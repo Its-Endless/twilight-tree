@@ -4,44 +4,52 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Star Vanguard · Wave Battles</title>
 <style>
-    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
 
-    body {
+    html, body {
         margin: 0;
-        min-height: 100vh;
-        min-height: 100dvh;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        overflow: hidden;
+        overscroll-behavior: none;
         background: radial-gradient(circle at 50% 30%, #0a1020, #02040a);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #eef4ff;
         display: flex;
         justify-content: center;
         align-items: center;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        overflow: hidden;
-        padding: 0.4rem;
+        touch-action: manipulation;
     }
 
     .game-wrapper {
         position: relative;
         background: linear-gradient(145deg, #0d111c, #07090f);
-        padding: 1.2rem 1.2rem 1.4rem;
-        border-radius: 2.5rem;
+        padding: 0.9rem 0.9rem 1rem;
+        border-radius: 2rem;
         box-shadow: 0 40px 80px -15px #000000ee, inset 0 0 0 2px #2e3b4e, 0 0 100px #1e90ff22;
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
-        max-width: 100%;
+        gap: 0.5rem;
+        max-width: 100vw;
+        max-height: 100dvh;
     }
 
     .wrapper-relative {
         position: relative;
         display: flex;
         justify-content: center;
+        align-items: center;
     }
 
     canvas {
         display: block;
-        border-radius: 1.5rem;
+        border-radius: 1rem;
         box-shadow: inset 0 0 80px #000000, 0 20px 45px #000000cc, 0 0 0 2px #3a4a60, 0 0 60px #1e90ff44;
         background: #0b0f18;
         cursor: crosshair;
@@ -53,25 +61,23 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0 0.4rem;
+        padding: 0 0.2rem;
         color: #eef4ff;
         font-weight: 600;
-        gap: 0.4rem;
+        gap: 0.35rem;
         flex-wrap: wrap;
     }
-
     .hud-left {
         display: flex;
-        gap: 0.4rem;
+        gap: 0.3rem;
         align-items: center;
         flex-wrap: wrap;
         flex: 1;
         min-width: 0;
     }
-
     .hud-right {
         display: flex;
-        gap: 0.4rem;
+        gap: 0.3rem;
         align-items: center;
         flex-shrink: 0;
     }
@@ -79,67 +85,77 @@
     .hud-item {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        gap: 0.3rem;
         background: linear-gradient(145deg, #101624, #0a0e18);
-        padding: 0.4rem 0.8rem;
+        padding: 0.35rem 0.65rem;
         border-radius: 3rem;
         border: 1px solid #4b6588;
-        box-shadow: 0 5px 0 #030509, 0 0 15px #1e90ff33, inset 0 1px 0 #ffffff22;
+        box-shadow: 0 4px 0 #030509, 0 0 12px #1e90ff33, inset 0 1px 0 #ffffff22;
         white-space: nowrap;
     }
-
-    .hud-icon { font-size: 1rem; filter: drop-shadow(0 0 6px #4ac7ff); }
+    .hud-icon { font-size: 0.9rem; filter: drop-shadow(0 0 6px #4ac7ff); }
     .hud-value {
-        font-size: 1.05rem; min-width: 1.6rem; text-align: center;
-        color: #ffd966; font-family: monospace; letter-spacing: 0.5px;
+        font-size: 0.95rem;
+        min-width: 1.3rem;
+        text-align: center;
+        color: #ffd966;
+        font-family: monospace;
+        letter-spacing: 0.5px;
         text-shadow: 0 0 12px #ffb347;
     }
-    .hud-value.small { font-size: 0.9rem; color: #8fd9ff; text-shadow: 0 0 12px #4ac7ff; }
+    .hud-value.small { font-size: 0.8rem; color: #8fd9ff; text-shadow: 0 0 12px #4ac7ff; }
     .hud-value.coin { color: #ffcc44; text-shadow: 0 0 12px #ffaa00; }
 
     .power-badge {
-        display: flex; align-items: center; gap: 0.35rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
         background: linear-gradient(145deg, #1e1338, #120a22);
-        padding: 0.3rem 0.8rem;
-        border-radius: 3rem; border: 2px solid #b48aff;
-        box-shadow: 0 0 20px #b48affaa, 0 4px 0 #0d061b;
-        font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px;
-        color: #d9c6ff; transition: all 0.2s;
+        padding: 0.28rem 0.7rem;
+        border-radius: 3rem;
+        border: 2px solid #b48aff;
+        box-shadow: 0 0 20px #b48affaa, 0 3px 0 #0d061b;
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: #d9c6ff;
+        transition: all 0.2s;
         white-space: nowrap;
     }
-    .power-badge.inactive {
-        opacity: 0.5; filter: grayscale(0.6);
-        border-color: #4a4a6a; box-shadow: 0 4px 0 #0d061b;
-    }
-    .power-badge.rapid { border-color: #ffaa33; box-shadow: 0 0 25px #ffaa33aa, 0 4px 0 #0d061b; color: #ffe0a3; }
-    .power-badge.shield { border-color: #4ac7ff; box-shadow: 0 0 25px #4ac7ffaa, 0 4px 0 #0d061b; color: #b8ecff; }
-    .power-badge.triple { border-color: #ff88ff; box-shadow: 0 0 25px #ff88ffaa, 0 4px 0 #0d061b; color: #ffd0ff; }
+    .power-badge.inactive { opacity: 0.5; filter: grayscale(0.6); border-color: #4a4a6a; box-shadow: 0 3px 0 #0d061b; }
+    .power-badge.rapid { border-color: #ffaa33; box-shadow: 0 0 25px #ffaa33aa, 0 3px 0 #0d061b; color: #ffe0a3; }
+    .power-badge.shield { border-color: #4ac7ff; box-shadow: 0 0 25px #4ac7ffaa, 0 3px 0 #0d061b; color: #b8ecff; }
+    .power-badge.triple { border-color: #ff88ff; box-shadow: 0 0 25px #ff88ffaa, 0 3px 0 #0d061b; color: #ffd0ff; }
 
-    /* ============ BUTTONS ============ */
     .btn {
         background: linear-gradient(145deg, #2a3d56, #1a2638);
-        border: none; color: white;
-        font-weight: bold; font-size: 0.85rem; padding: 0.55rem 1.1rem;
-        border-radius: 3rem; cursor: pointer;
-        box-shadow: 0 5px 0 #0c111a, 0 0 18px #3a6ea5aa, inset 0 1px 0 #ffffff33;
-        transition: all 0.06s linear; border: 1px solid #5f8ec9;
-        letter-spacing: 0.6px; text-transform: uppercase;
+        border: none;
+        color: white;
+        font-weight: bold;
+        font-size: 0.8rem;
+        padding: 0.5rem 1rem;
+        border-radius: 3rem;
+        cursor: pointer;
+        box-shadow: 0 4px 0 #0c111a, 0 0 15px #3a6ea5aa, inset 0 1px 0 #ffffff33;
+        transition: all 0.06s linear;
+        border: 1px solid #5f8ec9;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
         font-family: inherit;
     }
-    .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #0c111a, inset 0 1px 0 #ffffff33; }
+    .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #0c111a; }
     .btn:hover { background: linear-gradient(145deg, #3a5070, #253248); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: 0 5px 0 #0c111a; }
-    .btn:disabled:active { transform: none; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .hud-btn {
-        width: 42px;
-        height: 42px;
-        min-width: 42px;
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
         border-radius: 50%;
         border: 1.5px solid #5f8ec9;
         background: linear-gradient(145deg, #1e2b3e, #131c2b);
         color: #8fd9ff;
-        font-size: 1.1rem;
+        font-size: 1rem;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -147,29 +163,31 @@
         padding: 0;
         box-shadow: 0 3px 0 #0c111a, inset 0 1px 0 #ffffff22;
         transition: all 0.12s;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
     }
     .hud-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #0c111a; }
     .hud-btn.active {
         background: linear-gradient(145deg, #ffaa33, #cc7700);
         color: #1a0f00;
         border-color: #ffcc66;
-        box-shadow: 0 3px 0 #663300, 0 0 20px #ffaa33aa, inset 0 1px 0 #ffffff55;
+        box-shadow: 0 3px 0 #663300, 0 0 20px #ffaa33aa;
     }
 
     /* ============ OVERLAYS ============ */
     .overlay {
-        position: absolute; left: 0; top: 0;
-        width: 100%; height: 100%;
-        display: flex; flex-direction: column;
-        justify-content: center; align-items: center;
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
         background: radial-gradient(circle at 50% 40%, #0a1220f2, #02040af8);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
-        border-radius: 1.5rem;
-        opacity: 0; pointer-events: none;
-        transition: opacity 0.3s; z-index: 20;
+        border-radius: 1rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        z-index: 20;
         padding: 0.8rem;
         overflow-y: auto;
         gap: 0.5rem;
@@ -177,162 +195,199 @@
     .overlay.show { opacity: 1; pointer-events: all; }
 
     .overlay h1 {
-        font-size: clamp(1.5rem, 5vw, 2.6rem);
-        margin: 0 0 0.2rem; color: #ffd966;
+        font-size: clamp(1.3rem, 5vw, 2.4rem);
+        margin: 0 0 0.2rem;
+        color: #ffd966;
         text-shadow: 0 0 40px #ffb347, 0 0 15px #ff8800, 0 3px 0 #4a2800;
-        letter-spacing: 3px; font-weight: 900; text-align: center;
+        letter-spacing: 3px;
+        font-weight: 900;
+        text-align: center;
     }
     .overlay h2 {
-        font-size: clamp(0.65rem, 1.8vw, 0.85rem);
-        color: #9bb8dd; letter-spacing: 3px;
-        margin: 0 0 0.6rem; text-transform: uppercase; font-weight: 500;
+        font-size: clamp(0.6rem, 1.6vw, 0.8rem);
+        color: #9bb8dd;
+        letter-spacing: 3px;
+        margin: 0 0 0.5rem;
+        text-transform: uppercase;
+        font-weight: 500;
         text-align: center;
     }
 
     .stats-grid {
-        display: flex; gap: 0.5rem; margin-bottom: 0.5rem;
-        flex-wrap: wrap; justify-content: center;
+        display: flex;
+        gap: 0.4rem;
+        margin-bottom: 0.4rem;
+        flex-wrap: wrap;
+        justify-content: center;
     }
     .stat-box {
         background: linear-gradient(145deg, #0f1624, #070b14);
         border: 1.5px solid #3a5a7a;
-        border-radius: 0.9rem; padding: 0.4rem 0.9rem; text-align: center;
-        min-width: 80px;
-        box-shadow: 0 0 25px #1e90ff44, inset 0 1px 0 #ffffff11;
+        border-radius: 0.8rem;
+        padding: 0.35rem 0.75rem;
+        text-align: center;
+        min-width: 70px;
+        box-shadow: 0 0 20px #1e90ff33;
     }
     .stat-box .label {
-        font-size: 0.55rem; color: #7a9bc4;
-        text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.1rem;
+        font-size: 0.5rem;
+        color: #7a9bc4;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 0.1rem;
     }
     .stat-box .value {
-        font-size: 1.2rem; font-family: monospace; font-weight: 900;
-        color: #ffd966; text-shadow: 0 0 20px #ffb347;
+        font-size: 1.05rem;
+        font-family: monospace;
+        font-weight: 900;
+        color: #ffd966;
+        text-shadow: 0 0 15px #ffb347;
     }
-    .stat-box.high .value { color: #7ae0ff; text-shadow: 0 0 20px #4ac7ff; }
-    .stat-box.coin .value { color: #ffcc44; text-shadow: 0 0 20px #ffaa00; }
+    .stat-box.high .value { color: #7ae0ff; text-shadow: 0 0 15px #4ac7ff; }
+    .stat-box.coin .value { color: #ffcc44; text-shadow: 0 0 15px #ffaa00; }
 
     .game-over-msg {
-        font-size: clamp(1.4rem, 4.5vw, 2.2rem);
-        font-weight: 900; color: #ff5e5e;
+        font-size: clamp(1.2rem, 4vw, 2rem);
+        font-weight: 900;
+        color: #ff5e5e;
         text-shadow: 0 0 30px #ff0000, 0 3px 0 #4a0000;
-        letter-spacing: 4px; margin-bottom: 0.5rem; text-align: center;
+        letter-spacing: 4px;
+        margin-bottom: 0.4rem;
+        text-align: center;
     }
 
     .controls-hint {
-        color: #7a9bc4; font-size: 0.68rem;
-        letter-spacing: 0.5px; margin-top: 0.5rem; text-align: center;
+        color: #7a9bc4;
+        font-size: 0.62rem;
+        letter-spacing: 0.4px;
+        margin-top: 0.4rem;
+        text-align: center;
         line-height: 1.6;
-        max-width: 420px;
+        max-width: 400px;
     }
     .controls-hint kbd {
-        background: #1e2b3e; padding: 0.1rem 0.4rem;
-        border-radius: 0.3rem; border: 1px solid #4b6588;
-        font-family: monospace; color: #8fd9ff;
+        background: #1e2b3e;
+        padding: 0.1rem 0.35rem;
+        border-radius: 0.3rem;
+        border: 1px solid #4b6588;
+        font-family: monospace;
+        color: #8fd9ff;
         font-size: 0.9em;
     }
 
-    .btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+    .btn-row { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
 
     .pause-icon {
-        position: absolute; top: 12px; right: 16px;
-        font-size: 1.5rem; color: #ffd966;
+        position: absolute;
+        top: 10px;
+        right: 14px;
+        font-size: 1.3rem;
+        color: #ffd966;
         text-shadow: 0 0 20px #ffb347;
-        z-index: 5; cursor: pointer;
-        opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        z-index: 5;
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
     }
     .pause-icon.show { opacity: 1; pointer-events: all; }
 
     /* Coin display */
     .coin-display-big {
-        display: flex; align-items: center; gap: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
         background: linear-gradient(145deg, #2a1e0a, #1a1206);
         border: 2px solid #ffcc44;
-        padding: 0.4rem 1.1rem; border-radius: 2rem;
-        box-shadow: 0 0 35px #ffaa0055, inset 0 1px 0 #ffffff22;
-        margin-bottom: 0.5rem;
+        padding: 0.35rem 1rem;
+        border-radius: 2rem;
+        box-shadow: 0 0 30px #ffaa0055;
+        margin-bottom: 0.4rem;
     }
-    .coin-display-big .coin-icon { font-size: 1.3rem; }
+    .coin-display-big .coin-icon { font-size: 1.1rem; }
     .coin-display-big .coin-value {
-        font-size: 1.3rem; font-family: monospace; font-weight: 900;
-        color: #ffcc44; text-shadow: 0 0 15px #ffaa00;
-        letter-spacing: 1px;
+        font-size: 1.1rem;
+        font-family: monospace;
+        font-weight: 900;
+        color: #ffcc44;
+        text-shadow: 0 0 15px #ffaa00;
     }
 
     /* Difficulty */
     .difficulty-row {
         display: flex;
-        gap: 0.4rem;
+        gap: 0.35rem;
         align-items: center;
         justify-content: center;
-        margin-bottom: 0.6rem;
+        margin-bottom: 0.5rem;
         flex-wrap: wrap;
     }
     .difficulty-label {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         color: #7a9bc4;
-        letter-spacing: 2px;
+        letter-spacing: 1.5px;
         text-transform: uppercase;
-        margin-right: 0.3rem;
     }
     .diff-btn {
         background: linear-gradient(145deg, #1a2638, #0f1720);
         border: 1.5px solid #3a5a7a;
         color: #7a9bc4;
         font-weight: bold;
-        font-size: 0.65rem;
-        padding: 0.35rem 0.75rem;
+        font-size: 0.6rem;
+        padding: 0.3rem 0.65rem;
         border-radius: 2rem;
         cursor: pointer;
-        letter-spacing: 1.2px;
+        letter-spacing: 1px;
         text-transform: uppercase;
         font-family: inherit;
         transition: all 0.2s;
     }
-    .diff-btn:hover { color: #9bb8dd; border-color: #5f8ec9; }
     .diff-btn.active {
         background: linear-gradient(145deg, #4ac7ff, #1e90ff);
         color: #001a33;
         border-color: #7ae0ff;
         box-shadow: 0 0 20px #4ac7ff88;
-        text-shadow: none;
     }
     .diff-btn[data-diff="hard"].active {
         background: linear-gradient(145deg, #ff4466, #cc2244);
         border-color: #ff6688;
-        box-shadow: 0 0 20px #ff446688;
-        color: #ffffff;
+        color: #fff;
     }
     .diff-btn[data-diff="easy"].active {
         background: linear-gradient(145deg, #4ac780, #2a9950);
         border-color: #6ae0a0;
-        box-shadow: 0 0 20px #4ac78088;
         color: #002a10;
     }
 
-    /* Menu tabs */
+    /* Tabs */
     .menu-tabs {
-        display: flex; gap: 0.3rem; margin-bottom: 0.5rem;
+        display: flex;
+        gap: 0.25rem;
+        margin-bottom: 0.4rem;
         background: #0a0f18aa;
-        padding: 0.25rem;
+        padding: 0.2rem;
         border-radius: 3rem;
         border: 1px solid #3a5a7a;
-        box-shadow: inset 0 2px 8px #00000066;
     }
     .tab-btn {
         background: transparent;
-        border: none; color: #7a9bc4;
-        font-weight: bold; font-size: 0.7rem; padding: 0.4rem 1rem;
-        border-radius: 2rem; cursor: pointer;
-        letter-spacing: 1.2px; text-transform: uppercase;
+        border: none;
+        color: #7a9bc4;
+        font-weight: bold;
+        font-size: 0.65rem;
+        padding: 0.35rem 0.9rem;
+        border-radius: 2rem;
+        cursor: pointer;
+        letter-spacing: 1px;
+        text-transform: uppercase;
         font-family: inherit;
         transition: all 0.2s;
     }
     .tab-btn.active {
         background: linear-gradient(145deg, #2a3d56, #1a2638);
         color: #7ae0ff;
-        box-shadow: 0 0 20px #4ac7ff66, inset 0 1px 0 #ffffff22;
+        box-shadow: 0 0 20px #4ac7ff66;
     }
-
     .tab-content { display: none; flex-direction: column; align-items: center; width: 100%; }
     .tab-content.active { display: flex; }
 
@@ -340,124 +395,139 @@
     .upgrade-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 0.5rem;
+        gap: 0.4rem;
         width: 100%;
-        max-width: 700px;
+        max-width: 640px;
     }
     .upgrade-card {
         background: linear-gradient(155deg, #121a2b, #0a0f18);
         border: 1.5px solid #3a5a7a;
-        border-radius: 0.9rem;
-        padding: 0.5rem 0.4rem 0.45rem;
-        display: flex; flex-direction: column; align-items: center;
+        border-radius: 0.8rem;
+        padding: 0.45rem 0.35rem 0.4rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         position: relative;
-        transition: all 0.2s;
-        box-shadow: 0 0 20px #1e90ff22, inset 0 1px 0 #ffffff0a;
-        min-height: 140px;
+        min-height: 130px;
     }
-    .upgrade-card.maxed { border-color: #ffcc44; box-shadow: 0 0 30px #ffaa0044; }
-    .upgrade-card:hover:not(.maxed) { border-color: #5f8ec9; transform: translateY(-2px); }
-    .upgrade-card .uc-icon { font-size: 1.4rem; filter: drop-shadow(0 0 10px #4ac7ff); margin-bottom: 0.15rem; }
-    .upgrade-card.maxed .uc-icon { filter: drop-shadow(0 0 10px #ffcc44); }
-    .upgrade-card .uc-name { font-size: 0.65rem; color: #eef4ff; font-weight: bold; letter-spacing: 0.4px; text-align: center; margin-bottom: 0.1rem; }
-    .upgrade-card .uc-desc { font-size: 0.5rem; color: #7a9bc4; text-align: center; margin-bottom: 0.3rem; line-height: 1.25; min-height: 18px; }
-    .uc-pips { display: flex; gap: 2px; margin-bottom: 0.35rem; flex-wrap: wrap; justify-content: center; }
-    .uc-pip { width: 9px; height: 5px; border-radius: 2px; background: #1e2b3e; border: 1px solid #3a5a7a; }
-    .uc-pip.filled { background: linear-gradient(90deg, #4ac780, #7ae0ff); box-shadow: 0 0 6px #4ac7ff; border-color: #4ac7ff; }
-    .upgrade-card.maxed .uc-pip.filled { background: linear-gradient(90deg, #ffaa00, #ffcc44); box-shadow: 0 0 6px #ffcc44; border-color: #ffcc44; }
+    .upgrade-card.maxed { border-color: #ffcc44; }
+    .upgrade-card .uc-icon { font-size: 1.2rem; filter: drop-shadow(0 0 8px #4ac7ff); margin-bottom: 0.15rem; }
+    .upgrade-card .uc-name { font-size: 0.58rem; color: #eef4ff; font-weight: bold; text-align: center; margin-bottom: 0.1rem; }
+    .upgrade-card .uc-desc { font-size: 0.45rem; color: #7a9bc4; text-align: center; margin-bottom: 0.25rem; line-height: 1.2; min-height: 16px; }
+    .uc-pips { display: flex; gap: 2px; margin-bottom: 0.3rem; flex-wrap: wrap; justify-content: center; }
+    .uc-pip { width: 8px; height: 4px; border-radius: 2px; background: #1e2b3e; border: 1px solid #3a5a7a; }
+    .uc-pip.filled { background: linear-gradient(90deg, #4ac780, #7ae0ff); box-shadow: 0 0 5px #4ac7ff; }
+    .upgrade-card.maxed .uc-pip.filled { background: linear-gradient(90deg, #ffaa00, #ffcc44); }
     .uc-buy {
         width: 100%;
         background: linear-gradient(145deg, #2a5a3a, #1a3a25);
-        border: 1.5px solid #4ac780; color: #c8ffdd;
-        font-weight: bold; font-size: 0.62rem; padding: 0.32rem 0.3rem;
-        border-radius: 1.4rem; cursor: pointer;
-        letter-spacing: 0.3px; font-family: inherit;
-        white-space: nowrap;
+        border: 1.5px solid #4ac780;
+        color: #c8ffdd;
+        font-weight: bold;
+        font-size: 0.58rem;
+        padding: 0.28rem 0.25rem;
+        border-radius: 1.2rem;
+        cursor: pointer;
+        font-family: inherit;
         box-shadow: 0 3px 0 #0a1a10;
-        transition: all 0.1s;
-        display: flex; align-items: center; justify-content: center; gap: 0.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.2rem;
     }
     .uc-buy:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #0a1a10; }
     .uc-buy:disabled { opacity: 0.45; cursor: not-allowed; background: linear-gradient(145deg, #2a2a3a, #1a1a25); border-color: #555; color: #888; }
-    .uc-buy.maxed { background: linear-gradient(145deg, #5a4a1a, #3a3010); border-color: #ffcc44; color: #ffe9a8; cursor: default; }
+    .uc-buy.maxed { background: linear-gradient(145deg, #5a4a1a, #3a3010); border-color: #ffcc44; color: #ffe9a8; }
     .uc-lvl-badge {
-        position: absolute; top: 5px; right: 5px;
+        position: absolute;
+        top: 4px;
+        right: 4px;
         background: #0a0f18cc;
         border: 1px solid #4ac7ff;
         color: #7ae0ff;
-        font-size: 0.5rem; font-family: monospace; font-weight: bold;
-        padding: 0.05rem 0.3rem;
-        border-radius: 0.6rem;
+        font-size: 0.45rem;
+        font-family: monospace;
+        font-weight: bold;
+        padding: 0.05rem 0.28rem;
+        border-radius: 0.5rem;
     }
     .upgrade-card.maxed .uc-lvl-badge { border-color: #ffcc44; color: #ffcc44; }
-    .shop-footer { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.6rem; }
+    .shop-footer { display: flex; justify-content: center; gap: 0.4rem; margin-top: 0.5rem; }
 
     /* Banners */
+    .wave-banner, .wave-clear-banner, .powerup-toast {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: 900;
+        z-index: 6;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.4s;
+        white-space: nowrap;
+    }
     .wave-banner {
-        position: absolute; top: 28%; left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: clamp(1.4rem, 5vw, 2.4rem);
-        font-weight: 900;
-        color: #ffd966; text-shadow: 0 0 40px #ffb347, 0 0 15px #ff8800, 0 3px 0 #4a2800;
-        letter-spacing: 5px; z-index: 6;
-        pointer-events: none; opacity: 0;
-        transition: opacity 0.4s;
-        white-space: nowrap;
+        top: 28%;
+        font-size: clamp(1.2rem, 4.5vw, 2.2rem);
+        color: #ffd966;
+        text-shadow: 0 0 40px #ffb347, 0 0 15px #ff8800, 0 3px 0 #4a2800;
+        letter-spacing: 5px;
     }
-    .wave-banner.show { opacity: 1; }
-
     .wave-clear-banner {
-        position: absolute; top: 38%; left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: clamp(1rem, 3.5vw, 1.6rem);
-        font-weight: 900;
-        color: #4ac7ff; text-shadow: 0 0 30px #4ac7ff, 0 0 15px #1e90ff, 0 3px 0 #003366;
-        letter-spacing: 4px; z-index: 6;
-        pointer-events: none; opacity: 0;
-        transition: opacity 0.4s;
-        white-space: nowrap;
+        top: 38%;
+        font-size: clamp(0.9rem, 3vw, 1.5rem);
+        color: #4ac7ff;
+        text-shadow: 0 0 30px #4ac7ff, 0 3px 0 #003366;
+        letter-spacing: 3px;
     }
-    .wave-clear-banner.show { opacity: 1; }
-
     .powerup-toast {
-        position: absolute; top: 14%; left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: clamp(0.75rem, 2.5vw, 1.1rem);
-        font-weight: 900;
-        z-index: 7;
-        pointer-events: none; opacity: 0;
-        transition: opacity 0.35s, transform 0.35s;
-        white-space: nowrap;
+        top: 14%;
+        font-size: clamp(0.7rem, 2.2vw, 1rem);
         letter-spacing: 2px;
         text-transform: uppercase;
+        transform: translate(-50%, -50%);
+        transition: opacity 0.35s, transform 0.35s;
     }
+    .wave-banner.show, .wave-clear-banner.show { opacity: 1; }
     .powerup-toast.show { opacity: 1; transform: translate(-50%, -70%); }
 
     .hp-bar {
-        position: absolute; top: 10px; left: 50%;
+        position: absolute;
+        top: 8px;
+        left: 50%;
         transform: translateX(-50%);
-        width: 55%; max-width: 320px; height: 16px;
+        width: 55%;
+        max-width: 300px;
+        height: 14px;
         background: #0a0f18;
         border: 2px solid #4b6588;
-        border-radius: 10px; overflow: hidden;
+        border-radius: 10px;
+        overflow: hidden;
         box-shadow: 0 0 20px #1e90ff55, inset 0 2px 5px #000;
         z-index: 5;
-        opacity: 0; transition: opacity 0.3s;
+        opacity: 0;
+        transition: opacity 0.3s;
     }
     .hp-bar.show { opacity: 1; }
     .hp-fill {
-        height: 100%; width: 100%;
+        height: 100%;
+        width: 100%;
         background: linear-gradient(90deg, #4ac780, #7ae0ff, #4ac780);
         transition: width 0.2s;
         box-shadow: 0 0 15px #4ac7ff;
     }
     .hp-fill.low { background: linear-gradient(90deg, #ff5e5e, #ffaa33, #ff5e5e); }
     .hp-text {
-        position: absolute; top: 0; left: 0;
-        width: 100%; height: 100%;
-        display: flex; justify-content: center; align-items: center;
-        font-size: 0.65rem; font-weight: bold; color: white;
-        text-shadow: 0 1px 3px black; letter-spacing: 1.2px;
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 0.55rem;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 1px 3px black;
+        letter-spacing: 1px;
         font-family: monospace;
     }
 
@@ -470,7 +540,6 @@
         z-index: 8;
         white-space: nowrap;
         animation: dmgFloat 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        will-change: transform, opacity;
     }
     @keyframes dmgFloat {
         0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6); }
@@ -480,15 +549,17 @@
 
     /* Mobile hint */
     .mobile-hint {
-        position: absolute; left: 50%; bottom: 12%;
+        position: absolute;
+        left: 50%;
+        bottom: 10%;
         transform: translateX(-50%);
         background: rgba(0, 240, 255, 0.15);
         border: 1.5px solid #4ac7ff;
         color: #b8ecff;
-        padding: 0.5rem 1rem;
+        padding: 0.45rem 0.9rem;
         border-radius: 3rem;
-        font-size: 0.72rem;
-        letter-spacing: 1.5px;
+        font-size: 0.68rem;
+        letter-spacing: 1.2px;
         text-transform: uppercase;
         font-weight: 700;
         z-index: 15;
@@ -496,71 +567,64 @@
         box-shadow: 0 0 25px #4ac7ff66;
         opacity: 0;
         transition: opacity 0.4s;
-        text-align: center;
         white-space: nowrap;
     }
     .mobile-hint.show { opacity: 1; }
 
     /* ============ RESPONSIVE ============ */
     @media (max-width: 780px) {
-        body { padding: 0.3rem; }
         .game-wrapper {
-            padding: 0.5rem 0.5rem 0.7rem;
+            padding: 0.5rem 0.5rem 0.6rem;
             border-radius: 1.2rem;
-            gap: 0.4rem;
-            width: 100%;
+            gap: 0.35rem;
         }
-        canvas { border-radius: 0.9rem; }
-        .overlay { border-radius: 0.9rem; padding: 0.5rem; }
-        .hud { padding: 0 0.2rem; gap: 0.3rem; }
-        .hud-item { padding: 0.3rem 0.55rem; gap: 0.25rem; }
-        .hud-icon { font-size: 0.85rem; }
-        .hud-value { font-size: 0.9rem; min-width: 1.3rem; }
-        .hud-value.small { font-size: 0.78rem; }
-        .hud-btn { width: 36px; height: 36px; min-width: 36px; font-size: 1rem; }
-        .btn { padding: 0.5rem 1rem; font-size: 0.72rem; }
-        .upgrade-grid { gap: 0.35rem; }
-        .upgrade-card { padding: 0.4rem 0.3rem; min-height: 128px; border-radius: 0.7rem; }
-        .upgrade-card .uc-icon { font-size: 1.2rem; }
-        .upgrade-card .uc-name { font-size: 0.58rem; }
-        .upgrade-card .uc-desc { font-size: 0.45rem; min-height: 16px; }
-        .uc-buy { font-size: 0.55rem; padding: 0.28rem; }
-        .uc-lvl-badge { font-size: 0.45rem; }
-        .tab-btn { padding: 0.35rem 0.7rem; font-size: 0.62rem; }
-        .diff-btn { padding: 0.3rem 0.6rem; font-size: 0.58rem; }
-        .controls-hint { font-size: 0.6rem; margin-top: 0.3rem; }
+        canvas { border-radius: 0.7rem; }
+        .overlay { border-radius: 0.7rem; padding: 0.5rem; }
+        .hud { padding: 0; gap: 0.25rem; }
+        .hud-item { padding: 0.25rem 0.5rem; gap: 0.2rem; }
+        .hud-icon { font-size: 0.8rem; }
+        .hud-value { font-size: 0.85rem; min-width: 1.1rem; }
+        .hud-value.small { font-size: 0.72rem; }
+        .hud-btn { width: 32px; height: 32px; min-width: 32px; font-size: 0.85rem; }
+        .btn { padding: 0.4rem 0.9rem; font-size: 0.7rem; }
+        .upgrade-grid { grid-template-columns: repeat(2, 1fr); gap: 0.3rem; }
+        .upgrade-card { padding: 0.4rem 0.3rem; min-height: 118px; }
+        .upgrade-card .uc-icon { font-size: 1rem; }
+        .tab-btn { padding: 0.3rem 0.7rem; font-size: 0.58rem; }
+        .diff-btn { padding: 0.28rem 0.55rem; font-size: 0.55rem; }
+        .controls-hint { font-size: 0.55rem; }
+        .coin-display-big { padding: 0.3rem 0.85rem; margin-bottom: 0.3rem; }
+        .coin-display-big .coin-value { font-size: 0.95rem; }
     }
 
-    @media (max-width: 500px) {
-        .hud-left { gap: 0.25rem; }
-        .hud-item { padding: 0.25rem 0.5rem; }
-        .hud-icon { font-size: 0.8rem; }
-        .hud-value { font-size: 0.85rem; }
-        .hud-btn { width: 34px; height: 34px; min-width: 34px; font-size: 0.9rem; }
-        .power-badge { font-size: 0.55rem; padding: 0.25rem 0.55rem; letter-spacing: 1px; }
-        .upgrade-grid { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 420px) {
+        .hud-item { padding: 0.2rem 0.4rem; }
+        .hud-icon { font-size: 0.75rem; }
+        .hud-value { font-size: 0.78rem; }
+        .hud-btn { width: 30px; height: 30px; min-width: 30px; font-size: 0.8rem; }
+        .power-badge { font-size: 0.5rem; padding: 0.2rem 0.5rem; letter-spacing: 0.8px; }
         .overlay h1 { letter-spacing: 1.5px; }
     }
 
-    /* Landscape mobile — maximize canvas size */
-    @media (max-height: 500px) and (orientation: landscape) {
-        body { padding: 0.2rem; }
+    /* Portrait-specific: taller layout */
+    @media (orientation: portrait) and (max-width: 780px) {
         .game-wrapper {
-            padding: 0.35rem;
-            border-radius: 0.8rem;
-            gap: 0.3rem;
+            width: 100vw;
+            max-width: 100vw;
+            padding: 0.4rem;
+            border-radius: 0;
         }
-        .overlay { padding: 0.4rem; }
-        .overlay h1 { font-size: 1.3rem; }
-        .controls-hint { display: none; }
-        .hud { padding: 0; }
+        canvas { border-radius: 0.5rem; }
+        .overlay { border-radius: 0.5rem; }
+        .hud-left { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+        .hud-left::-webkit-scrollbar { display: none; }
     }
 </style>
 </head>
 <body>
 <div class="game-wrapper" id="gameWrapper">
     <div class="wrapper-relative">
-        <canvas id="gameCanvas" width="1000" height="500"></canvas>
+        <canvas id="gameCanvas"></canvas>
         <div id="pauseIcon" class="pause-icon">⏸</div>
 
         <div id="waveBanner" class="wave-banner"></div>
@@ -676,9 +740,9 @@
             </div>
         </div>
         <div class="hud-right">
-            <button id="autoFireBtn" class="hud-btn" title="Toggle Auto-Fire" aria-label="Toggle Auto-Fire">🔥</button>
-            <button id="fullscreenBtn" class="hud-btn" title="Fullscreen" aria-label="Fullscreen">⛶</button>
-            <button id="pauseBtnHud" class="hud-btn" title="Pause" aria-label="Pause">⏸</button>
+            <button id="autoFireBtn" class="hud-btn" title="Toggle Auto-Fire">🔥</button>
+            <button id="fullscreenBtn" class="hud-btn" title="Fullscreen">⛶</button>
+            <button id="pauseBtnHud" class="hud-btn" title="Pause">⏸</button>
         </div>
     </div>
 </div>
@@ -724,54 +788,85 @@
     const gameOverOverlay = document.getElementById('gameOverOverlay');
     const pauseIcon = document.getElementById('pauseIcon');
 
-    // ============ CONSTANTS ============
-    const W = 1000, H = 500;
-    const PLAYER_Y = H - 65;
-    const ENEMY_ZONE_BOTTOM = 240;
-    const ASTEROID_START_WAVE = 5;
+    // ============ DYNAMIC DIMENSIONS ============
+    let W = 1000, H = 500;
+    let PLAYER_Y = H - 65;
+    let ENEMY_ZONE_BOTTOM = 240;
+    let EZ_TOP = 40;
+
+    function isPortraitNow() {
+        return window.innerHeight > window.innerWidth;
+    }
+
+    function applyDimensions() {
+        const portrait = isPortraitNow();
+        const oldW = W, oldH = H;
+
+        if (portrait) {
+            // 9:16 portrait
+            W = 540;
+            H = 960;
+        } else {
+            // 2:1 landscape
+            W = 1000;
+            H = 500;
+        }
+
+        // Resize canvas backing store (with DPR)
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Compute CSS display size to fit viewport
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const aspect = W / H;
+        const reserved = portrait ? 120 : 150;
+        const maxW = vw - (portrait ? 8 : 40);
+        const maxH = vh - reserved;
+
+        let cssW = maxW;
+        let cssH = cssW / aspect;
+        if (cssH > maxH) {
+            cssH = maxH;
+            cssW = cssH * aspect;
+        }
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+
+        // Update dimension-dependent positions
+        EZ_TOP = H * 0.08;
+        ENEMY_ZONE_BOTTOM = H * 0.48;
+        PLAYER_Y = H - 65;
+
+        // Scale existing game state (if any) to new dimensions
+        const scaleX = W / oldW;
+        const scaleY = H / oldH;
+
+        player.y = PLAYER_Y;
+        player.x = Math.max(player.radius + 5, Math.min(W - player.radius - 5, player.x * scaleX));
+        targetX = Math.max(player.radius + 5, Math.min(W - player.radius - 5, targetX * scaleX));
+
+        enemies.forEach(e => {
+            e.x *= scaleX;
+            e.baseY = EZ_TOP + (e.baseY - oldH * 0.08) * ((ENEMY_ZONE_BOTTOM - EZ_TOP) / (oldH * 0.48 - oldH * 0.08));
+            e.y = e.baseY;
+        });
+        asteroids.forEach(a => { a.x *= scaleX; a.y = Math.max(ENEMY_ZONE_BOTTOM + 40, Math.min(H - a.radius - 5, a.y * scaleY)); });
+        bullets.forEach(b => { b.x *= scaleX; b.y *= scaleY; });
+        enemyBullets.forEach(b => { b.x *= scaleX; b.y *= scaleY; });
+        powerups.forEach(p => { p.x *= scaleX; p.y *= scaleY; });
+        particles.forEach(p => { p.x *= scaleX; p.y *= scaleY; });
+    }
 
     // ============ MOBILE DETECTION ============
     const isMobile = (function() {
         const ua = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|webOS|BlackBerry/i.test(navigator.userAgent || '');
         const touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        const narrow = window.innerWidth < 1024;
+        const narrow = Math.min(window.innerWidth, window.innerHeight) < 1024;
         return ua || (touch && narrow);
     })();
-
-    // ============ CANVAS SETUP (DPR-aware) ============
-    function setupCanvas() {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = W * dpr;
-        canvas.height = H * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    function layoutCanvas() {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const isSmall = vw < 780;
-        const padX = isSmall ? 20 : 80;
-        const padY = isSmall ? 130 : 170;
-        const maxW = isSmall ? vw - padX : Math.min(vw - padX, 1050);
-        const maxH = vh - padY;
-
-        let cw = maxW;
-        let ch = cw / 2;
-        if (ch > maxH) {
-            ch = maxH;
-            cw = ch * 2;
-        }
-        cw = Math.max(cw, 200);
-        ch = Math.max(ch, 100);
-
-        canvas.style.width = cw + 'px';
-        canvas.style.height = ch + 'px';
-    }
-
-    setupCanvas();
-    layoutCanvas();
-    window.addEventListener('resize', layoutCanvas);
-    window.addEventListener('orientationchange', () => setTimeout(layoutCanvas, 150));
 
     // ============ PERSISTENT DATA ============
     const saveData = {
@@ -872,163 +967,183 @@
         return 0;
     }
 
-    // ============ PATTERNS ============
+    // ============ POSITION HELPERS (scale-aware) ============
+    function ex(f) { return W * f; }   // x as fraction of width
+    function ey(f) {                    // y as fraction of enemy zone height
+        return EZ_TOP + (ENEMY_ZONE_BOTTOM - EZ_TOP) * f;
+    }
+
+    // ============ PATTERNS (responsive) ============
     const PATTERNS = [
-        { tier: 1, fn: (w) => {
+        // Tier 1 — simple
+        { tier: 1, fn: () => {
             const count = 3 + Math.floor(Math.random() * 2);
             const arr = [];
-            const startX = W/2 - (count - 1) * 80 / 2;
-            for (let i = 0; i < count; i++)
-                arr.push({ x: startX + i*80, y: 100, hp: 15, radius: 20, color: '#ff4466', type: 'basic', attackRate: 150 });
-            return arr;
-        }},
-        { tier: 1, fn: (w) => {
-            const arr = [];
-            const count = 3;
-            const startX = W/2;
             for (let i = 0; i < count; i++) {
-                const mid = Math.floor(count/2);
-                const offset = (i - mid) * 80;
-                const yOff = Math.abs(i - mid) * 35;
-                arr.push({ x: startX + offset, y: 100 + yOff, hp: 18, radius: 20, color: '#ff6644', type: 'basic', attackRate: 150 });
+                const t = (i + 1) / (count + 1);
+                arr.push({ x: ex(t), y: ey(0.2), hp: 15, radius: 18, color: '#ff4466', type: 'basic', attackRate: 150 });
             }
             return arr;
         }},
-        { tier: 1, fn: (w) => {
+        { tier: 1, fn: () => {
+            const arr = [];
+            const count = 3, mid = Math.floor(count/2);
+            for (let i = 0; i < count; i++) {
+                arr.push({
+                    x: ex(0.5 + (i - mid) * 0.22),
+                    y: ey(0.2 + Math.abs(i - mid) * 0.18),
+                    hp: 18, radius: 18, color: '#ff6644', type: 'basic', attackRate: 150
+                });
+            }
+            return arr;
+        }},
+        { tier: 1, fn: () => {
             const arr = [];
             const count = 5;
             for (let i = 0; i < count; i++) {
                 const t = i / (count - 1);
-                const x = 250 + t * 500;
-                const y = 100 + Math.sin(t * Math.PI) * 35;
-                arr.push({ x, y, hp: 15, radius: 19, color: '#ff44aa', type: 'basic', attackRate: 160 });
+                arr.push({
+                    x: ex(0.15 + t * 0.7),
+                    y: ey(0.15 + Math.sin(t * Math.PI) * 0.25),
+                    hp: 15, radius: 17, color: '#ff44aa', type: 'basic', attackRate: 160
+                });
             }
             return arr;
         }},
-        { tier: 2, fn: (w) => {
+        // Tier 2 — moderate
+        { tier: 2, fn: () => {
             const arr = [];
-            const count = 3;
-            for (let i = 0; i < count; i++) {
-                arr.push({ x: 250 + i * 250, y: 90, hp: 25, radius: 22, color: '#aa44ff', type: 'basic', attackRate: 130 });
-                arr.push({ x: 250 + i * 250, y: 160, hp: 25, radius: 22, color: '#aa44ff', type: 'basic', attackRate: 120 });
+            for (let i = 0; i < 3; i++) {
+                const x = ex(0.2 + i * 0.3);
+                arr.push({ x, y: ey(0.15), hp: 25, radius: 20, color: '#aa44ff', type: 'basic', attackRate: 130 });
+                arr.push({ x, y: ey(0.55), hp: 25, radius: 20, color: '#aa44ff', type: 'basic', attackRate: 120 });
             }
             return arr;
         }},
-        { tier: 2, fn: (w) => {
+        { tier: 2, fn: () => {
             const arr = [];
-            const cx = W/2, cy = 140;
-            arr.push({ x: cx, y: cy - 55, hp: 30, radius: 22, color: '#44ddff', type: 'basic', attackRate: 110 });
-            arr.push({ x: cx - 75, y: cy, hp: 30, radius: 22, color: '#44ddff', type: 'basic', attackRate: 120 });
-            arr.push({ x: cx + 75, y: cy, hp: 30, radius: 22, color: '#44ddff', type: 'basic', attackRate: 120 });
-            arr.push({ x: cx, y: cy + 55, hp: 30, radius: 22, color: '#44ddff', type: 'basic', attackRate: 110 });
+            const cx = ex(0.5), cy = ey(0.4);
+            const dx = W * 0.18, dy = (ENEMY_ZONE_BOTTOM - EZ_TOP) * 0.3;
+            arr.push({ x: cx, y: cy - dy, hp: 30, radius: 20, color: '#44ddff', type: 'basic', attackRate: 110 });
+            arr.push({ x: cx - dx, y: cy, hp: 30, radius: 20, color: '#44ddff', type: 'basic', attackRate: 120 });
+            arr.push({ x: cx + dx, y: cy, hp: 30, radius: 20, color: '#44ddff', type: 'basic', attackRate: 120 });
+            arr.push({ x: cx, y: cy + dy, hp: 30, radius: 20, color: '#44ddff', type: 'basic', attackRate: 110 });
             return arr;
         }},
-        { tier: 2, fn: (w) => {
+        { tier: 2, fn: () => {
             const arr = [];
-            arr.push({ x: W/2, y: 110, hp: 90, radius: 32, color: '#ff2222', type: 'tank', attackRate: 90 });
-            arr.push({ x: W/2 - 130, y: 140, hp: 18, radius: 17, color: '#ff8888', type: 'basic', attackRate: 150 });
-            arr.push({ x: W/2 + 130, y: 140, hp: 18, radius: 17, color: '#ff8888', type: 'basic', attackRate: 150 });
+            arr.push({ x: ex(0.5), y: ey(0.3), hp: 90, radius: 30, color: '#ff2222', type: 'tank', attackRate: 90 });
+            arr.push({ x: ex(0.25), y: ey(0.55), hp: 18, radius: 15, color: '#ff8888', type: 'basic', attackRate: 150 });
+            arr.push({ x: ex(0.75), y: ey(0.55), hp: 18, radius: 15, color: '#ff8888', type: 'basic', attackRate: 150 });
             return arr;
         }},
-        { tier: 3, fn: (w) => {
+        // Tier 3 — challenging
+        { tier: 3, fn: () => {
             const arr = [];
-            const count = 5;
-            for (let i = 0; i < count; i++) {
-                arr.push({ x: 180 + i * 160, y: 100 + (i%2)*55, hp: 26, radius: 20, color: '#ffaa22', type: 'shooter', attackRate: 100 });
+            for (let i = 0; i < 5; i++) {
+                arr.push({
+                    x: ex(0.15 + i * 0.175),
+                    y: ey(0.2 + (i % 2) * 0.35),
+                    hp: 26, radius: 18, color: '#ffaa22', type: 'shooter', attackRate: 100
+                });
             }
             return arr;
         }},
-        { tier: 3, fn: (w) => {
+        { tier: 3, fn: () => {
             const arr = [];
-            const count = 5;
-            for (let i = 0; i < count; i++) {
-                arr.push({ x: 140 + i * 180, y: 90, hp: 22, radius: 18, color: '#ee44ee', type: 'basic', attackRate: 130 });
-                arr.push({ x: 140 + i * 180, y: 155, hp: 22, radius: 18, color: '#ee44ee', type: 'basic', attackRate: 120 });
+            for (let i = 0; i < 5; i++) {
+                const x = ex(0.1 + i * 0.2);
+                arr.push({ x, y: ey(0.15), hp: 22, radius: 16, color: '#ee44ee', type: 'basic', attackRate: 130 });
+                arr.push({ x, y: ey(0.55), hp: 22, radius: 16, color: '#ee44ee', type: 'basic', attackRate: 120 });
             }
             return arr;
         }},
-        { tier: 3, fn: (w) => {
+        { tier: 3, fn: () => {
             const arr = [];
-            const cols = 4;
-            for (let c = 0; c < cols; c++) {
-                const baseX = 200 + c * 200;
-                const rows = 3;
-                for (let r = 0; r < rows; r++) {
-                    arr.push({ x: baseX + (r%2)*30, y: 80 + r*50, hp: 24, radius: 19, color: '#66ff88', type: 'basic', attackRate: 130 });
+            for (let c = 0; c < 4; c++) {
+                const baseX = ex(0.15 + c * 0.233);
+                for (let r = 0; r < 3; r++) {
+                    arr.push({
+                        x: baseX + (r % 2) * W * 0.03,
+                        y: ey(0.05 + r * 0.3),
+                        hp: 24, radius: 17, color: '#66ff88', type: 'basic', attackRate: 130
+                    });
                 }
             }
             return arr;
         }},
-        { tier: 3, fn: (w) => {
+        { tier: 3, fn: () => {
             const arr = [];
+            const cx = ex(0.5), cy = ey(0.45);
             const count = 8;
-            const cx = W/2, cy = 140;
             for (let i = 0; i < count; i++) {
                 const angle = (i / count) * Math.PI * 2;
-                const r = 100;
-                arr.push({ x: cx + Math.cos(angle)*r, y: cy + Math.sin(angle)*r*0.5,
-                           hp: 24, radius: 19, color: '#ff88ff', type: 'basic', attackRate: 125 });
+                arr.push({
+                    x: cx + Math.cos(angle) * W * 0.18,
+                    y: cy + Math.sin(angle) * (ENEMY_ZONE_BOTTOM - EZ_TOP) * 0.2,
+                    hp: 24, radius: 17, color: '#ff88ff', type: 'basic', attackRate: 125
+                });
             }
             return arr;
         }},
-        { tier: 4, fn: (w) => {
+        // Tier 4 — hard
+        { tier: 4, fn: () => {
             const arr = [];
             for (let i = 0; i < 3; i++) {
-                const x = W/2 + (i - 1) * 220;
-                arr.push({ x, y: 110, hp: 110, radius: 32, color: '#ff4444', type: 'tank', attackRate: 85 });
-                arr.push({ x: x - 65, y: 155, hp: 16, radius: 14, color: '#ffaa66', type: 'basic', attackRate: 150 });
-                arr.push({ x: x + 65, y: 155, hp: 16, radius: 14, color: '#ffaa66', type: 'basic', attackRate: 150 });
+                const x = ex(0.5 + (i - 1) * 0.25);
+                arr.push({ x, y: ey(0.25), hp: 110, radius: 30, color: '#ff4444', type: 'tank', attackRate: 85 });
+                arr.push({ x: x - W * 0.065, y: ey(0.55), hp: 16, radius: 13, color: '#ffaa66', type: 'basic', attackRate: 150 });
+                arr.push({ x: x + W * 0.065, y: ey(0.55), hp: 16, radius: 13, color: '#ffaa66', type: 'basic', attackRate: 150 });
             }
             return arr;
         }},
-        { tier: 4, fn: (w) => {
+        { tier: 4, fn: () => {
             const arr = [];
-            const cx = W/2, cy = 130;
+            const cx = ex(0.5), cy = ey(0.45);
             for (let i = 0; i < 4; i++) {
-                const d = i * 55 + 30;
-                arr.push({ x: cx, y: cy - d, hp: 26, radius: 20, color: '#ffcc44', type: 'basic', attackRate: 115 });
-                arr.push({ x: cx, y: cy + d, hp: 26, radius: 20, color: '#ffcc44', type: 'basic', attackRate: 115 });
-                arr.push({ x: cx - d, y: cy, hp: 26, radius: 20, color: '#ffcc44', type: 'basic', attackRate: 115 });
-                arr.push({ x: cx + d, y: cy, hp: 26, radius: 20, color: '#ffcc44', type: 'basic', attackRate: 115 });
+                const d = W * 0.06 * (i + 1);
+                arr.push({ x: cx, y: cy - d, hp: 26, radius: 18, color: '#ffcc44', type: 'basic', attackRate: 115 });
+                arr.push({ x: cx, y: cy + d, hp: 26, radius: 18, color: '#ffcc44', type: 'basic', attackRate: 115 });
+                arr.push({ x: cx - d, y: cy, hp: 26, radius: 18, color: '#ffcc44', type: 'basic', attackRate: 115 });
+                arr.push({ x: cx + d, y: cy, hp: 26, radius: 18, color: '#ffcc44', type: 'basic', attackRate: 115 });
             }
             return arr;
         }},
-        { tier: 4, fn: (w) => {
+        { tier: 4, fn: () => {
             const arr = [];
-            const count = 4;
-            for (let i = 0; i < count; i++) {
-                arr.push({ x: 200 + i * 200, y: 100, hp: 55, radius: 24, color: '#ff2266', type: 'sniper', attackRate: 80 });
+            for (let i = 0; i < 4; i++) {
+                arr.push({ x: ex(0.15 + i * 0.233), y: ey(0.25), hp: 55, radius: 22, color: '#ff2266', type: 'sniper', attackRate: 80 });
             }
-            for (let i = 0; i < count - 1; i++) {
-                arr.push({ x: 300 + i * 200, y: 170, hp: 25, radius: 18, color: '#ff88aa', type: 'basic', attackRate: 130 });
+            for (let i = 0; i < 3; i++) {
+                arr.push({ x: ex(0.27 + i * 0.233), y: ey(0.65), hp: 25, radius: 16, color: '#ff88aa', type: 'basic', attackRate: 130 });
             }
             return arr;
         }},
-        { tier: 4, fn: (w) => {
+        { tier: 4, fn: () => {
             const arr = [];
-            const gapX = W/2 + (Math.random()-0.5) * 250;
-            const gap = 200;
+            const gapX = W * (0.3 + Math.random() * 0.4);
+            const gap = W * 0.2;
             for (let i = 0; i < 5; i++) {
-                const x = 80 + i * 60;
-                if (Math.abs(x - gapX) > gap/2)
-                    arr.push({ x, y: 100 + (i%2)*50, hp: 26, radius: 19, color: '#44aaff', type: 'basic', attackRate: 115 });
+                const x = ex(0.05 + i * 0.06);
+                if (Math.abs(x - gapX) > gap / 2)
+                    arr.push({ x, y: ey(0.2 + (i % 2) * 0.35), hp: 26, radius: 17, color: '#44aaff', type: 'basic', attackRate: 115 });
             }
             for (let i = 0; i < 5; i++) {
-                const x = W - 80 - i * 60;
-                if (Math.abs(x - gapX) > gap/2)
-                    arr.push({ x, y: 100 + (i%2)*50, hp: 26, radius: 19, color: '#44aaff', type: 'basic', attackRate: 115 });
+                const x = ex(0.95 - i * 0.06);
+                if (Math.abs(x - gapX) > gap / 2)
+                    arr.push({ x, y: ey(0.2 + (i % 2) * 0.35), hp: 26, radius: 17, color: '#44aaff', type: 'basic', attackRate: 115 });
             }
             return arr;
         }},
-        { tier: 5, fn: (w) => {
+        // Tier 5 — brutal
+        { tier: 5, fn: () => {
             const arr = [];
-            const count = 10;
-            for (let i = 0; i < count; i++) {
+            for (let i = 0; i < 10; i++) {
                 arr.push({
-                    x: 80 + Math.random() * (W - 160),
-                    y: 70 + Math.random() * 140,
+                    x: ex(0.05 + Math.random() * 0.9),
+                    y: ey(Math.random()),
                     hp: 30 + (Math.random() < 0.2 ? 40 : 0),
-                    radius: 16 + Math.random() * 8,
+                    radius: 14 + Math.random() * 6,
                     color: ['#ff4466','#ffaa22','#aa44ff','#44ddff','#ff88ff'][Math.floor(Math.random()*5)],
                     type: Math.random() < 0.3 ? 'shooter' : 'basic',
                     attackRate: 90 + Math.random() * 50
@@ -1036,21 +1151,25 @@
             }
             return arr;
         }},
-        { tier: 5, fn: (w) => {
+        { tier: 5, fn: () => {
             const arr = [];
             const count = 9;
             for (let i = 0; i < count; i++) {
                 const t = i / (count - 1);
-                arr.push({ x: 100 + t * 800, y: 70 + Math.sin(t * Math.PI) * 100,
-                           hp: 20, radius: 15, color: '#ff8844', type: 'shooter', attackRate: 70 });
+                arr.push({
+                    x: ex(0.05 + t * 0.9),
+                    y: ey(0.1 + Math.sin(t * Math.PI) * 0.75),
+                    hp: 20, radius: 13, color: '#ff8844', type: 'shooter', attackRate: 70
+                });
             }
             return arr;
         }},
-        { tier: 5, fn: (w) => {
+        { tier: 5, fn: () => {
             const arr = [];
             for (let i = 0; i < 6; i++) {
-                arr.push({ x: 120 + i * 150, y: 90, hp: 30, radius: 19, color: '#ff2266', type: 'sniper', attackRate: 70 });
-                arr.push({ x: 120 + i * 150, y: 165, hp: 20, radius: 16, color: '#ff88aa', type: 'shooter', attackRate: 90 });
+                const x = ex(0.1 + i * 0.16);
+                arr.push({ x, y: ey(0.2), hp: 30, radius: 17, color: '#ff2266', type: 'sniper', attackRate: 70 });
+                arr.push({ x, y: ey(0.65), hp: 20, radius: 14, color: '#ff88aa', type: 'shooter', attackRate: 90 });
             }
             return arr;
         }}
@@ -1134,35 +1253,27 @@
         setTimeout(() => powerupToastEl.classList.remove('show'), 1200);
     }
 
-    // Damage popup — DOM based for simplicity
     function showDamagePopup(x, y, amount, color) {
         const el = document.createElement('div');
         el.className = 'dmg-popup';
-        // Convert logical coords to CSS
-        const rect = canvas.getBoundingClientRect();
-        const cssX = rect.left - canvas.parentElement.getBoundingClientRect().left + (x / W) * rect.width;
-        const cssY = rect.top - canvas.parentElement.getBoundingClientRect().top + (y / H) * rect.height;
+        const wrapRect = document.querySelector('.wrapper-relative').getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        const cssX = (canvasRect.left - wrapRect.left) + (x / W) * canvasRect.width;
+        const cssY = (canvasRect.top - wrapRect.top) + (y / H) * canvasRect.height;
         el.style.left = cssX + 'px';
         el.style.top = cssY + 'px';
         el.textContent = amount;
         el.style.color = color || '#ffaa33';
         el.style.textShadow = `0 0 10px ${color || '#ffaa33'}, 0 2px 3px #000`;
-        el.style.fontSize = '16px';
+        el.style.fontSize = '14px';
         document.querySelector('.wrapper-relative').appendChild(el);
         setTimeout(() => el.remove(), 700);
     }
 
     // ============ AUTO-FIRE ============
     function updateAutoFireBtn() {
-        if (saveData.autoFire) {
-            autoFireBtn.classList.add('active');
-            autoFireBtn.textContent = '🔥';
-            autoFireBtn.title = 'Auto-Fire: ON';
-        } else {
-            autoFireBtn.classList.remove('active');
-            autoFireBtn.textContent = '🔒';
-            autoFireBtn.title = 'Auto-Fire: OFF';
-        }
+        if (saveData.autoFire) autoFireBtn.classList.add('active');
+        else autoFireBtn.classList.remove('active');
     }
 
     autoFireBtn.addEventListener('click', (e) => {
@@ -1171,7 +1282,7 @@
         persistSave();
         updateAutoFireBtn();
         initAudio();
-        playSound('click', 700, 0.08, 0.1);
+        playSound('click', 700, 0.08, 0.08);
     });
 
     // ============ FULLSCREEN ============
@@ -1188,10 +1299,7 @@
             }
         } catch (err) {}
     });
-    document.addEventListener('fullscreenchange', () => {
-        setTimeout(layoutCanvas, 100);
-        fullscreenBtn.textContent = document.fullscreenElement ? '⛶' : '⛶';
-    });
+    document.addEventListener('fullscreenchange', () => setTimeout(applyDimensions, 100));
 
     // ============ UPGRADE SHOP ============
     function renderUpgradeShop() {
@@ -1204,23 +1312,20 @@
 
             const card = document.createElement('div');
             card.className = 'upgrade-card' + (maxed ? ' maxed' : '');
-
             let pips = '';
             for (let i = 0; i < def.max; i++) pips += `<div class="uc-pip${i < lvl ? ' filled' : ''}"></div>`;
-
             card.innerHTML = `
-                <div class="uc-lvl-badge">LV ${lvl}/${def.max}</div>
+                <div class="uc-lvl-badge">${lvl}/${def.max}</div>
                 <div class="uc-icon">${def.icon}</div>
                 <div class="uc-name">${def.name}</div>
                 <div class="uc-desc">${def.desc}</div>
                 <div class="uc-pips">${pips}</div>
             `;
-
             const btn = document.createElement('button');
             btn.className = 'uc-buy' + (maxed ? ' maxed' : '');
             if (maxed) { btn.textContent = '★ MAXED'; btn.disabled = true; }
             else {
-                btn.textContent = `🪙 ${cost}`;
+                btn.textContent = `🪙${cost}`;
                 if (!canAfford) btn.disabled = true;
                 btn.addEventListener('click', () => {
                     if (saveData.coins >= cost && (saveData.upgrades[def.key] || 0) < def.max) {
@@ -1247,7 +1352,7 @@
             btn.classList.add('active');
             document.getElementById('tab-' + tab).classList.add('active');
             if (tab === 'upgrade') renderUpgradeShop();
-            playSound('click', 600, 0.08, 0.06);
+            playSound('click', 600, 0.08, 0.05);
         });
     });
 
@@ -1256,10 +1361,10 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelector('.tab-btn[data-tab="play"]').classList.add('active');
         document.getElementById('tab-play').classList.add('active');
-        playSound('click', 500, 0.08, 0.06);
+        playSound('click', 500, 0.08, 0.05);
     });
 
-    // ============ DIFFICULTY SELECTOR ============
+    // ============ DIFFICULTY ============
     document.querySelectorAll('.diff-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
@@ -1269,7 +1374,6 @@
             playSound('click', 650, 0.08, 0.08);
         });
     });
-
     function applyDifficultyUI() {
         document.querySelectorAll('.diff-btn').forEach(b => {
             b.classList.toggle('active', b.getAttribute('data-diff') === saveData.difficulty);
@@ -1279,10 +1383,12 @@
     // ============ GAME FLOW ============
     function resetGame() {
         score = 0; coins = 0; wave = 1;
-        player.x = W / 2; targetX = player.x;
         player.maxHp = getUpgradeValue('hp');
         player.hp = player.maxHp;
         player.invulnTimer = 0;
+        player.y = PLAYER_Y;
+        player.x = W / 2;
+        targetX = player.x;
 
         bullets = []; enemyBullets = []; enemies = []; asteroids = []; powerups = []; particles = [];
         fireCooldown = 0; powerupSpawnTimer = 0;
@@ -1300,6 +1406,7 @@
 
     function startGame() {
         initAudio();
+        applyDimensions(); // ensure fresh dims
         resetGame();
         gameState = 'playing';
         menuOverlay.classList.remove('show');
@@ -1308,7 +1415,6 @@
         pauseIcon.classList.add('show');
         playSound('power', 880, 0.25, 0.15);
 
-        // Show mobile hint first time
         if (isMobile && !localStorage.getItem('sv_mobile_hint_shown')) {
             mobileHintEl.classList.add('show');
             setTimeout(() => mobileHintEl.classList.remove('show'), 3500);
@@ -1355,7 +1461,6 @@
         if (score > saveData.highScore) saveData.highScore = score;
         if (wave > saveData.bestWave) saveData.bestWave = wave;
         persistSave();
-
         finalScoreEl.textContent = score;
         finalWaveEl.textContent = wave;
         finalCoinsEl.textContent = coins;
@@ -1418,22 +1523,24 @@
             });
         }
 
+        // Asteroids (wave 5+)
         asteroids = [];
-        if (wave >= ASTEROID_START_WAVE) {
-            const astCount = Math.min(5, 1 + Math.floor((wave - ASTEROID_START_WAVE) / 2));
-            const corridorWidth = Math.max(160, 320 - (wave - ASTEROID_START_WAVE) * 12);
-            const corridorX = 100 + Math.random() * (W - 200);
+        if (wave >= 5) {
+            const astCount = Math.min(5, 1 + Math.floor((wave - 5) / 2));
+            const corridorWidth = Math.max(W * 0.2, W * 0.4 - (wave - 5) * 10);
+            const corridorX = W * (0.15 + Math.random() * 0.7);
 
             for (let i = 0; i < astCount; i++) {
                 let ax, tries = 0;
-                do { ax = 40 + Math.random() * (W - 80); tries++; }
+                do { ax = W * 0.05 + Math.random() * W * 0.9; tries++; }
                 while (Math.abs(ax - corridorX) < corridorWidth / 2 && tries < 20);
 
-                const ay = ENEMY_ZONE_BOTTOM + 50 + Math.random() * (H - ENEMY_ZONE_BOTTOM - 100);
+                const ayTop = ENEMY_ZONE_BOTTOM + 40;
+                const ayBot = H - 60;
+                const ay = ayTop + Math.random() * Math.max(20, ayBot - ayTop);
                 const dir = Math.random() * Math.PI * 2;
                 const sp = (0.5 + Math.random() * 1.4 + wave * 0.05) * diff.speed;
                 const hp = 25 + wave * 3;
-
                 const verts = 8 + Math.floor(Math.random() * 4);
                 const shape = [];
                 for (let v = 0; v < verts; v++) shape.push(0.75 + Math.random() * 0.5);
@@ -1441,7 +1548,7 @@
                 asteroids.push({
                     x: ax, y: ay,
                     vx: Math.cos(dir) * sp, vy: Math.sin(dir) * sp,
-                    radius: 18 + Math.random() * 18,
+                    radius: 16 + Math.random() * 16,
                     rot: Math.random() * Math.PI * 2,
                     rotSpeed: (Math.random() - 0.5) * 0.05,
                     hp: hp, maxHp: hp,
@@ -1451,7 +1558,6 @@
         }
 
         powerupSpawnTimer = 180 + Math.random() * 120;
-
         waveState = 'fighting';
         showBanner(waveBannerEl, `WAVE ${wave}`, 1400);
         playSound('power', 700, 0.3, 0.13);
@@ -1469,11 +1575,11 @@
     function spawnPowerup() {
         const t = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
         powerups.push({
-            x: 80 + Math.random() * (W - 160),
+            x: W * 0.1 + Math.random() * W * 0.8,
             y: -30,
             vy: 1.4 + Math.random() * 0.8,
             type: t.type, color: t.color, icon: t.icon,
-            radius: 18,
+            radius: 16,
             wobble: Math.random() * Math.PI * 2
         });
     }
@@ -1484,7 +1590,6 @@
         const dmg = getUpgradeValue('damage');
         const bSpeed = getUpgradeValue('bulletSpeed');
         const multishot = getUpgradeValue('multishot');
-
         let shots = 1 + multishot;
         let spread = shots > 1 ? 0.12 : 0;
         if (tripleShotActive) { shots = Math.max(shots, 3); spread = 0.14; }
@@ -1496,17 +1601,15 @@
                 y: player.y - player.radius,
                 vx: Math.sin(offset) * bSpeed,
                 vy: -Math.cos(offset) * bSpeed,
-                radius: 5, damage: dmg,
-                trail: []
+                radius: 5, damage: dmg, trail: []
             });
         }
         let cd = getUpgradeValue('fireRate');
         if (rapidFireActive) cd = Math.max(3, Math.floor(cd * 0.55));
         fireCooldown = cd;
-        playSound('shoot', rapidFireActive ? 620 : 520, 0.05, 0.04);
+        playSound('shoot', rapidFireActive ? 620 : 520, 0.05, 0.035);
     }
 
-    // ============ ENEMY ATTACK ============
     function enemyShoot(e) {
         if (!e || e.hp <= 0) return;
         const dx = player.x - e.x, dy = player.y - e.y;
@@ -1525,19 +1628,18 @@
                 x: e.x, y: e.y + e.radius,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                radius: e.type === 'sniper' ? 5 : 6,
+                radius: e.type === 'sniper' ? 4 : 5,
                 damage: 8 + Math.floor(wave * 1.3),
                 color: e.type === 'tank' ? '#ff2222'
                        : e.type === 'shooter' ? '#ffaa22'
                        : e.type === 'sniper' ? '#ff2266' : '#ff66aa'
             });
         }
-        playSound('shoot', 260, 0.08, 0.03);
+        playSound('shoot', 260, 0.08, 0.025);
     }
 
-    // ============ PARTICLES ============
     function spawnExplosion(x, y, color, count) {
-        count = count || 12;
+        count = count || 10;
         for (let i = 0; i < count; i++) {
             const a = Math.random() * Math.PI * 2;
             const sp = 1 + Math.random() * 4;
@@ -1556,7 +1658,6 @@
     function update() {
         if (gameState !== 'playing') return;
 
-        // Player movement
         const speed = getUpgradeValue('speed');
         let moveDir = 0;
         if (keys['a'] || keys['A'] || keys['ArrowLeft']) moveDir -= 1;
@@ -1571,19 +1672,16 @@
         }
         player.x = Math.max(player.radius + 5, Math.min(W - player.radius - 5, player.x));
 
-        // Firing
         if (fireCooldown > 0) fireCooldown--;
         const wantsToFire = saveData.autoFire || keys[' '] || keys['Space'] || pointerHeld;
         if (wantsToFire && fireCooldown <= 0) playerShoot();
 
         if (player.invulnTimer > 0) player.invulnTimer--;
 
-        // Power-up timers
         if (rapidFireActive) { rapidFireTimer--; if (rapidFireTimer <= 0) { rapidFireActive = false; updatePowerBadge(); } }
         if (shieldActive) { shieldTimer--; if (shieldTimer <= 0) { shieldActive = false; updatePowerBadge(); } }
         if (tripleShotActive) { tripleShotTimer--; if (tripleShotTimer <= 0) { tripleShotActive = false; updatePowerBadge(); } }
 
-        // Wave state machine
         if (waveState === 'spawning') {
             waveTransitionTimer--;
             if (waveTransitionTimer <= 0) spawnNextWave();
@@ -1626,18 +1724,18 @@
                 const e = enemies[j];
                 if (dist2(b.x, b.y, e.x, e.y) < (b.radius + e.radius) * (b.radius + e.radius)) {
                     e.hp -= b.damage; e.flashTimer = 6;
-                    spawnExplosion(b.x, b.y, e.color, 4);
+                    spawnExplosion(b.x, b.y, e.color, 3);
                     showDamagePopup(e.x, e.y - e.radius, b.damage, '#ffe600');
                     bullets.splice(i, 1); consumed = true;
                     if (e.hp <= 0) {
-                        spawnExplosion(e.x, e.y, e.color, 18);
+                        spawnExplosion(e.x, e.y, e.color, 16);
                         playSound('explode', 150, 0.2, 0.1);
                         const gained = e.type === 'tank' ? 25 : (e.type === 'sniper' ? 18 : 10);
                         score += gained;
                         coins += e.type === 'tank' ? 8 : (e.type === 'sniper' ? 6 : 3);
                         enemies.splice(j, 1);
                         updateUI();
-                    } else { playSound('hit', 300, 0.05, 0.03); }
+                    } else { playSound('hit', 300, 0.05, 0.025); }
                     break;
                 }
             }
@@ -1647,16 +1745,16 @@
                 const a = asteroids[j];
                 if (dist2(b.x, b.y, a.x, a.y) < (b.radius + a.radius) * (b.radius + a.radius)) {
                     a.hp -= b.damage; a.flashTimer = 6;
-                    spawnExplosion(b.x, b.y, '#aa8866', 4);
+                    spawnExplosion(b.x, b.y, '#aa8866', 3);
                     showDamagePopup(a.x, a.y - a.radius, b.damage, '#ffaa66');
                     bullets.splice(i, 1);
                     if (a.hp <= 0) {
-                        spawnExplosion(a.x, a.y, '#ccaa88', 16);
+                        spawnExplosion(a.x, a.y, '#ccaa88', 14);
                         playSound('explode', 130, 0.22, 0.1);
                         score += 15; coins += 2;
                         asteroids.splice(j, 1);
                         updateUI();
-                    } else { playSound('hit', 220, 0.05, 0.03); }
+                    } else { playSound('hit', 220, 0.05, 0.025); }
                     break;
                 }
             }
@@ -1670,13 +1768,13 @@
 
             if (player.invulnTimer <= 0 && dist2(b.x, b.y, player.x, player.y) < (b.radius + player.radius) * (b.radius + player.radius)) {
                 if (shieldActive) {
-                    spawnExplosion(b.x, b.y, '#4ac7ff', 6);
+                    spawnExplosion(b.x, b.y, '#4ac7ff', 5);
                     enemyBullets.splice(i, 1);
-                    playSound('hit', 500, 0.08, 0.06);
+                    playSound('hit', 500, 0.08, 0.05);
                 } else {
                     player.hp -= b.damage; player.invulnTimer = 30;
-                    spawnExplosion(b.x, b.y, '#ff4466', 8);
-                    playSound('hit', 180, 0.15, 0.12);
+                    spawnExplosion(b.x, b.y, '#ff4466', 6);
+                    playSound('hit', 180, 0.15, 0.1);
                     enemyBullets.splice(i, 1);
                     updateHpBar();
                     if (player.hp <= 0) { player.hp = 0; updateHpBar(); endGame(); return; }
@@ -1694,7 +1792,7 @@
             e.y = e.baseY + Math.cos(e.wobble * 0.7) * 4;
             if (e.x < e.radius + 10) { e.x = e.radius + 10; e.driftSpeed = Math.abs(e.driftSpeed); }
             if (e.x > W - e.radius - 10) { e.x = W - e.radius - 10; e.driftSpeed = -Math.abs(e.driftSpeed); }
-            if (e.y < e.radius + 10) e.y = e.radius + 10;
+            if (e.y < EZ_TOP) e.y = EZ_TOP;
             if (e.y > ENEMY_ZONE_BOTTOM - e.radius) e.y = ENEMY_ZONE_BOTTOM - e.radius;
             if (e.attackTimer <= 0 && waveState === 'fighting') {
                 enemyShoot(e);
@@ -1714,13 +1812,13 @@
             if (a.y > H - a.radius - 5) { a.y = H - a.radius - 5; a.vy = -Math.abs(a.vy); }
             if (player.invulnTimer <= 0 && dist2(a.x, a.y, player.x, player.y) < (a.radius + player.radius) * (a.radius + player.radius)) {
                 if (shieldActive) {
-                    spawnExplosion(a.x, a.y, '#4ac7ff', 8);
+                    spawnExplosion(a.x, a.y, '#4ac7ff', 6);
                     a.hp -= 25;
                     if (a.hp <= 0) { asteroids.splice(i, 1); score += 15; coins += 2; updateUI(); }
                 } else {
                     player.hp -= 20; player.invulnTimer = 40;
-                    spawnExplosion(player.x, player.y, '#ffaa44', 10);
-                    playSound('hit', 140, 0.2, 0.15);
+                    spawnExplosion(player.x, player.y, '#ffaa44', 8);
+                    playSound('hit', 140, 0.2, 0.12);
                     updateHpBar();
                     if (player.hp <= 0) { player.hp = 0; updateHpBar(); endGame(); return; }
                 }
@@ -1755,13 +1853,13 @@
             const e = enemies[i];
             if (player.invulnTimer <= 0 && dist2(e.x, e.y, player.x, player.y) < (e.radius + player.radius) * (e.radius + player.radius)) {
                 if (shieldActive) {
-                    spawnExplosion(e.x, e.y, '#4ac7ff', 10);
+                    spawnExplosion(e.x, e.y, '#4ac7ff', 8);
                     e.hp -= 30;
                     if (e.hp <= 0) { score += 10; coins += 3; enemies.splice(i, 1); updateUI(); }
                 } else {
                     player.hp -= 25; player.invulnTimer = 40;
-                    spawnExplosion(player.x, player.y, '#4ac7ff', 10);
-                    playSound('hit', 120, 0.2, 0.15);
+                    spawnExplosion(player.x, player.y, '#4ac7ff', 8);
+                    playSound('hit', 120, 0.2, 0.12);
                     updateHpBar();
                     if (player.hp <= 0) { player.hp = 0; updateHpBar(); endGame(); return; }
                 }
@@ -1780,8 +1878,7 @@
 
     // ============ DRAW ============
     function draw() {
-        ctx.clearRect(0, 0, W, H);
-        const grad = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, 700);
+        const grad = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, Math.max(W, H));
         grad.addColorStop(0, '#0e1830');
         grad.addColorStop(0.6, '#070c18');
         grad.addColorStop(1, '#02040a');
@@ -1816,7 +1913,7 @@
             ctx.fillStyle = p.color;
             ctx.globalAlpha = alpha;
             ctx.shadowColor = p.color;
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = 10;
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
             ctx.fill();
@@ -1827,12 +1924,12 @@
         // Powerups
         for (const p of powerups) {
             ctx.shadowColor = p.color;
-            ctx.shadowBlur = 30;
+            ctx.shadowBlur = 25;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius + 4, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, p.radius + 3, 0, Math.PI * 2);
             ctx.fillStyle = p.color + '44';
             ctx.fill();
-            const g = ctx.createRadialGradient(p.x - 5, p.y - 5, 2, p.x, p.y, p.radius);
+            const g = ctx.createRadialGradient(p.x - 4, p.y - 4, 2, p.x, p.y, p.radius);
             g.addColorStop(0, '#ffffff');
             g.addColorStop(0.4, p.color);
             g.addColorStop(1, shadeColor(p.color, -70));
@@ -1841,7 +1938,7 @@
             ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
-            ctx.font = 'bold 18px "Segoe UI", system-ui';
+            ctx.font = 'bold 16px "Segoe UI", system-ui';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(p.icon, p.x, p.y + 1);
@@ -1850,7 +1947,7 @@
         // Enemy bullets
         for (const b of enemyBullets) {
             ctx.shadowColor = b.color;
-            ctx.shadowBlur = 18;
+            ctx.shadowBlur = 15;
             const g = ctx.createRadialGradient(b.x - 2, b.y - 2, 0, b.x, b.y, b.radius);
             g.addColorStop(0, '#ffffff');
             g.addColorStop(0.4, b.color);
@@ -1869,7 +1966,7 @@
             ctx.rotate(a.rot);
             const flash = a.flashTimer > 0;
             ctx.shadowColor = flash ? '#ffffff' : '#aa8866';
-            ctx.shadowBlur = flash ? 40 : 18;
+            ctx.shadowBlur = flash ? 35 : 15;
             ctx.beginPath();
             for (let i = 0; i < a.verts; i++) {
                 const ang = (i / a.verts) * Math.PI * 2;
@@ -1893,11 +1990,10 @@
                 ctx.fillStyle = '#2a2018aa';
                 ctx.beginPath(); ctx.arc(-a.radius*0.25, -a.radius*0.1, a.radius*0.18, 0, Math.PI * 2); ctx.fill();
                 ctx.beginPath(); ctx.arc(a.radius*0.3, a.radius*0.2, a.radius*0.14, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(a.radius*0.05, a.radius*0.4, a.radius*0.10, 0, Math.PI * 2); ctx.fill();
             }
             ctx.restore();
             if (a.hp < a.maxHp) {
-                const barW = a.radius * 1.6, barH = 4, barY = a.y - a.radius - 12;
+                const barW = a.radius * 1.6, barH = 3, barY = a.y - a.radius - 10;
                 ctx.fillStyle = '#000000aa';
                 ctx.fillRect(a.x - barW/2 - 1, barY - 1, barW + 2, barH + 2);
                 ctx.fillStyle = '#aa8866';
@@ -1913,7 +2009,7 @@
             ctx.ellipse(e.x, e.y + e.radius * 0.7, e.radius * 0.9, e.radius * 0.3, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowColor = e.color;
-            ctx.shadowBlur = flash ? 40 : 22;
+            ctx.shadowBlur = flash ? 35 : 20;
             const bodyGrad = ctx.createRadialGradient(e.x - e.radius*0.3, e.y - e.radius*0.3, e.radius*0.1, e.x, e.y, e.radius);
             if (flash) { bodyGrad.addColorStop(0, '#ffffff'); bodyGrad.addColorStop(1, '#ffffff'); }
             else {
@@ -1934,7 +2030,7 @@
             ctx.beginPath(); ctx.arc(e.x - e.radius*0.25, e.y - e.radius*0.1, e.radius*0.15, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(e.x + e.radius*0.25, e.y - e.radius*0.1, e.radius*0.15, 0, Math.PI * 2); ctx.fill();
             if (e.hp < e.maxHp) {
-                const barW = e.radius * 2, barH = 4, barY = e.y - e.radius - 10;
+                const barW = e.radius * 2, barH = 3, barY = e.y - e.radius - 9;
                 ctx.fillStyle = '#000000aa';
                 ctx.fillRect(e.x - barW/2 - 1, barY - 1, barW + 2, barH + 2);
                 ctx.fillStyle = '#ff3333';
@@ -1953,7 +2049,7 @@
                 ctx.fill();
             }
             ctx.shadowColor = tripleShotActive ? '#ff88ff' : (rapidFireActive ? '#ffaa33' : '#7ae0ff');
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 18;
             const bulletColor = tripleShotActive ? '#ff88ff' : (rapidFireActive ? '#ffcc66' : '#a8e8ff');
             const bg = ctx.createRadialGradient(b.x - 1, b.y - 1, 0, b.x, b.y, b.radius);
             bg.addColorStop(0, '#ffffff');
@@ -1969,7 +2065,7 @@
         drawPlayer();
 
         if (waveState === 'spawning') {
-            ctx.font = 'bold 15px monospace';
+            ctx.font = 'bold 14px monospace';
             ctx.fillStyle = '#8fd9ff';
             ctx.textAlign = 'center';
             ctx.shadowColor = '#4ac7ff';
@@ -1986,20 +2082,20 @@
         if (shieldActive) {
             ctx.save();
             ctx.shadowColor = '#4ac7ff';
-            ctx.shadowBlur = 30;
-            const shieldGrad = ctx.createRadialGradient(p.x, p.y, p.radius, p.x, p.y, p.radius + 22);
+            ctx.shadowBlur = 25;
+            const shieldGrad = ctx.createRadialGradient(p.x, p.y, p.radius, p.x, p.y, p.radius + 20);
             shieldGrad.addColorStop(0, '#4ac7ff00');
             shieldGrad.addColorStop(0.7, '#4ac7ff55');
             shieldGrad.addColorStop(1, '#4ac7ff00');
             ctx.fillStyle = shieldGrad;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius + 22, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, p.radius + 20, 0, Math.PI * 2);
             ctx.fill();
             const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
             ctx.strokeStyle = '#4ac7ff';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, (p.radius + 14) * pulse, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, (p.radius + 13) * pulse, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
         }
@@ -2009,9 +2105,9 @@
             ctx.strokeStyle = '#ffaa33';
             ctx.lineWidth = 2;
             ctx.shadowColor = '#ffaa33';
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 12;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius + 8 * pulse, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, p.radius + 7 * pulse, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
         }
@@ -2020,9 +2116,9 @@
             ctx.strokeStyle = '#ff88ff';
             ctx.lineWidth = 2;
             ctx.shadowColor = '#ff88ff';
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 12;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius + 10, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, p.radius + 9, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
         }
@@ -2030,18 +2126,18 @@
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.shadowColor = '#4ac7ff';
-        ctx.shadowBlur = 30;
+        ctx.shadowBlur = 25;
         ctx.fillStyle = '#4ac7ffaa';
         ctx.beginPath();
-        ctx.ellipse(0, p.radius + 6, 8, 14, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, p.radius + 5, 7, 12, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(0, p.radius + 14, 5, 10, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, p.radius + 12, 4, 8, 0, 0, Math.PI * 2);
         ctx.fillStyle = '#8fd9ffcc';
         ctx.fill();
 
         if (!flash) {
-            ctx.shadowBlur = 25;
+            ctx.shadowBlur = 22;
             ctx.shadowColor = '#4ac7ff';
             const hullGrad = ctx.createLinearGradient(0, -p.radius, 0, p.radius);
             hullGrad.addColorStop(0, '#a8e8ff');
@@ -2049,24 +2145,24 @@
             hullGrad.addColorStop(1, '#1a5a8a');
             ctx.fillStyle = hullGrad;
             ctx.beginPath();
-            ctx.moveTo(0, -p.radius - 6);
+            ctx.moveTo(0, -p.radius - 5);
             ctx.lineTo(p.radius * 0.7, 0);
             ctx.lineTo(p.radius * 0.5, p.radius);
             ctx.lineTo(-p.radius * 0.5, p.radius);
             ctx.lineTo(-p.radius * 0.7, 0);
             ctx.closePath();
             ctx.fill();
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 12;
             ctx.shadowColor = '#ffffff';
             ctx.fillStyle = '#ffffffdd';
             ctx.beginPath();
             ctx.ellipse(0, -p.radius * 0.25, p.radius * 0.28, p.radius * 0.4, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 12;
             ctx.shadowColor = '#ffcc44';
             ctx.fillStyle = '#ffcc44';
-            ctx.beginPath(); ctx.arc(-p.radius*0.65, p.radius*0.4, 2.5, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(p.radius*0.65, p.radius*0.4, 2.5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(-p.radius*0.65, p.radius*0.4, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(p.radius*0.65, p.radius*0.4, 2, 0, Math.PI*2); ctx.fill();
         }
         ctx.restore();
         ctx.shadowBlur = 0;
@@ -2091,7 +2187,6 @@
         requestAnimationFrame(gameLoop);
     }
 
-    // ============ CONVERT CLIENT TO LOGICAL COORDS ============
     function clientToLogicalX(clientX) {
         const rect = canvas.getBoundingClientRect();
         return ((clientX - rect.left) / rect.width) * W;
@@ -2120,17 +2215,11 @@
     window.addEventListener('mouseup', () => { pointerHeld = false; });
     canvas.addEventListener('mousemove', (e) => {
         if (gameState !== 'playing') return;
-        if (!pointerHeld && !isMobile) {
-            // Move ship by mouse position even without holding
-            usePointerControl = true;
-            targetX = clientToLogicalX(e.clientX);
-        } else if (pointerHeld) {
-            usePointerControl = true;
-            targetX = clientToLogicalX(e.clientX);
-        }
+        usePointerControl = true;
+        targetX = clientToLogicalX(e.clientX);
     });
 
-    // Touch — main mobile control
+    // Touch
     let touchId = null;
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
@@ -2146,7 +2235,6 @@
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
         if (gameState !== 'playing') return;
-        // Use any touch that matches our tracked ID, or just first touch
         let touch = null;
         for (let i = 0; i < e.touches.length; i++) {
             if (e.touches[i].identifier === touchId) { touch = e.touches[i]; break; }
@@ -2164,10 +2252,7 @@
         pointerHeld = false;
     }, { passive: false });
 
-    canvas.addEventListener('touchcancel', (e) => {
-        touchId = null;
-        pointerHeld = false;
-    });
+    canvas.addEventListener('touchcancel', () => { touchId = null; pointerHeld = false; });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
     // ============ BUTTONS ============
@@ -2184,6 +2269,32 @@
     bind('pauseBtnHud', pauseGame);
     bind('pauseIcon', pauseGame);
 
+    // ============ ORIENTATION / RESIZE HANDLING ============
+    let lastPortrait = isPortraitNow();
+    function handleResize() {
+        const nowPortrait = isPortraitNow();
+        // Only full re-layout if orientation changed; otherwise just rescale CSS
+        if (nowPortrait !== lastPortrait) {
+            lastPortrait = nowPortrait;
+            if (gameState === 'playing') pauseGame();
+            setTimeout(() => applyDimensions(), 50);
+        } else {
+            // Just update CSS size (viewport changed but same orientation)
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const aspect = W / H;
+            const reserved = nowPortrait ? 120 : 150;
+            const maxW = vw - (nowPortrait ? 8 : 40);
+            const maxH = vh - reserved;
+            let cssW = maxW, cssH = cssW / aspect;
+            if (cssH > maxH) { cssH = maxH; cssW = cssH * aspect; }
+            canvas.style.width = cssW + 'px';
+            canvas.style.height = cssH + 'px';
+        }
+    }
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', () => setTimeout(handleResize, 150));
+
     // ============ VISIBILITY PAUSE ============
     document.addEventListener('visibilitychange', () => {
         if (document.hidden && gameState === 'playing') pauseGame();
@@ -2195,23 +2306,22 @@
     applyDifficultyUI();
     updateUI();
     updatePowerBadge();
+    applyDimensions();
     resetGame();
     gameState = 'menu';
     menuOverlay.classList.add('show');
     hpBar.classList.remove('show');
 
-    // Update control hints based on device
     if (isMobile) {
         controlsHint.innerHTML = `
             <strong style="color:#4ac7ff;">📱 Mobile Controls</strong><br>
-            Drag anywhere to move your ship<br>
-            Auto-fire is <strong>ON</strong> by default<br>
-            Tap 🔥 in the HUD to toggle auto-fire
+            Drag anywhere on the screen to move<br>
+            Auto-fire is <strong>ON</strong> · Tap 🔥 to toggle<br>
+            Tap ⛶ for fullscreen
         `;
     }
 
     gameLoop();
-
 })();
 </script>
 </body>

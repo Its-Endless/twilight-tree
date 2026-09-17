@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#070a12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Whack-a-Mole</title>
+<style>
+/* ============================================================
+   BASE / RESET
+   ============================================================ */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  margin:0;padding:0;height:100%;overflow:hidden;background:#070a12;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  color:#eaf2ff;
+  user-select:none;-webkit-user-select:none;
+  touch-action:none;overscroll-behavior:none;
+}
+:root{--banner-h:54px}
+
+/* ============================================================
+   LAYOUT — canvas area sits above the banner ad
+   ============================================================ */
+#app{
+  position:fixed;left:0;right:0;top:0;
+  bottom:calc(var(--banner-h) + env(safe-area-inset-bottom));
+  overflow:hidden;
+}
+canvas#game{display:block;width:100%;height:100%}
+
+#ui{position:absolute;inset:0;pointer-events:none;z-index:3}
+
+/* ============================================================
+   OVERLAY SCREENS
+   ============================================================ */
+.screen{
+  position:absolute;inset:0;display:none;
+  align-items:center;justify-content:center;
+  padding:14px;overflow-y:auto;
+  background:rgba(6,10,20,.74);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  pointer-events:auto;touch-action:pan-y;
+}
+.screen.show{display:flex;animation:fadeIn .22s ease both}
+@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+.panel{
+  width:100%;max-width:430px;text-align:center;
+  padding:18px 16px 16px;border-radius:24px;
+  background:linear-gradient(160deg,rgba(32,48,86,.92),rgba(11,16,30,.96));
+  border:1px solid rgba(120,190,255,.22);
+  box-shadow:0 20px 70px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+/* ---------- Title ---------- */
+h1.title{
+  margin:4px 0 12px;font-size:clamp(26px,8.5vw,44px);font-weight:900;
+  letter-spacing:1px;line-height:1.05;
+  background:linear-gradient(90deg,#FFD700,#FF7A00,#FF3DAE,#00D4FF,#00E5A0,#FFD700);
+  background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:wobble 2.6s ease-in-out infinite,hueShift 6s linear infinite;
+  filter:drop-shadow(0 4px 18px rgba(255,140,0,.35));
+}
+@keyframes wobble{0%,100%{transform:rotate(-1.6deg) scale(1)}50%{transform:rotate(1.6deg) scale(1.05)}}
+@keyframes hueShift{to{background-position:300% 0}}
+
+/* ---------- Icon legend ---------- */
+.icons{display:flex;gap:6px;justify-content:center;margin:6px 0 14px;flex-wrap:wrap}
+.ic{flex:1 1 0;min-width:66px;padding:8px 2px;border-radius:14px;
+    background:rgba(255,255,255,.045);border:1px solid rgba(140,200,255,.12)}
+.ic i{display:block;width:32px;height:32px;margin:0 auto 5px;border-radius:50%;
+      background:radial-gradient(circle at 32% 26%,var(--a),var(--b));
+      box-shadow:inset -3px -5px 8px rgba(0,0,0,.5)}
+.ic b{display:block;font-size:13px;font-weight:900;color:#fff}
+.ic small{display:block;font-size:9.5px;letter-spacing:.4px;color:#8fa8c8;margin-top:1px}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:block;width:100%;margin:8px 0;padding:15px 14px;
+  border:1px solid rgba(140,200,255,.22);border-radius:16px;
+  font:800 17px/1 inherit;color:#fff;cursor:pointer;
+  background:linear-gradient(180deg,#2b3d63,#1a2540);
+  transition:transform .07s ease,filter .15s ease;
+  -webkit-appearance:none;appearance:none;
+}
+.btn:active{transform:scale(.965)}
+.btn.primary{
+  background:linear-gradient(180deg,#00E5A0,#00A0FF);color:#04121f;
+  border-color:transparent;box-shadow:0 8px 26px rgba(0,180,255,.38);
+  animation:pulse 1.5s ease-in-out infinite;
+}
+.btn.primary:active{animation:none;transform:scale(.955)}
+.btn.gold{background:linear-gradient(180deg,#FFD86B,#FF9F1A);color:#2a1600;border-color:transparent}
+.btn[disabled]{opacity:.35;filter:grayscale(1);pointer-events:none}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+
+.sub{font-size:12.5px;color:#8fa8c8;margin:8px 0 2px;letter-spacing:.3px}
+.sub b{color:#FFD700}
+
+/* ---------- Game over ---------- */
+.over-title{margin:2px 0 8px;font-size:clamp(22px,7vw,34px);font-weight:900;
+  letter-spacing:1.5px;color:#FF4D6D;text-shadow:0 0 24px rgba(255,60,100,.55)}
+.record{font-size:15px;font-weight:900;letter-spacing:1px;color:#FFD700;
+  margin:2px 0 8px;animation:recordPop .7s ease-in-out infinite alternate}
+@keyframes recordPop{from{transform:scale(1);text-shadow:0 0 10px rgba(255,215,0,.5)}
+                     to{transform:scale(1.09);text-shadow:0 0 26px rgba(255,215,0,.95)}}
+.final-score{font-size:clamp(46px,15vw,72px);font-weight:900;line-height:1;
+  background:linear-gradient(180deg,#fff,#6fd6ff);-webkit-background-clip:text;background-clip:text;
+  color:transparent;filter:drop-shadow(0 6px 20px rgba(0,180,255,.4));margin:2px 0 4px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0 14px}
+.stats div{background:rgba(255,255,255,.05);border:1px solid rgba(140,200,255,.12);
+  border-radius:12px;padding:8px 2px}
+.stats b{display:block;font-size:18px;font-weight:900;color:#fff}
+.stats small{display:block;font-size:8.5px;letter-spacing:.5px;color:#8fa8c8;margin-top:2px}
+
+/* ---------- Corner buttons ---------- */
+.corner{
+  position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;
+  width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(140,200,255,.25);background:rgba(20,30,55,.78);
+  color:#cfe4ff;font-size:19px;pointer-events:auto;cursor:pointer;z-index:4;
+  -webkit-appearance:none;appearance:none;
+}
+.corner:active{transform:scale(.93)}
+#pauseBtn{display:none}
+
+/* ---------- Toast ---------- */
+#toast{
+  position:absolute;left:50%;bottom:26px;transform:translate(-50%,20px);
+  background:rgba(10,18,34,.95);border:1px solid rgba(140,200,255,.3);
+  color:#eaf2ff;padding:10px 18px;border-radius:30px;font-size:13px;font-weight:700;
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:6;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Confetti ---------- */
+.confetti{position:absolute;width:9px;height:14px;border-radius:2px;pointer-events:none;z-index:5;
+  animation:fall linear forwards}
+@keyframes fall{
+  0%{transform:translateY(-40px) rotate(0);opacity:1}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+}
+
+/* ============================================================
+   BANNER AD SLOT
+   ============================================================ */
+#bannerAd{
+  position:fixed;left:0;right:0;bottom:0;z-index:5;
+  height:calc(var(--banner-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  display:flex;align-items:center;justify-content:center;
+  background:#0a0f1c;border-top:1px solid rgba(120,190,255,.14);
+  color:#4d5f7d;font-size:10.5px;letter-spacing:.6px;text-align:center;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     GAME CANVAS + UI OVERLAY
+     ============================================================ -->
+<div id="app">
+  <canvas id="game"></canvas>
+
+  <div id="ui">
+    <!-- ---------- START SCREEN ---------- -->
+    <div class="screen show" id="startScreen">
+      <div class="panel">
+        <h1 class="title">WHACK-A-MOLE</h1>
+
+        <div class="icons">
+          <div class="ic"><i style="--a:#C98A4B;--b:#8B5A2B"></i><b>+10</b><small>MOLE</small></div>
+          <div class="ic"><i style="--a:#FFF6B0;--b:#FFD700;box-shadow:0 0 12px #FFD700"></i><b>+50</b><small>GOLDEN</small></div>
+          <div class="ic"><i style="--a:#6E6E6E;--b:#1a1a1a"></i><b>-20</b><small>BOMB</small></div>
+          <div class="ic"><i style="--a:#B6F2FF;--b:#00D4FF;box-shadow:0 0 12px #00D4FF"></i><b>+2s</b><small>CLOCK</small></div>
+        </div>
+
+        <button class="btn primary" id="playBtn">TAP TO PLAY</button>
+        <button class="btn" id="dailyBtn">📅 DAILY CHALLENGE</button>
+        <div class="sub" id="startBest">Best: 0 &nbsp;|&nbsp; Best Combo: 0</div>
+        <div class="sub" id="startDaily" style="font-size:11px"></div>
+      </div>
+    </div>
+
+    <!-- ---------- PAUSE SCREEN ---------- -->
+    <div class="screen" id="pauseScreen">
+      <div class="panel">
+        <h1 class="title" style="font-size:clamp(22px,7vw,34px)">PAUSED</h1>
+        <button class="btn primary" id="resumeBtn">▶ RESUME</button>
+        <button class="btn" id="restartBtn">↻ RESTART</button>
+        <button class="btn" id="soundBtn2">🔊 SOUND: ON</button>
+        <div class="sub">Take a breath. The moles can wait.</div>
+      </div>
+    </div>
+
+    <!-- ---------- GAME OVER SCREEN ---------- -->
+    <div class="screen" id="overScreen">
+      <div class="panel">
+        <h2 class="over-title" id="overTitle">TIME'S UP!</h2>
+        <div class="record" id="recordLine" style="display:none">★ NEW RECORD! ★</div>
+        <div class="final-score" id="finalScore">0</div>
+        <div class="sub" id="overBest">Best: 0</div>
+        <div class="sub" id="closeLine" style="min-height:16px"></div>
+
+        <div class="stats">
+          <div><b id="stMoles">0</b><small>WHACKED</small></div>
+          <div><b id="stCombo">0</b><small>BEST COMBO</small></div>
+          <div><b id="stBombs">0</b><small>BOMBS</small></div>
+          <div><b id="stGold">0</b><small>GOLDEN</small></div>
+        </div>
+
+        <button class="btn primary" id="againBtn">PLAY AGAIN</button>
+        <button class="btn gold" id="adBtn">▶ WATCH AD → +15s</button>
+        <button class="btn" id="shareBtn">SHARE</button>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+  </div>
+
+  <button class="corner" id="pauseBtn" title="Pause">❚❚</button>
+  <button class="corner" id="soundBtn" title="Sound">🔊</button>
+</div>
+
+<!-- ============================================================
+     BANNER AD PLACEHOLDER — paste AdSense/AdMob code here
+     ============================================================
+     To go live, replace the <span> below with your ad unit, e.g.
+       <ins class="adsbygoogle" data-ad-client="ca-pub-XXXX"
+            data-ad-slot="YYYY" data-ad-format="auto"></ins>
+     AdMob (Cordova/Capacitor): mount your banner view over this area.
+     ============================================================ -->
+<div id="bannerAd">
+  <span>BANNER AD PLACEHOLDER — paste AdSense / AdMob code here</span>
+</div>
+
+<script>
+'use strict';
+/* ==========================================================================
+   WHACK-A-MOLE
+   Sections: CONFIG · MOLES · STORAGE · AUDIO · STATE · LAYOUT · SPAWNING
+             INPUT · SCORING · FX · RENDER · UI · ADS · MAIN LOOP
+   ========================================================================== */
+
+/* ==========================================================================
+   1. CONFIG — every tunable value lives here
+   ========================================================================== */
+const CONFIG = {
+  roundDuration : 30000,   // ms — full round length
+  maxTime       : 40000,   // ms — hard cap after clock bonuses / rewarded ad
+  grid          : 3,       // 3x3 holes
+  riseMs        : 120,     // mole rise animation
+  sinkMs        : 140,     // mole sink animation
+  endSinkMs     : 300,     // sink time when round ends
+  whackMs       : 180,     // squash-and-fade after a hit
+  hitRadiusMul  : 1.25,    // generous tap radius (x mole radius)
+  holePad       : 1.35,    // tap padding around a hole
+  comboSteps    : [1,3,6,10,15], // combo counts that unlock 1x..5x
+  maxCombo      : 15,      // combo value that fills the meter
+  clockBonus    : 2000,    // ms added by a bonus clock
+
+  // Difficulty ramp, keyed by elapsed round time
+  difficulty: [
+    { until: 10000, life: 1000, spawn: 700, max: 2 }, // 0-10s  easy
+    { until: 20000, life:  750, spawn: 500, max: 2 }, // 10-20s medium
+    { until: 99999, life:  550, spawn: 350, max: 3 }  // 20s+   fast
+  ]
+};
+
+/* ==========================================================================
+   2. MOLES — reskin here. `weight` controls spawn probability.
+   ========================================================================== */
+const MOLES = [
+  { // 0 — NORMAL MOLE
+    name:'Normal Mole', kind:'mole',
+    color:'#8B5A2B', light:'#D19A5C', dark:'#4A2B12',
+    points:10, lifeMul:1.0, weight:0.70
+  },
+  { // 1 — GOLDEN MOLE (rare, fast, big reward)
+    name:'Golden Mole', kind:'mole',
+    color:'#FFD700', light:'#FFF8C4', dark:'#A87900',
+    points:50, lifeMul:0.6, weight:0.10, aura:'#FFD700', sparkle:true
+  },
+  { // 2 — BOMB (never tap!)
+    name:'Bomb', kind:'bomb',
+    color:'#333333', light:'#7A7A7A', dark:'#080808',
+    points:-20, lifeMul:1.0, weight:0.15
+  },
+  { // 3 — BOMB (fake / decoy reskin slot — weight 0 = never spawns)
+    name:'Bomb (fake)', kind:'bomb',
+    color:'#2B2B33', light:'#5E5E6E', dark:'#05050A',
+    points:-20, lifeMul:1.0, weight:0.00
+  },
+  { // 4 — BONUS CLOCK (+2 seconds)
+    name:'Bonus Clock', kind:'clock',
+    color:'#00D4FF', light:'#C8F6FF', dark:'#006E9E',
+    points:0, lifeMul:0.8, weight:0.05, aura:'#00D4FF'
+  }
+];
+const TOTAL_WEIGHT = MOLES.reduce((s,m)=>s+m.weight,0);
+
+/* ==========================================================================
+   3. STORAGE — all access guarded for private-browsing modes
+   ========================================================================== */
+const SAVE_KEY = 'wam_save_v1';
+let save = {
+  bestScore:0, bestCombo:0, games:0, totalMoles:0,
+  sound:true, tutorial:false,
+  dailyBest:0, dailyDate:'', gameOverCount:0
+};
+function loadSave(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw) save = Object.assign(save, JSON.parse(raw));
+  }catch(e){ /* private mode — ignore */ }
+}
+function persist(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){}
+}
+loadSave();
+
+/* ==========================================================================
+   4. AUDIO — pure Web Audio API oscillators, no files
+   ========================================================================== */
+let actx = null, master = null;
+let soundEnabled = save.sound !== false;
+
+function initAudio(){
+  if(!actx){
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      actx = new AC();
+      master = actx.createGain();
+      master.gain.value = 0.55;
+      master.connect(actx.destination);
+    }catch(e){ actx = null; }
+  }
+  if(actx && actx.state === 'suspended') actx.resume();
+}
+
+/** Simple oscillator blip with optional pitch glide. */
+function tone(freq, dur, type, vol, delay, freqEnd){
+  if(!soundEnabled || !actx) return;
+  const t0 = actx.currentTime + (delay || 0);
+  const o = actx.createOscillator();
+  const g = actx.createGain();
+  o.type = type || 'sine';
+  o.frequency.setValueAtTime(freq, t0);
+  if(freqEnd) o.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(master);
+  o.start(t0); o.stop(t0 + dur + 0.03);
+}
+
+/** Short filtered noise burst — used for the bomb. */
+function noiseBurst(dur, vol){
+  if(!soundEnabled || !actx) return;
+  const len = Math.floor(actx.sampleRate * dur);
+  const buf = actx.createBuffer(1, len, actx.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+  const src = actx.createBufferSource(); src.buffer = buf;
+  const flt = actx.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value = 900;
+  const g = actx.createGain(); g.gain.value = vol;
+  src.connect(flt); flt.connect(g); g.connect(master);
+  src.start();
+}
+
+const sfx = {
+  whack(){ tone(430, 0.09, 'sine', 0.32, 0, 70); tone(1250, 0.035, 'square', 0.07, 0, 320); },
+  golden(){ [784,1046,1568].forEach((f,i)=>tone(f, 0.14, 'triangle', 0.20, i*0.055)); },
+  bomb(){ tone(95, 0.34, 'sawtooth', 0.30, 0, 38); tone(142, 0.30, 'square', 0.14, 0.01, 52); noiseBurst(0.24, 0.20); },
+  clock(){ [1046,1568,2093].forEach((f,i)=>tone(f, 0.16, 'sine', 0.17, i*0.085)); },
+  miss(){ tone(150, 0.11, 'sine', 0.17, 0, 92); },
+  combo(n){ const base = 523.25 * Math.pow(1.22, n-1);
+            for(let i=0;i<3;i++) tone(base*Math.pow(1.26,i), 0.12, 'triangle', 0.16, i*0.05); },
+  tick(){ tone(1350, 0.04, 'square', 0.09, 0, 900); },
+  over(){ [660,520,392,262].forEach((f,i)=>tone(f, 0.30, 'triangle', 0.18, i*0.13)); },
+  record(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f, 0.24, 'triangle', 0.20, i*0.09)); }
+};
+
+function vibrate(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+
+/* ==========================================================================
+   5. STATE
+   ========================================================================== */
+let state   = 'start';       // 'start' | 'playing' | 'paused' | 'gameover'
+let ending  = false;         // round finished, moles are sinking
+let endTimer = 0;
+
+let score = 0, combo = 0, mult = 1;
+let timeLeft = CONFIG.roundDuration;
+let lastTickSec = 99;
+let dailyMode = false;
+let rand = Math.random;      // swapped for a seeded RNG in daily challenge
+
+let runStats = { moles:0, bombs:0, goldens:0, bestCombo:0 };
+let rewardedUsed = false;
+
+const moles      = [];   // active moles
+const particles  = [];
+const texts      = [];
+const rings      = [];
+
+let shakeMag = 0;
+let flashRed = 0;
+let comboFlash = 0;      // big "COMBO xN!" burst
+let comboFlashVal = 2;
+let tutorialAlpha = 0;
+
+/* ==========================================================================
+   6. CANVAS + LAYOUT
+   ========================================================================== */
+const canvas = document.getElementById('game');
+const ctx    = canvas.getContext('2d');
+const app    = document.getElementById('app');
+
+let W = 0, H = 0, DPR = 1;
+let holes = [];
+const layout = { hudH: 96, cellW: 0, cellH: 0, ox: 0, oy: 0 };
+let bgGrad = null;
+let dots = [];
+let timeNow = 0;
+
+function roundRect(x, y, w, h, r){
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y,   x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x,   y+h, r);
+  ctx.arcTo(x,   y+h, x,   y,   r);
+  ctx.arcTo(x,   y,   x+w, y,   r);
+  ctx.closePath();
+}
+function hexA(hex, a){
+  const n = parseInt(hex.slice(1), 16);
+  return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',' + a + ')';
+}
+function easeOutBack(k){ const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(k-1,3) + c1*Math.pow(k-1,2); }
+function easeInQuad(k){ return k*k; }
+
+/** Recompute canvas size, hole positions and background on resize. */
+function layoutCanvas(){
+  const w = app.clientWidth || window.innerWidth;
+  const h = app.clientHeight || window.innerHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width  = Math.round(w * DPR);
+  canvas.height = Math.round(h * DPR);
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  W = w; H = h;
+
+  // --- HUD height ---
+  const hudH = Math.max(84, Math.min(112, H * 0.155));
+  layout.hudH = hudH;
+
+  // --- grid geometry ---
+  const top    = hudH + 14;
+  const availH = Math.max(120, H - top - 14);
+  const availW = W - 22;
+  const cellW  = availW / CONFIG.grid;
+  let cellH    = Math.min(availH / CONFIG.grid, cellW * 1.18);
+  cellH        = Math.max(cellH, 58);
+  const gridH  = cellH * CONFIG.grid;
+  const ox     = (W - cellW * CONFIG.grid) / 2;
+  const oy     = top + Math.max(0, (availH - gridH) / 2);
+
+  layout.cellW = cellW; layout.cellH = cellH; layout.ox = ox; layout.oy = oy;
+
+  const rx = Math.min(cellW * 0.40, cellH * 0.62);
+  const ry = rx * 0.42;
+
+  holes = [];
+  for(let r = 0; r < CONFIG.grid; r++){
+    for(let c = 0; c < CONFIG.grid; c++){
+      holes.push({
+        x: ox + cellW * (c + 0.5),
+        y: oy + cellH * (r + 0.74),
+        rx, ry,
+        rm: rx * 0.78
+      });
+    }
+  }
+
+  // --- cached background gradient ---
+  bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0.00, '#101a33');
+  bgGrad.addColorStop(0.45, '#0b1224');
+  bgGrad.addColorStop(1.00, '#05070f');
+
+  // --- drifting background dots (parallax) ---
+  dots = [];
+  const n = Math.min(46, Math.round((W * H) / 16000));
+  for(let i = 0; i < n; i++){
+    dots.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 0.7 + Math.random() * 2.1,
+      s: 0.004 + Math.random() * 0.016,
+      a: 0.06 + Math.random() * 0.20,
+      hue: Math.random() < 0.5 ? 190 : 285
+    });
+  }
+}
+
+/* ==========================================================================
+   7. MOLE GEOMETRY HELPERS
+   ========================================================================== */
+/** Vertical centre of a mole's dome for rise progress u (0 = hidden, 1 = up). */
+function moleCY(hole, u){
+  const topUp   = hole.y - hole.rm * 1.55;
+  const topDown = hole.y + hole.ry * 0.55;
+  const top     = topDown + (topUp - topDown) * u;
+  return top + hole.rm;
+}
+function holeBusy(idx){
+  for(const m of moles){
+    if(m.hole === idx && m.phase !== 'whacked') return true;
+  }
+  return false;
+}
+function multFor(c){
+  const s = CONFIG.comboSteps;
+  if(c >= s[4]) return 5;
+  if(c >= s[3]) return 4;
+  if(c >= s[2]) return 3;
+  if(c >= s[1]) return 2;
+  return 1;
+}
+
+/* ==========================================================================
+   8. SPAWNING
+   ========================================================================== */
+let spawnTimer = 0;
+
+function currentDifficulty(){
+  const elapsed = CONFIG.roundDuration - timeLeft;
+  for(const d of CONFIG.difficulty){ if(elapsed < d.until) return d; }
+  return CONFIG.difficulty[CONFIG.difficulty.length - 1];
+}
+
+function pickType(){
+  let r = rand() * TOTAL_WEIGHT;
+  for(let i = 0; i < MOLES.length; i++){
+    r -= MOLES[i].weight;
+    if(r <= 0) return i;
+  }
+  return 0;
+}
+
+function spawnMole(){
+  // free holes only — never two moles in one hole
+  const free = [];
+  for(let i = 0; i < holes.length; i++) if(!holeBusy(i)) free.push(i);
+  if(!free.length) return;
+
+  const idx = free[(rand() * free.length) | 0];
+  const type = pickType();
+  const def = MOLES[type];
+  const d = currentDifficulty();
+
+  moles.push({
+    hole: idx,
+    type,
+    phase: 'rise',
+    t: 0,
+    u: 0,
+    life: d.life * def.lifeMul,
+    maxLife: d.life * def.lifeMul,
+    hit: false,
+    endSink: false,
+    seed: rand() * 1000
+  });
+}
+
+function updateSpawning(dt){
+  const d = currentDifficulty();
+  spawnTimer -= dt;
+  if(spawnTimer <= 0){
+    let active = 0;
+    for(const m of moles) if(m.phase !== 'whacked') active++;
+    if(active < d.max){
+      spawnMole();
+      spawnTimer = d.spawn * (0.82 + rand() * 0.36);
+    } else {
+      spawnTimer = 140;
+    }
+  }
+}
+
+/* ==========================================================================
+   9. MOLE UPDATE
+   ========================================================================== */
+function updateMoles(dt){
+  for(let i = moles.length - 1; i >= 0; i--){
+    const m = moles[i];
+    const hole = holes[m.hole];
+
+    if(m.phase === 'rise'){
+      m.t += dt;
+      const k = Math.min(1, m.t / CONFIG.riseMs);
+      m.u = easeOutBack(k);
+      if(k >= 1){ m.phase = 'up'; m.t = 0; }
+
+    } else if(m.phase === 'up'){
+      m.life -= dt;
+      if(m.life <= 0){
+        m.phase = 'sink'; m.t = 0;
+        onEscape(hole);          // escaped = combo break
+      }
+
+    } else if(m.phase === 'sink'){
+      m.t += dt;
+      const dur = m.endSink ? CONFIG.endSinkMs : CONFIG.sinkMs;
+      const k = Math.min(1, m.t / dur);
+      m.u = 1 - easeInQuad(k);
+      if(k >= 1) moles.splice(i, 1);
+
+    } else if(m.phase === 'whacked'){
+      m.t += dt;
+      const k = Math.min(1, m.t / CONFIG.whackMs);
+      m.u = 1;
+      m.sq = k;
+      if(k >= 1) moles.splice(i, 1);
+    }
+  }
+}
+
+/* ==========================================================================
+   10. SCORING / COMBO
+   ========================================================================== */
+function addCombo(){
+  combo++;
+  if(combo > runStats.bestCombo) runStats.bestCombo = combo;
+  if(combo > save.bestCombo){ save.bestCombo = combo; }
+  const nm = multFor(combo);
+  if(nm > mult){
+    mult = nm;
+    comboFlash = 1;
+    comboFlashVal = nm;
+    sfx.combo(nm);
+    shakeIt(6 + nm * 2);
+  }
+}
+function breakCombo(){
+  combo = 0;
+  mult = 1;
+}
+function addText(x, y, txt, color, size){
+  texts.push({ x, y, text: txt, color, size: size || 20, life: 900, max: 900, vy: -0.075 });
+}
+function shakeIt(mag){ shakeMag = Math.min(34, Math.max(shakeMag, mag)); }
+
+function onEscape(hole){
+  breakCombo();
+  // grey puff hint where it was
+  for(let i = 0; i < 5; i++){
+    const a = Math.random() * Math.PI * 2;
+    particles.push({
+      x: hole.x + Math.cos(a) * hole.rx * 0.3,
+      y: hole.y - 6 + Math.sin(a) * hole.ry * 0.4,
+      vx: Math.cos(a) * 0.05, vy: -0.04 - Math.random() * 0.05,
+      life: 380, max: 380, size: 3 + Math.random() * 4, color: '#8c9bb5'
+    });
+  }
+}
+
+/* ==========================================================================
+   11. INPUT / WHACKING
+   ========================================================================== */
+function handleTap(x, y){
+  // 1) Mole hit-test (generous radius, must be reasonably emerged)
+  let best = null, bestD = 1e9;
+  for(const m of moles){
+    if(m.phase !== 'rise' && m.phase !== 'up') continue;
+    if(m.u < 0.35) continue;
+    const hole = holes[m.hole];
+    const cy = moleCY(hole, Math.min(m.u, 1.05));
+    const d = Math.hypot(x - hole.x, y - cy);
+    if(d < hole.rm * CONFIG.hitRadiusMul && d < bestD){ best = m; bestD = d; }
+  }
+  if(best){ whack(best); return; }
+
+  // 2) Empty-hole tap → miss
+  for(let i = 0; i < holes.length; i++){
+    const hole = holes[i];
+    if(holeBusy(i)) continue;
+    const dx = (x - hole.x) / (hole.rx * CONFIG.holePad);
+    const dy = (y - hole.y) / (hole.ry * CONFIG.holePad * 1.25);
+    if(dx*dx + dy*dy < 1){
+      breakCombo();
+      rings.push({ x: hole.x, y: hole.y, r: hole.rx * 0.35, max: hole.rx * 1.1,
+                   life: 420, maxLife: 420, color: '#8fa8c8', width: 2.5 });
+      sfx.miss();
+      return;
+    }
+  }
+}
+
+function whack(m){
+  const hole = holes[m.hole];
+  const def  = MOLES[m.type];
+  const cy   = moleCY(hole, Math.min(m.u, 1.05));
+
+  m.hit = true;
+  m.phase = 'whacked';
+  m.t = 0;
+  m.sq = 0;
+
+  if(def.kind === 'bomb'){
+    /* ---------- BOMB: penalty ---------- */
+    score = Math.max(0, score - 20);
+    breakCombo();
+    runStats.bombs++;
+    addText(hole.x, cy - hole.rm * 0.4, '-20 BOMB!', '#FF4D4D', 24);
+    burst(hole.x, cy, '#FF6B00', 14, 0.42);
+    burst(hole.x, cy, '#FFD000', 8, 0.32);
+    rings.push({ x: hole.x, y: cy, r: hole.rm * 0.4, max: hole.rm * 2.0,
+                 life: 300, maxLife: 300, color: '#FF4D4D', width: 5 });
+    flashRed = 1;
+    shakeIt(26);
+    sfx.bomb();
+    vibrate([20, 40, 20]);
+
+  } else if(def.kind === 'clock'){
+    /* ---------- BONUS CLOCK ---------- */
+    timeLeft = Math.min(CONFIG.maxTime, timeLeft + CONFIG.clockBonus);
+    lastTickSec = 99;
+    addCombo();
+    addText(hole.x, cy - hole.rm * 0.4, '+2s', '#00D4FF', 26);
+    burst(hole.x, cy, '#00D4FF', 12, 0.36);
+    rings.push({ x: hole.x, y: cy, r: hole.rm * 0.35, max: hole.rm * 1.9,
+                 life: 380, maxLife: 380, color: '#00D4FF', width: 4 });
+    shakeIt(8);
+    sfx.clock();
+    vibrate(15);
+
+  } else {
+    /* ---------- NORMAL / GOLDEN ---------- */
+    const gained = def.points * mult;
+    score += gained;
+    addCombo();
+    runStats.moles++;
+    save.totalMoles++;
+
+    const isGold = def.aura === '#FFD700';
+    if(isGold) runStats.goldens++;
+
+    addText(hole.x, cy - hole.rm * 0.5,
+            '+' + gained + (mult > 1 ? ' x' + mult : ''),
+            isGold ? '#FFD700' : '#FFFFFF',
+            isGold ? 28 : 22);
+
+    const pc = isGold ? '#FFD700' : def.color;
+    burst(hole.x, cy, pc, isGold ? 14 : 9, isGold ? 0.5 : 0.36);
+    if(isGold) burst(hole.x, cy, '#FFF6B0', 8, 0.3);
+
+    rings.push({ x: hole.x, y: cy, r: hole.rm * 0.4, max: hole.rm * 1.9,
+                 life: 300, maxLife: 300, color: '#FFFFFF', width: 4 });
+
+    shakeIt(isGold ? 12 : 6);
+    if(isGold) sfx.golden(); else sfx.whack();
+    vibrate(15);
+
+    // first ever successful hit — kill the tutorial
+    if(!save.tutorial){
+      save.tutorial = true;
+      persist();
+    }
+  }
+
+  // hide the tutorial hand after the first successful hit
+  tutorialAlpha = Math.min(tutorialAlpha, 0.0);
+}
+
+/* ==========================================================================
+   12. FX — particles, rings, floating text
+   ========================================================================== */
+function burst(x, y, color, count, power){
+  for(let i = 0; i < count; i++){
+    const a = Math.random() * Math.PI * 2;
+    const s = (0.35 + Math.random() * 0.9) * power;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * s,
+      vy: Math.sin(a) * s - 0.06,
+      life: 380 + Math.random() * 320,
+      max: 700,
+      size: 2 + Math.random() * 4.5,
+      color
+    });
+  }
+}
+
+function updateFX(dt){
+  for(let i = particles.length - 1; i >= 0; i--){
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 0.0014 * dt;      // gravity
+    p.vx *= 0.995;
+    p.life -= dt;
+    if(p.life <= 0) particles.splice(i, 1);
+  }
+  for(let i = rings.length - 1; i >= 0; i--){
+    const r = rings[i];
+    r.life -= dt;
+    const k = 1 - r.life / r.maxLife;
+    r.r = r.max * (0.35 + 0.65 * k);
+    if(r.life <= 0) rings.splice(i, 1);
+  }
+  for(let i = texts.length - 1; i >= 0; i--){
+    const t = texts[i];
+    t.y += t.vy * dt;
+    t.vy *= 0.985;
+    t.life -= dt;
+    if(t.life <= 0) texts.splice(i, 1);
+  }
+  if(shakeMag > 0.2) shakeMag *= Math.pow(0.86, dt / 16.67);
+  else shakeMag = 0;
+
+  if(flashRed > 0) flashRed = Math.max(0, flashRed - dt / 160);
+  if(comboFlash > 0) comboFlash = Math.max(0, comboFlash - dt / 750);
+
+  if(tutorialAlpha > 0) tutorialAlpha = Math.max(0, tutorialAlpha - dt / 600);
+}
+
+/* ==========================================================================
+   13. RENDER
+   ========================================================================== */
+function drawBackground(ts){
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(-40, -40, W + 80, H + 80);
+
+  // slow-moving radial glow for life
+  const gx = W * (0.5 + 0.28 * Math.sin(ts / 5200));
+  const gy = H * (0.42 + 0.22 * Math.cos(ts / 6100));
+  const rg = ctx.createRadialGradient(gx, gy, 0, gx, gy, Math.max(W, H) * 0.72);
+  rg.addColorStop(0, 'rgba(0,150,255,0.13)');
+  rg.addColorStop(0.5, 'rgba(160,0,255,0.055)');
+  rg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = rg;
+  ctx.fillRect(-40, -40, W + 80, H + 80);
+
+  // drifting dots
+  for(const d of dots){
+    d.y -= d.s * 16.7;
+    if(d.y < -6){ d.y = H + 6; d.x = Math.random() * W; }
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+    ctx.fillStyle = 'hsla(' + d.hue + ',90%,70%,' + d.a + ')';
+    ctx.fill();
+  }
+}
+
+function drawHoleBack(h){
+  // raised rim
+  ctx.beginPath();
+  ctx.ellipse(h.x, h.y + h.ry * 0.10, h.rx * 1.16, h.ry * 1.30, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.42)';
+  ctx.fill();
+
+  // dark interior
+  const g = ctx.createRadialGradient(h.x, h.y - h.ry * 0.25, h.ry * 0.15,
+                                     h.x, h.y + h.ry * 0.2, h.rx * 1.05);
+  g.addColorStop(0, '#04060c');
+  g.addColorStop(0.65, '#0c1220');
+  g.addColorStop(1, '#1d2a44');
+  ctx.beginPath();
+  ctx.ellipse(h.x, h.y, h.rx, h.ry, 0, 0, Math.PI * 2);
+  ctx.fillStyle = g;
+  ctx.fill();
+}
+
+function drawHoleFront(h){
+  // lower half — the "front lip" that hides the mole's base
+  const g = ctx.createLinearGradient(0, h.y - h.ry * 0.1, 0, h.y + h.ry * 1.1);
+  g.addColorStop(0, 'rgba(58,80,124,0.96)');
+  g.addColorStop(0.55, 'rgba(24,34,58,1)');
+  g.addColorStop(1, 'rgba(8,12,22,1)');
+  ctx.beginPath();
+  ctx.ellipse(h.x, h.y, h.rx, h.ry, 0, 0, Math.PI);
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  // back rim highlight
+  ctx.beginPath();
+  ctx.ellipse(h.x, h.y, h.rx, h.ry, 0, Math.PI, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(130,190,255,0.20)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function drawMoleShape(r, def, ts, m){
+  /* ---------- AURA (golden / clock) ---------- */
+  if(def.aura){
+    const pulse = 0.88 + 0.12 * Math.sin(ts / 170 + (m ? m.seed : 0));
+    const ag = ctx.createRadialGradient(0, 0, r * 0.55, 0, 0, r * 2.05 * pulse);
+    ag.addColorStop(0, hexA(def.aura, 0.42));
+    ag.addColorStop(0.55, hexA(def.aura, 0.14));
+    ag.addColorStop(1, hexA(def.aura, 0));
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 2.05 * pulse, 0, Math.PI * 2);
+    ctx.fillStyle = ag;
+    ctx.fill();
+  }
+
+  /* ---------- BODY DOME ---------- */
+  const bg = ctx.createRadialGradient(-r * 0.36, -r * 0.46, r * 0.08, 0, 0, r * 1.12);
+  bg.addColorStop(0, def.light);
+  bg.addColorStop(0.52, def.color);
+  bg.addColorStop(1, def.dark);
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fillStyle = bg;
+  ctx.fill();
+
+  // rim light
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.97, Math.PI * 1.05, Math.PI * 1.75);
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = Math.max(1.5, r * 0.07);
+  ctx.stroke();
+
+  if(def.kind === 'bomb'){
+    /* ---------- BOMB: fuse + spark ---------- */
+    ctx.beginPath();
+    ctx.moveTo(r * 0.10, -r * 0.90);
+    ctx.quadraticCurveTo(r * 0.62, -r * 1.28, r * 0.18, -r * 1.62);
+    ctx.strokeStyle = '#A9834A';
+    ctx.lineWidth = Math.max(2, r * 0.11);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    const flick = 0.72 + 0.28 * Math.sin(ts / 55 + (m ? m.seed : 0));
+    ctx.save();
+    ctx.shadowColor = '#FF8A00';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(r * 0.18, -r * 1.66, r * 0.24 * flick, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFE066';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(r * 0.18, -r * 1.66, r * 0.12 * flick, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.restore();
+
+    // menacing highlight
+    ctx.beginPath();
+    ctx.arc(-r * 0.32, -r * 0.34, r * 0.18, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.20)';
+    ctx.fill();
+
+  } else if(def.kind === 'clock'){
+    /* ---------- CLOCK FACE ---------- */
+    ctx.beginPath();
+    ctx.arc(0, -r * 0.05, r * 0.62, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.fill();
+    ctx.strokeStyle = '#0077A8';
+    ctx.lineWidth = Math.max(1.5, r * 0.07);
+    ctx.stroke();
+
+    // ticks
+    for(let i = 0; i < 4; i++){
+      const a = i * Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r * 0.44, -r * 0.05 + Math.sin(a) * r * 0.44);
+      ctx.lineTo(Math.cos(a) * r * 0.55, -r * 0.05 + Math.sin(a) * r * 0.55);
+      ctx.strokeStyle = '#0077A8';
+      ctx.lineWidth = Math.max(1.5, r * 0.07);
+      ctx.stroke();
+    }
+    // hands (animated)
+    const spin = ts / 900;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.05);
+    ctx.lineTo(Math.cos(spin - 1.57) * r * 0.30, -r * 0.05 + Math.sin(spin - 1.57) * r * 0.30);
+    ctx.strokeStyle = '#0a2a3a';
+    ctx.lineWidth = Math.max(2, r * 0.10);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.05);
+    ctx.lineTo(Math.cos(spin * 3) * r * 0.42, -r * 0.05 + Math.sin(spin * 3) * r * 0.42);
+    ctx.strokeStyle = '#00A6D6';
+    ctx.lineWidth = Math.max(1.5, r * 0.07);
+    ctx.stroke();
+
+  } else {
+    /* ---------- NORMAL / GOLDEN FACE ---------- */
+    // ears
+    ctx.beginPath();
+    ctx.arc(-r * 0.70, -r * 0.62, r * 0.20, 0, Math.PI * 2);
+    ctx.fillStyle = def.dark; ctx.fill();
+    ctx.beginPath();
+    ctx.arc( r * 0.70, -r * 0.62, r * 0.20, 0, Math.PI * 2);
+    ctx.fillStyle = def.dark; ctx.fill();
+
+    // eyes
+    const eo = r * 0.32, ey = -r * 0.16, er = r * 0.145;
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath(); ctx.arc(-eo, ey, er, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc( eo, ey, er, 0, Math.PI * 2); ctx.fill();
+    // eye sparkle
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.beginPath(); ctx.arc(-eo + er * 0.35, ey - er * 0.4, er * 0.36, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc( eo + er * 0.35, ey - er * 0.4, er * 0.36, 0, Math.PI * 2); ctx.fill();
+
+    // snout
+    ctx.beginPath();
+    ctx.ellipse(0, r * 0.30, r * 0.36, r * 0.27, 0, 0, Math.PI * 2);
+    ctx.fillStyle = def.light;
+    ctx.fill();
+    // nose
+    ctx.beginPath();
+    ctx.ellipse(0, r * 0.18, r * 0.13, r * 0.10, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fill();
+    // smile
+    ctx.beginPath();
+    ctx.arc(0, r * 0.30, r * 0.20, 0.25 * Math.PI, 0.75 * Math.PI);
+    ctx.strokeStyle = 'rgba(20,10,0,0.75)';
+    ctx.lineWidth = Math.max(1.5, r * 0.06);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  /* ---------- GOLDEN SPARKLES ---------- */
+  if(def.sparkle){
+    for(let i = 0; i < 4; i++){
+      const a = ts / 420 + i * Math.PI / 2 + (m ? m.seed : 0);
+      const rad = r * (1.15 + 0.18 * Math.sin(ts / 200 + i));
+      const sx = Math.cos(a) * rad, sy = Math.sin(a) * rad * 0.85;
+      const s = r * 0.20 * (0.7 + 0.4 * Math.sin(ts / 130 + i * 2));
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.beginPath();
+      ctx.moveTo(0, -s); ctx.lineTo(s * 0.3, 0); ctx.lineTo(0, s); ctx.lineTo(-s * 0.3, 0);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,250,190,0.95)';
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
+function drawMole(m){
+  const hole = holes[m.hole];
+  const def  = MOLES[m.type];
+  const rm   = hole.rm;
+  const u    = Math.min(m.u, 1.06);
+  const cy   = moleCY(hole, u);
+
+  // squash-and-stretch after a hit
+  let sx = 1, sy = 1, alpha = 1;
+  if(m.phase === 'whacked'){
+    const k = m.sq || 0;
+    sx = 1 + 0.48 * Math.sin(k * Math.PI);
+    sy = 1 - 0.55 * Math.sin(k * Math.PI);
+    alpha = 1 - k * k;
+  }
+
+  /* soft shadow inside the hole */
+  ctx.beginPath();
+  ctx.ellipse(hole.x, hole.y + hole.ry * 0.25,
+              hole.rx * (0.72 * u + 0.2), hole.ry * (0.60 * u + 0.16), 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,' + (0.45 * u) + ')';
+  ctx.fill();
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // clip to the region ABOVE the hole's centre line → mole emerges from the hole
+  ctx.beginPath();
+  ctx.rect(hole.x - hole.rx * 1.1, hole.y - rm * 4.2, hole.rx * 2.2, rm * 4.2);
+  ctx.clip();
+
+  ctx.save();
+  ctx.translate(hole.x, cy);
+  ctx.scale(sx, sy);
+  drawMoleShape(rm, def, timeNow, m);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawParticles(){
+  for(const p of particles){
+    const a = Math.max(0, Math.min(1, p.life / p.max));
+    ctx.globalAlpha = a;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * (0.4 + a * 0.6), 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawRings(){
+  for(const r of rings){
+    const a = Math.max(0, r.life / r.maxLife);
+    ctx.globalAlpha = a * 0.9;
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+    ctx.strokeStyle = r.color;
+    ctx.lineWidth = r.width * a;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawTexts(){
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for(const t of texts){
+    const a = Math.max(0, Math.min(1, t.life / t.max));
+    const pop = 1 + 0.35 * Math.max(0, 1 - (t.max - t.life) / 130);
+    ctx.globalAlpha = a;
+    ctx.font = '900 ' + (t.size * pop).toFixed(1) + 'px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    ctx.strokeText(t.text, t.x, t.y);
+    ctx.fillStyle = t.color;
+    ctx.fillText(t.text, t.x, t.y);
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- HUD ---------- */
+function drawHUD(){
+  const hudH = layout.hudH;
+  const FONT = 'system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+
+  // top bar backdrop
+  const bg = ctx.createLinearGradient(0, 0, 0, hudH);
+  bg.addColorStop(0, 'rgba(10,16,30,0.92)');
+  bg.addColorStop(1, 'rgba(10,16,30,0.0)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, hudH);
+
+  ctx.textBaseline = 'middle';
+
+  /* ----- SCORE (left) ----- */
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(150,185,225,0.75)';
+  ctx.font = '800 10px ' + FONT;
+  ctx.fillText('SCORE', 18, 26);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 30px ' + FONT;
+  ctx.fillText(String(score), 18, 52);
+
+  /* ----- TIMER (center pill) ----- */
+  const secs = Math.max(0, Math.ceil(timeLeft / 1000));
+  let tColor = '#7EE8FF', tGlow = 'rgba(0,200,255,0.5)';
+  if(secs <= 10){ tColor = '#FFC93C'; tGlow = 'rgba(255,190,0,0.55)'; }
+  if(secs <= 5){
+    const p = 0.5 + 0.5 * Math.sin(timeNow / 110);
+    tColor = '#FF4D6D';
+    tGlow = 'rgba(255,60,100,' + (0.35 + 0.5 * p) + ')';
+  }
+
+  const pillW = 104, pillH = 56, pillX = W / 2 - pillW / 2, pillY = 16;
+  ctx.save();
+  ctx.shadowColor = tGlow;
+  ctx.shadowBlur = 20;
+  roundRect(pillX, pillY, pillW, pillH, 18);
+  ctx.fillStyle = 'rgba(12,20,38,0.92)';
+  ctx.fill();
+  ctx.restore();
+  roundRect(pillX, pillY, pillW, pillH, 18);
+  ctx.strokeStyle = hexA(tColor, 0.55);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = tColor;
+  ctx.font = '900 30px ' + FONT;
+  ctx.fillText(String(secs), W / 2 - 8, pillY + pillH / 2 + 1);
+  ctx.font = '800 11px ' + FONT;
+  ctx.fillStyle = hexA(tColor, 0.75);
+  ctx.fillText('SEC', W / 2 + 28, pillY + pillH / 2 + 1);
+
+  /* ----- COMBO (right) ----- */
+  const rx = W - 66;
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(150,185,225,0.75)';
+  ctx.font = '800 10px ' + FONT;
+  ctx.fillText('COMBO', rx, 26);
+  ctx.font = '900 26px ' + FONT;
+  const comboCol = mult >= 5 ? '#FFD700' : mult >= 3 ? '#FF9F1A' : mult >= 2 ? '#00E5A0' : '#9fb6d4';
+  ctx.fillStyle = combo === 0 ? 'rgba(159,182,212,0.45)' : comboCol;
+  ctx.fillText('x' + mult, rx, 50);
+  if(combo > 0){
+    ctx.font = '800 10px ' + FONT;
+    ctx.fillStyle = 'rgba(180,210,240,0.7)';
+    ctx.fillText(combo + ' HITS', rx, 68);
+  }
+
+  /* ----- COMBO METER ----- */
+  const mw = W - 36, mh = 8, mx = 18, my = hudH - 12;
+  roundRect(mx, my, mw, mh, 4);
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.fill();
+
+  const frac = Math.min(1, combo / CONFIG.maxCombo);
+  if(frac > 0){
+    const g = ctx.createLinearGradient(mx, 0, mx + mw, 0);
+    g.addColorStop(0, '#00E5A0');
+    g.addColorStop(0.5, '#00D4FF');
+    g.addColorStop(1, '#FFD700');
+    roundRect(mx, my, Math.max(mh, mw * frac), mh, 4);
+    ctx.fillStyle = g;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,220,255,0.7)';
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ---------- Combo glow + big combo burst + red flash ---------- */
+function drawComboGlow(){
+  if(mult < 5) return;
+  const a = 0.16 + 0.09 * Math.sin(timeNow / 190);
+  const g = ctx.createRadialGradient(W/2, H/2, Math.min(W,H) * 0.22,
+                                     W/2, H/2, Math.max(W,H) * 0.78);
+  g.addColorStop(0, 'rgba(255,200,0,0)');
+  g.addColorStop(1, 'rgba(255,180,0,' + a + ')');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawComboFlash(){
+  if(comboFlash <= 0) return;
+  const k = comboFlash;
+  const s = 1 + (1 - k) * 1.4;
+  ctx.save();
+  ctx.globalAlpha = k;
+  ctx.translate(W / 2, H * 0.34);
+  ctx.scale(s, s);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 40px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  ctx.strokeText('COMBO x' + comboFlashVal + '!', 0, 0);
+  const g = ctx.createLinearGradient(-140, 0, 140, 0);
+  g.addColorStop(0, '#00E5A0');
+  g.addColorStop(0.5, '#FFD700');
+  g.addColorStop(1, '#FF3DAE');
+  ctx.fillStyle = g;
+  ctx.fillText('COMBO x' + comboFlashVal + '!', 0, 0);
+  ctx.restore();
+}
+
+function drawFlash(){
+  if(flashRed <= 0) return;
+  ctx.fillStyle = 'rgba(255,20,50,' + (flashRed * 0.42) + ')';
+  ctx.fillRect(0, 0, W, H);
+}
+
+/* ---------- Tutorial hand ---------- */
+function drawTutorial(){
+  if(tutorialAlpha <= 0.01) return;
+  const h = holes[4];
+  const p = (timeNow % 1150) / 1150;
+  const bob = Math.sin(p * Math.PI * 2);
+
+  ctx.save();
+  ctx.globalAlpha = tutorialAlpha;
+
+  // pulsing ring
+  const rr = 30 + 10 * (0.5 + 0.5 * bob);
+  ctx.beginPath();
+  ctx.arc(h.x, h.y - 14, rr, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(0,229,160,0.85)';
+  ctx.lineWidth = 3.5;
+  ctx.stroke();
+
+  // finger
+  const fy = h.y - 34 + bob * 14;
+  ctx.beginPath();
+  roundRect(h.x - 12, fy - 34, 24, 52, 12);
+  ctx.fillStyle = '#FFE0B2';
+  ctx.fill();
+  ctx.strokeStyle = '#C98A4B';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // label
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 17px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+  ctx.strokeText('TAP THE MOLES!', h.x, h.y - 92);
+  ctx.fillStyle = '#00E5A0';
+  ctx.fillText('TAP THE MOLES!', h.x, h.y - 92);
+
+  ctx.restore();
+}
+
+/* ---------- Master render ---------- */
+function render(){
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.save();
+  if(shakeMag > 0.3){
+    ctx.translate((Math.random() - 0.5) * shakeMag,
+                  (Math.random() - 0.5) * shakeMag);
+  }
+
+  drawBackground(timeNow);
+
+  // holes (backs)
+  for(const h of holes) drawHoleBack(h);
+
+  // moles + front lips
+  for(let i = 0; i < holes.length; i++){
+    const h = holes[i];
+    let mole = null;
+    for(const m of moles) if(m.hole === i) mole = m;
+    if(mole) drawMole(mole);
+    drawHoleFront(h);
+  }
+
+  drawRings();
+  drawParticles();
+  drawTexts();
+
+  ctx.restore();
+
+  drawComboGlow();
+  drawComboFlash();
+  drawHUD();
+  drawFlash();
+
+  if(state === 'playing' && !ending && !save.tutorial) drawTutorial();
+}
+
+/* ==========================================================================
+   14. ROUND CONTROL
+   ========================================================================== */
+function startRound(isDaily){
+  initAudio();
+  dailyMode = !!isDaily;
+  rand = dailyMode ? mulberry32(dailySeed()) : Math.random;
+
+  state = 'playing';
+  ending = false;
+  endTimer = 0;
+  score = 0;
+  combo = 0;
+  mult = 1;
+  timeLeft = CONFIG.roundDuration;
+  lastTickSec = 99;
+  spawnTimer = 300;
+  moles.length = 0;
+  particles.length = 0;
+  texts.length = 0;
+  rings.length = 0;
+  shakeMag = 0;
+  flashRed = 0;
+  comboFlash = 0;
+  rewardedUsed = false;
+  runStats = { moles:0, bombs:0, goldens:0, bestCombo:0 };
+  tutorialAlpha = save.tutorial ? 0 : 1;
+
+  // reset reward button
+  const adBtn = document.getElementById('adBtn');
+  adBtn.disabled = false;
+  adBtn.textContent = '▶ WATCH AD → +15s';
+
+  showScreen(null);
+  document.getElementById('pauseBtn').style.display = 'flex';
+  document.getElementById('soundBtn').style.display = 'none';
+
+  layoutCanvas();
+}
+
+function endRound(){
+  ending = true;
+  endTimer = 0;
+  for(const m of moles){
+    if(m.phase === 'rise' || m.phase === 'up'){
+      m.phase = 'sink';
+      m.t = 0;
+      m.u = 1;
+      m.endSink = true;
+      m.hit = true;    // don't count as an escape
+    }
+  }
+  sfx.over();
+}
+
+function finishRound(){
+  state = 'gameover';
+  ending = false;
+  moles.length = 0;
+
+  save.games++;
+  save.gameOverCount = (save.gameOverCount || 0) + 1;
+
+  const prevBest = save.bestScore || 0;
+  const isRecord = score > prevBest;
+  if(isRecord) save.bestScore = score;
+
+  if(dailyMode){
+    if(score > (save.dailyBest || 0)) save.dailyBest = score;
+    save.dailyDate = todayKey();
+  }
+  persist();
+
+  showGameOver(isRecord, prevBest);
+}
+
+/* ==========================================================================
+   15. SEEDED RNG (daily challenge)
+   ========================================================================== */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function dailySeed(){
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+/* ==========================================================================
+   16. UI — screens, buttons, toast
+   ========================================================================== */
+const startScreen = document.getElementById('startScreen');
+const pauseScreen = document.getElementById('pauseScreen');
+const overScreen  = document.getElementById('overScreen');
+const pauseBtn    = document.getElementById('pauseBtn');
+const soundBtn    = document.getElementById('soundBtn');
+const toastEl     = document.getElementById('toast');
+
+function showScreen(el){
+  [startScreen, pauseScreen, overScreen].forEach(s => {
+    if(s === el) s.classList.add('show'); else s.classList.remove('show');
+  });
+}
+function refreshStartScreen(){
+  document.getElementById('startBest').innerHTML =
+    'Best: <b>' + (save.bestScore || 0) + '</b> &nbsp;|&nbsp; Best Combo: <b>' + (save.bestCombo || 0) + '</b>';
+  const dB = document.getElementById('startDaily');
+  if(save.dailyDate === todayKey()){
+    dB.textContent = "Today's daily best: " + (save.dailyBest || 0);
+  } else {
+    dB.textContent = 'A new daily challenge is ready!';
+  }
+}
+function refreshSoundButtons(){
+  const label = soundEnabled ? '🔊' : '🔇';
+  soundBtn.textContent = label;
+  const b2 = document.getElementById('soundBtn2');
+  b2.textContent = (soundEnabled ? '🔊 SOUND: ON' : '🔇 SOUND: OFF');
+}
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toastEl.classList.remove('show'), 1800);
+}
+
+/* ---------- Game Over screen ---------- */
+let countRAF = null;
+function showGameOver(isRecord, prevBest){
+  document.getElementById('overTitle').textContent = isRecord ? "NEW RECORD!" : "TIME'S UP!";
+  document.getElementById('recordLine').style.display = isRecord ? 'block' : 'none';
+  document.getElementById('overBest').innerHTML = 'Best: <b>' + (save.bestScore || 0) + '</b>';
+  document.getElementById('stMoles').textContent  = runStats.moles;
+  document.getElementById('stCombo').textContent  = runStats.bestCombo;
+  document.getElementById('stBombs').textContent  = runStats.bombs;
+  document.getElementById('stGold').textContent   = runStats.goldens;
+
+  // close-call messaging
+  const closeLine = document.getElementById('closeLine');
+  if(!isRecord && prevBest > 0){
+    const diff = prevBest - score;
+    if(diff > 0 && diff <= 30) closeLine.textContent = 'You were ' + diff + ' points from a new record!';
+    else if(diff > 30 && diff <= 80) closeLine.textContent = 'So close! ' + diff + ' points off your best.';
+    else closeLine.textContent = '';
+  } else {
+    closeLine.textContent = '';
+  }
+
+  // count-up final score
+  const el = document.getElementById('finalScore');
+  if(countRAF) cancelAnimationFrame(countRAF);
+  const t0 = performance.now();
+  (function step(t){
+    const k = Math.min(1, (t - t0) / 750);
+    el.textContent = Math.round(score * (1 - Math.pow(1 - k, 3)));
+    if(k < 1) countRAF = requestAnimationFrame(step);
+  })(t0);
+
+  if(isRecord){
+    sfx.record();
+    confetti();
+  }
+
+  showScreen(overScreen);
+  pauseBtn.style.display = 'none';
+  soundBtn.style.display = 'flex';
+
+  // INTERSTITIAL AD — every 3rd game over only
+  if((save.gameOverCount || 0) % 3 === 0){
+    showInterstitialAd(() => { /* gameplay already resumed via Play Again */ });
+  }
+}
+
+function confetti(){
+  const colors = ['#FFD700','#FF3DAE','#00E5A0','#00D4FF','#FF7A00','#FFFFFF'];
+  for(let i = 0; i < 26; i++){
+    const d = document.createElement('div');
+    d.className = 'confetti';
+    d.style.left = (Math.random() * 100) + '%';
+    d.style.top = '-20px';
+    d.style.background = colors[(Math.random() * colors.length) | 0];
+    d.style.animationDuration = (1.4 + Math.random() * 1.2) + 's';
+    d.style.animationDelay = (Math.random() * 0.5) + 's';
+    d.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+    overScreen.appendChild(d);
+    setTimeout(() => d.remove(), 3200);
+  }
+}
+
+/* ==========================================================================
+   17. ADS — placeholders (replace bodies with real SDK calls)
+   ========================================================================== */
+
+/**
+ * INTERSTITIAL AD
+ * Called on the Game Over screen only every 3rd game over.
+ * ---------------------------------------------------------------
+ * >>> PASTE YOUR INTERSTITIAL CODE HERE <<<
+ *   AdMob (Cordova/Capacitor):
+ *     admob.interstitial.load({id:'ca-app-pub-XXX/YYY'}).then(()=>admob.interstitial.show());
+ *   AdSense (H5 Games Ads):
+ *     adBreak({type:'next', name:'gameover', beforeAd:..., afterAd:...});
+ *   Adsterra: inject the popunder / interstitial script here.
+ * ---------------------------------------------------------------
+ */
+function showInterstitialAd(onComplete){
+  console.log('[ADS] Interstitial placeholder — would show now (every 3rd game over).');
+  // Simulated 1s load; in production call onComplete() from the ad's
+  // "closed" / "completed" callback instead of the timeout below.
+  setTimeout(() => { if(typeof onComplete === 'function') onComplete(); }, 1000);
+}
+
+/**
+ * REWARDED AD — "+15 seconds"
+ * Limited to ONCE PER RUN. Resumes the SAME run with +15s.
+ * ---------------------------------------------------------------
+ * >>> PASTE YOUR REWARDED AD CODE HERE <<<
+ *   AdMob: admob.rewardVideo.load(...).then(()=>admob.rewardVideo.show());
+ *   On the reward callback, call resumeAfterReward().
+ * ---------------------------------------------------------------
+ */
+function showRewardedAd(onComplete){
+  console.log('[ADS] Rewarded ad placeholder — +15s reward.');
+  setTimeout(() => { if(typeof onComplete === 'function') onComplete(); }, 1000);
+}
+
+/** Resume the same run with a 15-second extension. */
+function resumeAfterReward(){
+  // reset danger state, keep score, keep combo meter but reset multiplier
+  breakCombo();
+  flashRed = 0;
+  shakeMag = 0;
+  ending = false;
+  endTimer = 0;
+  moles.length = 0;
+  particles.length = 0;
+  texts.length = 0;
+  rings.length = 0;
+  timeLeft = 15000;
+  lastTickSec = 99;
+  spawnTimer = 250;
+  state = 'playing';
+  rewardedUsed = true;
+
+  const adBtn = document.getElementById('adBtn');
+  adBtn.disabled = true;
+  adBtn.textContent = 'AD USED';
+
+  showScreen(null);
+  pauseBtn.style.display = 'flex';
+  soundBtn.style.display = 'none';
+  toast('+15 SECONDS!');
+}
+
+/* ==========================================================================
+   18. EVENT WIRING
+   ========================================================================== */
+document.getElementById('playBtn').addEventListener('click', () => {
+  initAudio();
+  startRound(false);
+});
+document.getElementById('dailyBtn').addEventListener('click', () => {
+  initAudio();
+  startRound(true);
+});
+document.getElementById('againBtn').addEventListener('click', () => {
+  // ONE TAP, NO DELAY
+  initAudio();
+  startRound(dailyMode);
+});
+document.getElementById('resumeBtn').addEventListener('click', () => {
+  state = 'playing';
+  showScreen(null);
+  pauseBtn.style.display = 'flex';
+  soundBtn.style.display = 'none';
+});
+document.getElementById('restartBtn').addEventListener('click', () => {
+  startRound(dailyMode);
+});
+document.getElementById('soundBtn2').addEventListener('click', toggleSound);
+soundBtn.addEventListener('click', toggleSound);
+
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  save.sound = soundEnabled;
+  persist();
+  refreshSoundButtons();
+  initAudio();
+  if(soundEnabled) sfx.tick();
+}
+
+pauseBtn.addEventListener('click', () => {
+  if(state !== 'playing' || ending) return;
+  state = 'paused';
+  showScreen(pauseScreen);
+  soundBtn.style.display = 'flex';
+});
+
+document.getElementById('adBtn').addEventListener('click', (e) => {
+  if(rewardedUsed) return;
+  e.currentTarget.disabled = true;
+  showRewardedAd(() => resumeAfterReward());
+});
+
+document.getElementById('shareBtn').addEventListener('click', async () => {
+  const txt = 'I scored ' + score + ' in Whack-a-Mole! 🐹🔨 Beat that!';
+  try{
+    if(navigator.share){
+      await navigator.share({ title:'Whack-a-Mole', text: txt });
+    } else if(navigator.clipboard){
+      await navigator.clipboard.writeText(txt);
+      toast('Score copied to clipboard!');
+    } else {
+      toast(txt);
+    }
+  }catch(err){ /* user cancelled */ }
+});
+
+/* ---------- Pointer input ---------- */
+canvas.addEventListener('pointerdown', (e) => {
+  initAudio();
+  if(state !== 'playing' || ending) return;
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  handleTap(e.clientX - r.left, e.clientY - r.top);
+}, { passive: false });
+
+/* ---------- Resize / orientation ---------- */
+let resizeRAF = null;
+function onResize(){
+  if(resizeRAF) cancelAnimationFrame(resizeRAF);
+  resizeRAF = requestAnimationFrame(() => {
+    layoutCanvas();
+    // keep active moles visually consistent — positions derive from holes
+  });
+}
+window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', () => setTimeout(onResize, 120));
+
+/* ---------- Auto-pause when tab hidden ---------- */
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden && state === 'playing' && !ending){
+    state = 'paused';
+    showScreen(pauseScreen);
+    soundBtn.style.display = 'flex';
+  }
+});
+
+/* ==========================================================================
+   19. MAIN LOOP
+   ========================================================================== */
+let lastTs = 0;
+
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!lastTs) lastTs = ts;
+  let dt = ts - lastTs;
+  lastTs = ts;
+  if(dt > 60) dt = 60;      // clamp after tab switches
+  timeNow = ts;
+
+  /* ---------- UPDATE ---------- */
+  if(state === 'playing'){
+    if(!ending){
+      timeLeft -= dt;
+      if(timeLeft <= 0){
+        timeLeft = 0;
+        endRound();
+      } else {
+        // final-5-seconds ticking
+        if(timeLeft <= 5000){
+          const s = Math.ceil(timeLeft / 1000);
+          if(s !== lastTickSec){ lastTickSec = s; sfx.tick(); }
+        }
+        updateSpawning(dt);
+      }
+    } else {
+      endTimer += dt;
+      if(endTimer > 420 && moles.length === 0){
+        finishRound();
+      }
+    }
+    updateMoles(dt);
+  }
+  updateFX(dt);
+
+  /* ---------- RENDER ---------- */
+  render();
+}
+
+/* ==========================================================================
+   20. BOOT
+   ========================================================================== */
+(function boot(){
+  layoutCanvas();
+  refreshStartScreen();
+  refreshSoundButtons();
+  pauseBtn.style.display = 'none';
+  soundBtn.style.display = 'flex';
+  showScreen(startScreen);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
