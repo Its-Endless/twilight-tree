@@ -31,6 +31,18 @@ window.GAMES = [
     file: "games/star-vanguard.html",
     isNew: true
   }
+  ,
+  {
+  "id": "whack-a-mole",
+  "title": "Whack-a-Mole",
+  "description": "Tap the moles, dodge the bombs, and chase the combo multiplier in 30 seconds of pure arcade mayhem.",
+  "category": "Reaction",
+  "emoji": "🔨",
+  "gradient": ["#FFD700", "#FF3DAE"],
+  "accent": "#FFD700",
+  "file": "games/whack-a-mole.html",
+  "isNew": true
+}
   /* === ADD YOUR NEXT GAME HERE ===
   ,
   {
