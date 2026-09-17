@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Click the Dot</title>
+  <!-- Satisfying futuristic font: Orbitron -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CSS VARIABLES
+       ============================================================ */
+    :root {
+      --bg-1: #0a0a1a;
+      --bg-2: #1a0a2e;
+      --bg-3: #0d0d2b;
+      --neon-cyan: #00f0ff;
+      --neon-pink: #ff00aa;
+      --neon-purple: #b400ff;
+      --neon-yellow: #ffe600;
+      --neon-green: #00ff88;
+      --neon-red: #ff2244;
+      --text-primary: #e8e8ff;
+      --text-dim: #8888aa;
+      --glass-bg: rgba(20, 10, 40, 0.75);
+      --glow-cyan: 0 0 10px #00f0ff, 0 0 30px #00f0ff66, 0 0 60px #00f0ff33;
+      --glow-pink: 0 0 10px #ff00aa, 0 0 30px #ff00aa66, 0 0 60px #ff00aa33;
+      --glow-purple: 0 0 10px #b400ff, 0 0 30px #b400ff66;
+      --font-main: 'Orbitron', -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace, sans-serif;
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+      overscroll-behavior: none;
+      font-family: var(--font-main);
+      background: linear-gradient(135deg, var(--bg-1), var(--bg-2), var(--bg-3));
+      color: var(--text-primary);
+    }
+
+    /* Animated nebula background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(0, 240, 255, 0.07) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(180, 0, 255, 0.07) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 0, 170, 0.04) 0%, transparent 60%);
+      animation: nebulaDrift 22s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes nebulaDrift {
+      0%   { transform: scale(1) rotate(0deg); }
+      100% { transform: scale(1.15) rotate(3deg); }
+    }
+
+    /* ============================================================
+       GAME CONTAINER
+       ============================================================ */
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      z-index: 1;
+    }
+
+    /* ============================================================
+       HUD
+       ============================================================ */
+    #hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      padding-top: max(8px, env(safe-area-inset-top));
+      background: rgba(10, 5, 25, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+      z-index: 10;
+      flex-shrink: 0;
+      min-height: 52px;
+      gap: 2px;
+    }
+
+    .hud-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      flex: 1 1 0;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .hud-label {
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .hud-value {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    #score-display { color: var(--neon-cyan); text-shadow: var(--glow-cyan); }
+    #timer-display { color: var(--neon-yellow); text-shadow: 0 0 10px #ffe600, 0 0 30px #ffe60066; }
+    #combo-display { color: var(--neon-pink); text-shadow: var(--glow-pink); }
+    #best-display  { color: var(--neon-purple); text-shadow: var(--glow-purple); }
+
+    #timer-display.low {
+      animation: timerPulse 0.5s ease-in-out infinite alternate;
+      color: var(--neon-red);
+      text-shadow: 0 0 15px #ff2244, 0 0 40px #ff224466;
+    }
+
+    @keyframes timerPulse {
+      from { transform: scale(1); }
+      to   { transform: scale(1.12); }
+    }
+
+    /* Mute button INSIDE the HUD (right side) */
+    #mute-btn {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(0, 240, 255, 0.35);
+      background: rgba(0, 240, 255, 0.06);
+      color: var(--neon-cyan);
+      font-size: 15px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 2px;
+      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    #mute-btn:hover {
+      background: rgba(0, 240, 255, 0.15);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    }
+
+    #mute-btn:active {
+      transform: scale(0.88);
+    }
+
+    /* Combo progress bar */
+    #combo-bar-wrapper {
+      position: relative;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    #combo-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink), var(--neon-yellow));
+      transition: width 0.15s ease-out;
+      box-shadow: 0 0 8px var(--neon-cyan);
+    }
+
+    /* ============================================================
+       PLAY AREA
+       ============================================================ */
+    #play-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      cursor: crosshair;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ============================================================
+       THE DOT
+       ============================================================ */
+    #dot {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffffff, var(--neon-cyan) 40%, var(--neon-purple) 100%);
+      box-shadow:
+        0 0 15px var(--neon-cyan),
+        0 0 40px var(--neon-cyan),
+        0 0 80px rgba(0, 240, 255, 0.4),
+        inset 0 0 10px rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      will-change: left, top, width, height;
+      animation: dotPulse 1.2s ease-in-out infinite;
+      z-index: 5;
+      touch-action: none;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50%      { transform: scale(1.05); filter: brightness(1.3); }
+    }
+
+    /* ============================================================
+       PARTICLES CANVAS
+       ============================================================ */
+    #particles-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    /* ============================================================
+       SCREEN SHAKE
+       ============================================================ */
+    .shake {
+      animation: screenShake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    }
+
+    @keyframes screenShake {
+      0%   { transform: translate(0, 0); }
+      10%  { transform: translate(-6px, -4px); }
+      20%  { transform: translate(6px, 4px); }
+      30%  { transform: translate(-5px, 3px); }
+      40%  { transform: translate(5px, -3px); }
+      50%  { transform: translate(-4px, -2px); }
+      60%  { transform: translate(4px, 2px); }
+      70%  { transform: translate(-2px, 1px); }
+      80%  { transform: translate(2px, -1px); }
+      90%  { transform: translate(-1px, 0); }
+      100% { transform: translate(0, 0); }
+    }
+
+    /* Red flash overlay */
+    #flash-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 30, 60, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+      transition: opacity 0.1s ease-out;
+    }
+
+    #flash-overlay.active {
+      opacity: 1;
+    }
+
+    /* Hit text popup */
+    .hit-popup {
+      position: absolute;
+      font-family: var(--font-main);
+      font-weight: 900;
+      pointer-events: none;
+      z-index: 20;
+      animation: hitPopup 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      white-space: nowrap;
+      letter-spacing: 1px;
+    }
+
+    @keyframes hitPopup {
+      0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+      40%  { opacity: 1; transform: translate(-50%, -100%) scale(1.3); }
+      100% { opacity: 0; transform: translate(-50%, -200%) scale(0.8); }
+    }
+
+    /* Combo milestone flash */
+    #combo-flash {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: 46px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: var(--neon-yellow);
+      text-shadow: 0 0 20px var(--neon-yellow), 0 0 60px #ffe60088, 0 0 100px #ffe60044;
+      pointer-events: none;
+      z-index: 60;
+      opacity: 0;
+      white-space: nowrap;
+    }
+
+    #combo-flash.show {
+      animation: comboFlash 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes comboFlash {
+      0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.3); }
+      50%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+    }
+
+    /* ============================================================
+       BANNER AD PLACEHOLDER
+       ============================================================ */
+    #banner-ad {
+      width: 100%;
+      min-height: 50px;
+      max-height: 70px;
+      background: rgba(10, 5, 25, 0.85);
+      border-top: 1px solid rgba(0, 240, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      z-index: 10;
+      padding-bottom: env(safe-area-inset-bottom);
+      /* === BANNER AD PLACEHOLDER ===
+         Paste your AdSense/AdMob banner ad code here.
+         Example AdSense:
+         <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXX" data-ad-slot="XXXX" data-ad-format="auto" data-full-width-responsive="true"></ins>
+         <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      */
+    }
+
+    /* ============================================================
+       OVERLAY SCREENS
+       ============================================================ */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 0, 15, 0.88);
+      backdrop-filter: blur(18px) saturate(1.4);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      z-index: 100;
+      padding: 24px 16px;
+      padding-top: max(24px, env(safe-area-inset-top));
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      text-align: center;
+      overflow-y: auto;
+      gap: 14px;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .overlay.showing {
+      animation: overlayFadeIn 0.35s ease-out;
+    }
+
+    @keyframes overlayFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .overlay h1 {
+      font-size: clamp(28px, 8vw, 52px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink), var(--neon-yellow));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.5));
+      animation: titleGlow 2s ease-in-out infinite alternate;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+
+    @keyframes titleGlow {
+      from { filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.5)); }
+      to   { filter: drop-shadow(0 0 40px rgba(255, 0, 170, 0.6)); }
+    }
+
+    .overlay p {
+      font-size: clamp(12px, 3.5vw, 15px);
+      color: var(--text-dim);
+      max-width: 340px;
+      line-height: 1.7;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .overlay .highlight {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px var(--neon-cyan);
+      font-weight: 700;
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: var(--font-main);
+      font-weight: 700;
+      font-size: clamp(14px, 4vw, 17px);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 14px 36px;
+      border: 2px solid var(--neon-cyan);
+      border-radius: 50px;
+      background: transparent;
+      color: var(--neon-cyan);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+      text-shadow: 0 0 8px var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 15px rgba(0, 240, 255, 0.05);
+      min-width: 200px;
+      max-width: 320px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+
+    .btn:hover, .btn:active {
+      background: rgba(0, 240, 255, 0.12);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.5), inset 0 0 30px rgba(0, 240, 255, 0.1);
+      transform: scale(1.04);
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn.rewarded {
+      border-color: var(--neon-yellow);
+      color: var(--neon-yellow);
+      text-shadow: 0 0 8px var(--neon-yellow);
+      box-shadow: 0 0 15px rgba(255, 230, 0, 0.3), inset 0 0 15px rgba(255, 230, 0, 0.05);
+      font-size: clamp(12px, 3.4vw, 14px);
+      padding: 12px 28px;
+    }
+
+    .btn.rewarded:hover, .btn.rewarded:active {
+      background: rgba(255, 230, 0, 0.12);
+      box-shadow: 0 0 30px rgba(255, 230, 0, 0.5), inset 0 0 30px rgba(255, 230, 0, 0.1);
+    }
+
+    .btn.rewarded:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Stats on game over */
+    .stats-grid {
+      display: flex;
+      gap: 16px;
+      margin: 6px 0;
+      flex-wrap: wrap;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 78px;
+    }
+
+    .stat-value {
+      font-size: clamp(22px, 6vw, 30px);
+      font-weight: 900;
+      letter-spacing: 1px;
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    #final-score { color: var(--neon-cyan); text-shadow: var(--glow-cyan); }
+    #final-best  { color: var(--neon-purple); text-shadow: var(--glow-purple); }
+    #final-combo { color: var(--neon-pink); text-shadow: var(--glow-pink); }
+
+    /* New best badge */
+    #new-best-badge {
+      display: none;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--neon-yellow);
+      text-shadow: 0 0 15px var(--neon-yellow);
+      animation: newBestPulse 0.6s ease-in-out infinite alternate;
+      flex-shrink: 0;
+    }
+
+    #new-best-badge.visible { display: block; }
+
+    @keyframes newBestPulse {
+      from { transform: scale(1); opacity: 0.7; }
+      to   { transform: scale(1.15); opacity: 1; }
+    }
+
+    /* ============================================================
+       AD OVERLAY (simulated)
+       ============================================================ */
+    #ad-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.94);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      color: var(--text-dim);
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      gap: 18px;
+      transition: opacity 0.3s ease;
+    }
+
+    #ad-overlay.hidden {
+      display: none;
+    }
+
+    .ad-spinner {
+      width: 42px;
+      height: 42px;
+      border: 3px solid rgba(0, 240, 255, 0.2);
+      border-top-color: var(--neon-cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ============================================================
+       RESPONSIVE TWEAKS
+       ============================================================ */
+    @media (max-height: 640px) {
+      .overlay h1 { font-size: 26px; }
+      .overlay p { font-size: 11px; }
+      .btn { padding: 11px 26px; font-size: 13px; }
+      .overlay { gap: 10px; padding: 16px 12px; }
+      #hud { min-height: 44px; padding: 5px 8px; }
+      .hud-value { font-size: 14px; }
+      .hud-label { font-size: 7px; }
+      #mute-btn { width: 30px; height: 30px; font-size: 13px; }
+    }
+
+    @media (min-width: 768px) {
+      #hud { padding: 12px 22px; }
+      .hud-value { font-size: 22px; }
+      .hud-label { font-size: 10px; }
+      #mute-btn { width: 38px; height: 38px; font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GAME CONTAINER -->
+  <div id="game-container">
+
+    <!-- HUD (with mute button inside) -->
+    <div id="hud">
+      <div class="hud-item">
+        <span class="hud-label">Score</span>
+        <span class="hud-value" id="score-display">0</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Time</span>
+        <span class="hud-value" id="timer-display">30</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Combo</span>
+        <span class="hud-value" id="combo-display">x1</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Best</span>
+        <span class="hud-value" id="best-display">0</span>
+      </div>
+      <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    </div>
+
+    <!-- Combo progress bar -->
+    <div id="combo-bar-wrapper">
+      <div id="combo-bar"></div>
+    </div>
+
+    <!-- PLAY AREA -->
+    <div id="play-area">
+      <canvas id="particles-canvas"></canvas>
+      <div id="dot" style="display:none;"></div>
+    </div>
+
+    <!-- BANNER AD PLACEHOLDER -->
+    <div id="banner-ad">
+      <!-- BANNER AD PLACEHOLDER -->
+      <!-- Paste your AdSense/AdMob banner code inside this div -->
+      Banner Ad
+    </div>
+
+  </div>
+
+  <!-- RED FLASH OVERLAY -->
+  <div id="flash-overlay"></div>
+
+  <!-- COMBO MILESTONE FLASH -->
+  <div id="combo-flash"></div>
+
+  <!-- START SCREEN -->
+  <div class="overlay" id="start-screen">
+    <h1>Click the Dot</h1>
+    <p>
+      Tap the glowing dot as fast as you can.<br>
+      <span class="highlight">30 seconds</span> on the clock.<br>
+      Miss = <span class="highlight">−1s</span> &amp; combo reset.<br>
+      Build combos for <span class="highlight">up to 5×</span> points!
+    </p>
+    <button class="btn" id="start-btn">Start Game</button>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div class="overlay hidden" id="gameover-screen">
+    <h1>Game Over</h1>
+    <div id="new-best-badge">★ NEW BEST ★</div>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <span class="stat-value" id="final-score">0</span>
+        <span class="stat-label">Score</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="final-best">0</span>
+        <span class="stat-label">Best</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="final-combo">x1</span>
+        <span class="stat-label">Max Combo</span>
+      </div>
+    </div>
+    <button class="btn" id="try-again-btn">Try Again</button>
+    <button class="btn rewarded" id="rewarded-btn">▶ Watch Ad to Continue (+10s)</button>
+  </div>
+
+  <!-- AD OVERLAY (simulated) -->
+  <div id="ad-overlay" class="hidden">
+    <div class="ad-spinner"></div>
+    <span id="ad-overlay-text">Loading Ad...</span>
+  </div>
+
+  <script>
+    'use strict';
+
+    /* ============================================================
+       GAME STATE
+       ============================================================ */
+    const STATE = {
+      running: false,
+      paused: false,
+      score: 0,
+      best: 0,
+      combo: 0,
+      multiplier: 1,
+      maxCombo: 0,
+      timeLeft: 30,
+      gameOverCount: 0,
+      rewardedUsed: false,
+      soundMuted: false,
+      dotSize: 80,
+    };
+
+    /* ============================================================
+       DOM REFERENCES
+       ============================================================ */
+    const $ = (id) => document.getElementById(id);
+    const playArea = $('play-area');
+    const dot = $('dot');
+    const scoreDisplay = $('score-display');
+    const timerDisplay = $('timer-display');
+    const comboDisplay = $('combo-display');
+    const bestDisplay = $('best-display');
+    const comboBar = $('combo-bar');
+    const startScreen = $('start-screen');
+    const gameoverScreen = $('gameover-screen');
+    const finalScoreEl = $('final-score');
+    const finalBestEl = $('final-best');
+    const finalComboEl = $('final-combo');
+    const newBestBadge = $('new-best-badge');
+    const flashOverlay = $('flash-overlay');
+    const comboFlash = $('combo-flash');
+    const particlesCanvas = $('particles-canvas');
+    const muteBtn = $('mute-btn');
+    const adOverlay = $('ad-overlay');
+    const adOverlayText = $('ad-overlay-text');
+    const rewardedBtn = $('rewarded-btn');
+    const tryAgainBtn = $('try-again-btn');
+    const startBtn = $('start-btn');
+
+    /* ============================================================
+       AUDIO ENGINE (Web Audio API — synthesized SFX)
+       ============================================================ */
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+          console.warn('Web Audio API not supported');
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    /** Bright synth "pop" for hitting the dot. */
+    function playPopSound() {
+      if (STATE.soundMuted || !audioCtx) return;
+      const t = audioCtx.currentTime;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(850 + Math.random() * 350, t);
+      osc.frequency.exponentialRampToValueAtTime(180, t + 0.08);
+      gain.gain.setValueAtTime(0.35, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.14);
+
+      // Crisp high "tick"
+      const tick = audioCtx.createOscillator();
+      const tickGain = audioCtx.createGain();
+      tick.type = 'square';
+      tick.frequency.setValueAtTime(3200, t);
+      tickGain.gain.setValueAtTime(0.06, t);
+      tickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+      tick.connect(tickGain);
+      tickGain.connect(audioCtx.destination);
+      tick.start(t);
+      tick.stop(t + 0.04);
+    }
+
+    /** Descending "miss" sound. */
+    function playMissSound() {
+      if (STATE.soundMuted || !audioCtx) return;
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, t);
+      osc.frequency.exponentialRampToValueAtTime(70, t + 0.28);
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.35);
+    }
+
+    /** Ascending chime for combo milestones. */
+    function playComboMilestoneSound(multiplier) {
+      if (STATE.soundMuted || !audioCtx) return;
+      const t = audioCtx.currentTime;
+      const baseFreq = 500 + multiplier * 160;
+      for (let i = 0; i < 3; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq + i * 220, t + i * 0.06);
+        gain.gain.setValueAtTime(0.16, t + i * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.16);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t + i * 0.06);
+        osc.stop(t + i * 0.06 + 0.18);
+      }
+    }
+
+    /** Sad descending tone for game over. */
+    function playGameOverSound() {
+      if (STATE.soundMuted || !audioCtx) return;
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(420, t);
+      osc.frequency.exponentialRampToValueAtTime(90, t + 0.9);
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 1.05);
+    }
+
+    /** Short haptic tap (mobile). */
+    function vibrate(pattern) {
+      if (navigator.vibrate) {
+        try { navigator.vibrate(pattern); } catch (e) { /* no-op */ }
+      }
+    }
+
+    /* ============================================================
+       PARTICLE SYSTEM
+       ============================================================ */
+    const ctx = particlesCanvas.getContext('2d');
+    let particles = [];
+    let rings = [];
+    let animFrameId = null;
+
+    function resizeCanvas() {
+      const rect = playArea.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      particlesCanvas.width = Math.max(1, rect.width * dpr);
+      particlesCanvas.height = Math.max(1, rect.height * dpr);
+      particlesCanvas.style.width = rect.width + 'px';
+      particlesCanvas.style.height = rect.height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+
+    function spawnParticles(x, y, color) {
+      const count = 12 + Math.floor(STATE.multiplier * 4);
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.8;
+        const speed = 2 + Math.random() * 5 + STATE.multiplier * 0.8;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          decay: 0.015 + Math.random() * 0.02,
+          size: 2 + Math.random() * 4,
+          color: color || '#00f0ff',
+        });
+      }
+    }
+
+    function spawnRing(x, y, color) {
+      rings.push({
+        x, y,
+        radius: 5,
+        maxRadius: 40 + STATE.multiplier * 12,
+        life: 1,
+        decay: 0.035,
+        color: color || '#00f0ff',
+      });
+    }
+
+    function animateParticles() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = particlesCanvas.width / dpr;
+      const h = particlesCanvas.height / dpr;
+      ctx.clearRect(0, 0, w, h);
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.97;
+        p.vy *= 0.97;
+        p.vy += 0.08;
+        p.life -= p.decay;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(0.1, p.size * p.life), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (let i = rings.length - 1; i >= 0; i--) {
+        const r = rings[i];
+        r.radius += (r.maxRadius - r.radius) * 0.15;
+        r.life -= r.decay;
+        if (r.life <= 0) { rings.splice(i, 1); continue; }
+        ctx.globalAlpha = r.life * 0.6;
+        ctx.strokeStyle = r.color;
+        ctx.lineWidth = 2 + r.life * 2;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = r.color;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+      animFrameId = requestAnimationFrame(animateParticles);
+    }
+
+    function startParticleLoop() {
+      if (!animFrameId) animFrameId = requestAnimationFrame(animateParticles);
+    }
+
+    function stopParticleLoop() {
+      if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+      particles = [];
+      rings = [];
+      ctx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
+    }
+
+    /* ============================================================
+       HELPERS
+       ============================================================ */
+    function getEventCoords(e) {
+      if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+      if (e.changedTouches && e.changedTouches.length > 0) {
+        return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+      }
+      return { x: e.clientX || 0, y: e.clientY || 0 };
+    }
+
+    function showHitPopup(x, y, text, color) {
+      const el = document.createElement('div');
+      el.className = 'hit-popup';
+      el.textContent = text;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.color = color || '#00f0ff';
+      el.style.textShadow = `0 0 10px ${color || '#00f0ff'}, 0 0 30px ${color || '#00f0ff'}66`;
+      el.style.fontSize = (18 + STATE.multiplier * 4) + 'px';
+      playArea.appendChild(el);
+      setTimeout(() => el.remove(), 700);
+    }
+
+    /* ============================================================
+       DOT
+       ============================================================ */
+    function moveDot() {
+      const areaRect = playArea.getBoundingClientRect();
+      const size = STATE.dotSize;
+      const maxX = areaRect.width - size;
+      const maxY = areaRect.height - size;
+      if (maxX <= 0 || maxY <= 0) return;
+
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+
+      dot.style.width = size + 'px';
+      dot.style.height = size + 'px';
+      dot.style.left = x + 'px';
+      dot.style.top = y + 'px';
+      dot.style.display = 'block';
+    }
+
+    function updateDotSize() {
+      const shrinkFactor = Math.min(STATE.score / 120, 1);
+      STATE.dotSize = Math.max(30, 80 - shrinkFactor * 50);
+    }
+
+    /* ============================================================
+       EFFECTS
+       ============================================================ */
+    function screenShake() {
+      document.body.classList.remove('shake');
+      void document.body.offsetWidth;
+      document.body.classList.add('shake');
+      setTimeout(() => document.body.classList.remove('shake'), 400);
+    }
+
+    function redFlash() {
+      flashOverlay.classList.add('active');
+      setTimeout(() => flashOverlay.classList.remove('active'), 120);
+    }
+
+    function showComboMilestone(multiplier) {
+      comboFlash.textContent = `${multiplier}× COMBO!`;
+      comboFlash.classList.remove('show');
+      void comboFlash.offsetWidth;
+      comboFlash.classList.add('show');
+      playComboMilestoneSound(multiplier);
+    }
+
+    /* ============================================================
+       HUD
+       ============================================================ */
+    function updateHUD() {
+      scoreDisplay.textContent = STATE.score;
+      timerDisplay.textContent = Math.max(0, Math.ceil(STATE.timeLeft));
+      comboDisplay.textContent = `x${STATE.multiplier}`;
+      bestDisplay.textContent = STATE.best;
+
+      const progress = ((STATE.combo % 5) / 5) * 100;
+      comboBar.style.width = progress + '%';
+
+      if (STATE.timeLeft <= 5 && STATE.running) {
+        timerDisplay.classList.add('low');
+      } else {
+        timerDisplay.classList.remove('low');
+      }
+    }
+
+    /* ============================================================
+       HIT
+       ============================================================ */
+    let lastHitTime = 0;
+    function handleHit(e) {
+      if (!STATE.running || STATE.paused) return;
+      const now = performance.now();
+      if (now - lastHitTime < 60) return; // debounce accidental double-fire
+      lastHitTime = now;
+
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
+
+      // Score: 1 × multiplier
+      const points = 1 * STATE.multiplier;
+      STATE.score += points;
+      STATE.combo++;
+      STATE.maxCombo = Math.max(STATE.maxCombo, STATE.combo);
+
+      // Multiplier milestone every 5 hits (max 5x)
+      if (STATE.combo > 0 && STATE.combo % 5 === 0) {
+        if (STATE.multiplier < 5) {
+          STATE.multiplier++;
+          showComboMilestone(STATE.multiplier);
+        }
+      }
+
+      // Shrink dot, then move
+      updateDotSize();
+
+      // Capture click coords (for particles) — use event coords, not post-move dot position
+      const coords = getEventCoords(e);
+      const areaRect = playArea.getBoundingClientRect();
+      let localX = coords.x - areaRect.left;
+      let localY = coords.y - areaRect.top;
+      // Fallback to dot center if coords are missing
+      if (!localX && !localY) {
+        const dotRect = dot.getBoundingClientRect();
+        localX = dotRect.left - areaRect.left + dotRect.width / 2;
+        localY = dotRect.top - areaRect.top + dotRect.height / 2;
+      }
+
+      moveDot();
+
+      // Effects
+      spawnParticles(localX, localY, '#00f0ff');
+      spawnRing(localX, localY, '#00f0ff');
+      showHitPopup(localX, localY - 20, `+${points}`, '#00f0ff');
+      playPopSound();
+      vibrate(10);
+
+      // Subtle shake
+      document.body.classList.remove('shake');
+      void document.body.offsetWidth;
+      document.body.classList.add('shake');
+      setTimeout(() => document.body.classList.remove('shake'), 300);
+
+      updateHUD();
+    }
+
+    /* ============================================================
+       MISS
+       ============================================================ */
+    function handleMiss(e) {
+      if (!STATE.running || STATE.paused) return;
+      if (e.target === dot || dot.contains(e.target)) return;
+
+      // Reset combo
+      STATE.combo = 0;
+      STATE.multiplier = 1;
+
+      // Subtract 1 second
+      STATE.timeLeft = Math.max(0, STATE.timeLeft - 1);
+
+      // Effects
+      redFlash();
+      screenShake();
+      playMissSound();
+      vibrate([30, 20, 30]);
+
+      const coords = getEventCoords(e);
+      const areaRect = playArea.getBoundingClientRect();
+      const localX = coords.x - areaRect.left;
+      const localY = coords.y - areaRect.top;
+      spawnParticles(localX, localY, '#ff2244');
+      spawnRing(localX, localY, '#ff2244');
+
+      updateHUD();
+
+      if (STATE.timeLeft <= 0) {
+        endGame();
+      }
+    }
+
+    /* ============================================================
+       GAME LOOP (timer via requestAnimationFrame)
+       ============================================================ */
+    let lastTimestamp = 0;
+
+    function gameLoop(timestamp) {
+      if (!STATE.running) return;
+
+      if (lastTimestamp === 0) {
+        lastTimestamp = timestamp;
+        requestAnimationFrame(gameLoop);
+        return;
+      }
+
+      const delta = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      if (!STATE.paused) {
+        STATE.timeLeft -= delta;
+        if (STATE.timeLeft <= 0) {
+          STATE.timeLeft = 0;
+          updateHUD();
+          endGame();
+          return;
+        }
+        updateHUD();
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    /* ============================================================
+       START GAME
+       ============================================================ */
+    function startGame() {
+      initAudio();
+
+      // Reset gameplay state (keep gameOverCount across games)
+      STATE.running = true;
+      STATE.paused = false;
+      STATE.score = 0;
+      STATE.combo = 0;
+      STATE.multiplier = 1;
+      STATE.maxCombo = 0;
+      STATE.timeLeft = 30;
+      STATE.dotSize = 80;
+      STATE.rewardedUsed = false;
+      lastTimestamp = 0;
+      lastHitTime = 0;
+      particles = [];
+      rings = [];
+
+      // Hide overlays
+      hideOverlay(startScreen);
+      hideOverlay(gameoverScreen);
+      adOverlay.classList.add('hidden');
+
+      // Reset rewarded button
+      rewardedBtn.style.display = 'block';
+      rewardedBtn.disabled = false;
+      rewardedBtn.textContent = '▶ Watch Ad to Continue (+10s)';
+
+      // Show dot
+      dot.style.display = 'block';
+
+      // Position dot, start loops
+      requestAnimationFrame(() => {
+        resizeCanvas();
+        moveDot();
+        updateHUD();
+        startParticleLoop();
+        requestAnimationFrame(gameLoop);
+      });
+    }
+
+    /* ============================================================
+       END GAME
+       ============================================================ */
+    function endGame() {
+      if (!STATE.running) return; // guard against double-call
+      STATE.running = false;
+      STATE.paused = false;
+
+      dot.style.display = 'none';
+      stopParticleLoop();
+      playGameOverSound();
+      vibrate([80, 40, 120]);
+
+      // Update best score
+      const isNewBest = STATE.score > STATE.best;
+      if (isNewBest) {
+        STATE.best = STATE.score;
+        try { localStorage.setItem('clickTheDot_best', String(STATE.best)); } catch (e) {}
+      }
+
+      // Populate game-over screen
+      finalScoreEl.textContent = STATE.score;
+      finalBestEl.textContent = STATE.best;
+      // "Max combo" as multiplier tier reached
+      const maxMulti = Math.min(5, Math.floor(STATE.maxCombo / 5) + 1);
+      finalComboEl.textContent = `x${maxMulti}`;
+
+      if (isNewBest && STATE.score > 0) {
+        newBestBadge.classList.add('visible');
+      } else {
+        newBestBadge.classList.remove('visible');
+      }
+
+      // Increment game-over counter BEFORE showing screen (used by Try Again interstitial)
+      STATE.gameOverCount++;
+
+      // Show game over screen (reliable: display + fade-in class)
+      showOverlay(gameoverScreen);
+    }
+
+    /* ============================================================
+       OVERLAY SHOW/HIDE HELPERS (reliable visibility)
+       ============================================================ */
+    function showOverlay(el) {
+      el.classList.remove('hidden');
+      el.classList.remove('showing');
+      void el.offsetWidth;
+      el.classList.add('showing');
+      setTimeout(() => el.classList.remove('showing'), 400);
+    }
+
+    function hideOverlay(el) {
+      el.classList.add('hidden');
+      el.classList.remove('showing');
+    }
+
+    /* ============================================================
+       TRY AGAIN (with interstitial check)
+       ============================================================ */
+    function tryAgain() {
+      initAudio();
+      hideOverlay(gameoverScreen);
+
+      // Interstitial every 3rd game over — before allowing replay
+      if (STATE.gameOverCount > 0 && STATE.gameOverCount % 3 === 0) {
+        showInterstitialAd(() => {
+          startGame();
+        });
+      } else {
+        startGame();
+      }
+    }
+
+    /* ============================================================
+       BEST SCORE
+       ============================================================ */
+    function loadBestScore() {
+      try {
+        const saved = localStorage.getItem('clickTheDot_best');
+        STATE.best = saved ? parseInt(saved, 10) || 0 : 0;
+      } catch (e) {
+        STATE.best = 0;
+      }
+      bestDisplay.textContent = STATE.best;
+    }
+
+    /* ============================================================
+       AD PLACEHOLDER FUNCTIONS
+       ============================================================ */
+
+    /**
+     * showInterstitialAd(onComplete)
+     * ------------------------------
+     * Simulates an interstitial ad. Shows an overlay for ~3 seconds.
+     *
+     * === REAL AD INTEGRATION ===
+     * Paste your AdSense/AdMob interstitial code here.
+     * Example AdSense:
+     *   (adsbygoogle = window.adsbygoogle || []).push({});
+     * Example AdMob (Cordova/Capacitor):
+     *   admob.interstitial.load({ id: 'ca-app-pub-XXXX/YYYY' });
+     *   admob.interstitial.show().then(onComplete);
+     */
+    function showInterstitialAd(onComplete) {
+      console.log('[AD] Interstitial ad would show here.');
+      console.log('[AD] Paste AdSense/AdMob interstitial code in showInterstitialAd()');
+
+      adOverlayText.textContent = 'Interstitial Ad (simulated)';
+      adOverlay.classList.remove('hidden');
+
+      setTimeout(() => {
+        adOverlay.classList.add('hidden');
+        console.log('[AD] Interstitial ad finished.');
+        if (typeof onComplete === 'function') onComplete();
+      }, 3000);
+    }
+
+    /**
+     * showRewardedAd(onComplete)
+     * --------------------------
+     * Simulates a rewarded ad. Shows an overlay for ~3 seconds,
+     * then calls onComplete() to grant the reward.
+     *
+     * === REAL AD INTEGRATION ===
+     * Paste your AdSense/AdMob rewarded ad code here.
+     * Example AdMob (Cordova/Capacitor):
+     *   admob.rewarded.load({ id: 'ca-app-pub-XXXX/YYYY' });
+     *   admob.rewarded.show().then(() => onComplete());
+     */
+    function showRewardedAd(onComplete) {
+      console.log('[AD] Rewarded ad would show here.');
+      console.log('[AD] Paste AdSense/AdMob rewarded code in showRewardedAd()');
+
+      adOverlayText.textContent = 'Rewarded Ad (simulated)';
+      adOverlay.classList.remove('hidden');
+
+      setTimeout(() => {
+        adOverlay.classList.add('hidden');
+        console.log('[AD] Rewarded ad finished. Calling onComplete().');
+        if (typeof onComplete === 'function') onComplete();
+      }, 3000);
+    }
+
+    /* ============================================================
+       EVENT LISTENERS
+       ============================================================ */
+
+    // Dot hit — pointerdown unifies mouse + touch (prevents double-fire)
+    dot.addEventListener('pointerdown', handleHit);
+    // Keyboard accessibility fallback
+    dot.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') handleHit(e);
+    });
+
+    // Play area miss
+    playArea.addEventListener('pointerdown', (e) => {
+      if (e.target !== dot && !dot.contains(e.target)) {
+        handleMiss(e);
+      }
+    });
+
+    // Start button
+    startBtn.addEventListener('click', startGame);
+
+    // Try Again button
+    tryAgainBtn.addEventListener('click', tryAgain);
+
+    // Rewarded Ad button
+    rewardedBtn.addEventListener('click', () => {
+      if (STATE.rewardedUsed) return;
+      STATE.rewardedUsed = true;
+      rewardedBtn.disabled = true;
+      rewardedBtn.textContent = 'Ad Watched ✓';
+
+      showRewardedAd(() => {
+        // Grant reward: +10 seconds, resume current game
+        STATE.timeLeft += 10;
+        STATE.running = true;
+        STATE.paused = false;
+        STATE.rewardedUsed = true;
+
+        hideOverlay(gameoverScreen);
+        dot.style.display = 'block';
+        moveDot();
+
+        startParticleLoop();
+        lastTimestamp = 0;
+        requestAnimationFrame(gameLoop);
+        updateHUD();
+
+        // Reset button styling for next session
+        rewardedBtn.disabled = false;
+        rewardedBtn.textContent = '▶ Watch Ad to Continue (+10s)';
+      });
+    });
+
+    // Mute button
+    muteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      STATE.soundMuted = !STATE.soundMuted;
+      muteBtn.textContent = STATE.soundMuted ? '🔇' : '🔊';
+      muteBtn.setAttribute('aria-label', STATE.soundMuted ? 'Unmute' : 'Mute');
+      if (!STATE.soundMuted) initAudio();
+    });
+
+    /* ============================================================
+       PREVENT SCROLL / ZOOM / LONG-PRESS
+       ============================================================ */
+    document.addEventListener('touchmove', (e) => {
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+    document.addEventListener('gesturechange', (e) => e.preventDefault());
+    document.addEventListener('gestureend', (e) => e.preventDefault());
+
+    // Prevent double-tap zoom
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 320) {
+        if (e.cancelable) e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // Prevent context menu (long press)
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Pause when tab hidden (avoid huge delta)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && STATE.running) {
+        STATE.paused = true;
+      } else if (!document.hidden && STATE.running) {
+        STATE.paused = false;
+        lastTimestamp = 0;
+      }
+    });
+
+    /* ============================================================
+       INIT
+       ============================================================ */
+    function init() {
+      loadBestScore();
+      updateHUD();
+      resizeCanvas();
+      startParticleLoop();
+      dot.style.display = 'none';
+      // Ensure overlays have correct initial state
+      startScreen.classList.remove('hidden');
+      gameoverScreen.classList.add('hidden');
+      adOverlay.classList.add('hidden');
+
+      console.log('%c Click the Dot ', 'font-size:20px; font-weight:bold; color:#00f0ff; text-shadow:0 0 10px #00f0ff;');
+      console.log('%c Ready to play! ', 'font-size:14px; color:#ff00aa;');
+    }
+
+    if (document.readyState === 'complete') {
+      init();
+    } else {
+      window.addEventListener('load', init);
+    }
+
+  </script>
+</body>
+</html>

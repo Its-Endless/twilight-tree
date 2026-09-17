@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a1a">
+<title>About · Twilight Tree</title>
+<meta name="description" content="Learn about Twilight Tree — a growing collection of free browser games.">
+<meta name="author" content="Shubhang Gupta">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="arcade-body">
+
+<header class="site-header">
+  <a href="index.html" class="logo"><span class="logo-icon">🌲</span><span class="logo-text">TWILIGHT TREE</span></a>
+  <nav class="site-nav">
+    <a href="index.html">Arcade</a>
+    <a href="about.html" class="active">About</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+</header>
+
+<main class="page-content">
+  <h1>About Twilight Tree</h1>
+  <p>Twilight Tree is a growing collection of free browser games — no downloads, no sign-ups, no nonsense. Just click and play.</p>
+
+  <h2>Our Philosophy</h2>
+  <p>We believe games should be instantly accessible. Every game on Twilight Tree loads in seconds, works on phones and laptops, and requires nothing more than a browser.</p>
+
+  <h2>What's Inside</h2>
+  <ul>
+    <li><strong>Click the Dot</strong> — a fast reaction game with combo multipliers.</li>
+    <li><strong>Star Vanguard</strong> — an endless wave-based space shooter with upgrades.</li>
+    <li>…and many more games on the way. Bookmark the site to see new additions.</li>
+  </ul>
+
+  <h2>How It Stays Free</h2>
+  <p>Twilight Tree is supported by non-intrusive display ads. They keep the lights on without interrupting your play session. If you enjoy the games, sharing them with a friend is the best way to help.</p>
+
+  <h2>Built By</h2>
+  <p>Twilight Tree is made by <strong>Shubhang Gupta</strong> — a solo indie developer building small, satisfying games.</p>
+
+  <p class="muted">Last updated: <span id="updated"></span></p>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-col"><h4>Twilight Tree</h4><p>A growing collection of free browser games.</p></div>
+    <div class="footer-col"><h4>Pages</h4>
+      <a href="index.html">Arcade</a><a href="about.html">About</a>
+      <a href="privacy.html">Privacy Policy</a><a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-col"><h4>Contact</h4><a href="mailto:shubhgupta916@gmail.com">shubhgupta916@gmail.com</a></div>
+  </div>
+  <div class="footer-bottom"><p>© <span id="year"></span> Twilight Tree. All rights reserved.</p></div>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+  document.getElementById('updated').textContent = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+</script>
+</body>
+</html>

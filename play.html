@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Play · Twilight Tree</title>
+<meta name="description" content="Play free browser games on Twilight Tree.">
+
+<!-- Google AdSense — replace ca-pub-XXXXXXXXXXXXXXXX after approval -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="play-body">
+
+<header class="play-header">
+  <button id="back-btn" class="icon-btn" aria-label="Back to arcade">←</button>
+  <div class="play-title" id="play-title">Loading…</div>
+  <button id="fullscreen-btn" class="icon-btn" aria-label="Fullscreen">⛶</button>
+  <button id="share-btn" class="icon-btn" aria-label="Share">↗</button>
+</header>
+
+<div class="play-frame-wrapper">
+  <div class="play-loading" id="play-loading">
+    <div class="spinner"></div>
+    <span>Loading game…</span>
+  </div>
+  <iframe id="game-frame" src="about:blank"
+          allow="fullscreen; autoplay; gamepad; accelerometer; gyroscope"
+          allowfullscreen
+          title="Game"></iframe>
+</div>
+
+<script src="games.js"></script>
+<script>
+  'use strict';
+
+  /* ============================================================
+     PARSE ?id= FROM URL
+     ============================================================ */
+  const params = new URLSearchParams(window.location.search);
+  const gameId = params.get('id');
+  const game = window.GAMES.find(g => g.id === gameId);
+
+  const titleEl = document.getElementById('play-title');
+  const frame = document.getElementById('game-frame');
+  const loading = document.getElementById('play-loading');
+  const backBtn = document.getElementById('back-btn');
+  const fullscreenBtn = document.getElementById('fullscreen-btn');
+  const shareBtn = document.getElementById('share-btn');
+
+  if (!game) {
+    titleEl.textContent = 'Game Not Found';
+    loading.innerHTML = '<span style="letter-spacing:2px;text-transform:uppercase;color:#8888aa;font-size:0.8rem;">This game does not exist.</span>';
+    frame.style.display = 'none';
+  } else {
+    document.title = game.title + ' · Twilight Tree';
+    titleEl.textContent = game.title;
+
+    // Load game into iframe
+    frame.src = game.file;
+
+    // Hide loading once iframe finishes loading
+    frame.addEventListener('load', () => {
+      if (frame.src !== 'about:blank') {
+        loading.classList.add('hidden');
+      }
+    });
+
+    // Safety: force-hide loading after 6s
+    setTimeout(() => loading.classList.add('hidden'), 6000);
+
+    // Record to "Recently Played"
+    try {
+      const KEY = 'twilighttree_recent';
+      const MAX = 4;
+      const raw = localStorage.getItem(KEY);
+      let list = raw ? JSON.parse(raw) : [];
+      list = list.filter(id => id !== game.id);
+      list.unshift(game.id);
+      list = list.slice(0, MAX);
+      localStorage.setItem(KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  /* ============================================================
+     BACK BUTTON
+     ============================================================ */
+  backBtn.addEventListener('click', () => {
+    window.location.href = 'index.html';
+  });
+
+  /* ============================================================
+     FULLSCREEN
+     ============================================================ */
+  fullscreenBtn.addEventListener('click', async () => {
+    try {
+      const target = document.querySelector('.play-frame-wrapper');
+      if (!document.fullscreenElement) {
+        if (target.requestFullscreen) await target.requestFullscreen();
+        else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
+      } else {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      }
+    } catch (e) { /* user cancelled or not supported */ }
+  });
+
+  // Update fullscreen icon on change
+  document.addEventListener('fullscreenchange', () => {
+    fullscreenBtn.textContent = document.fullscreenElement ? '⛶' : '⛶';
+  });
+
+  /* ============================================================
+     SHARE
+     ============================================================ */
+  shareBtn.addEventListener('click', async () => {
+    const shareData = {
+      title: game ? game.title + ' · Twilight Tree' : 'Twilight Tree',
+      text: game ? 'Playing ' + game.title + ' on Twilight Tree!' : 'Check out Twilight Tree!',
+      url: window.location.href
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('Link copied!');
+      } else {
+        prompt('Copy this link:', window.location.href);
+      }
+    } catch (e) { /* cancelled */ }
+  });
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = `
+      position:fixed;top:70px;left:50%;transform:translateX(-50%);
+      padding:0.6rem 1.2rem;background:rgba(0,240,255,0.15);
+      border:1px solid #00f0ff;border-radius:50px;color:#00f0ff;
+      font-family:'Orbitron',sans-serif;font-size:0.75rem;
+      letter-spacing:2px;text-transform:uppercase;z-index:1000;
+      backdrop-filter:blur(10px);box-shadow:0 0 25px rgba(0,240,255,0.4);
+      transition:opacity 0.3s;
+    `;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; }, 1500);
+    setTimeout(() => t.remove(), 1900);
+  }
+</script>
+</body>
+</html>
