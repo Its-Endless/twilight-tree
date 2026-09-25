@@ -1585,25 +1585,33 @@
     }
 
     // ============ SHOOTING ============
-    function playerShoot() {
+        function playerShoot() {
         if (gameState !== 'playing' || waveState !== 'fighting') return;
         const dmg = getUpgradeValue('damage');
         const bSpeed = getUpgradeValue('bulletSpeed');
         const multishot = getUpgradeValue('multishot');
+
+        // Determine total shots
         let shots = 1 + multishot;
-        let spread = shots > 1 ? 0.12 : 0;
-        if (tripleShotActive) { shots = Math.max(shots, 3); spread = 0.14; }
+        if (tripleShotActive) shots = Math.max(shots, 3);
+
+        // All bullets travel STRAIGHT UP (vx = 0)
+        // Multiple shots are spaced horizontally at spawn, not angled
+        const spacing = 14; // pixels between parallel bullets
 
         for (let i = 0; i < shots; i++) {
-            const offset = shots > 1 ? (i - (shots - 1) / 2) * spread : 0;
+            const xOffset = shots > 1 ? (i - (shots - 1) / 2) * spacing : 0;
             bullets.push({
-                x: player.x,
+                x: player.x + xOffset,
                 y: player.y - player.radius,
-                vx: Math.sin(offset) * bSpeed,
-                vy: -Math.cos(offset) * bSpeed,
-                radius: 5, damage: dmg, trail: []
+                vx: 0,              // ← straight up (no horizontal velocity)
+                vy: -bSpeed,        // ← straight up
+                radius: 5,
+                damage: dmg,
+                trail: []
             });
         }
+
         let cd = getUpgradeValue('fireRate');
         if (rapidFireActive) cd = Math.max(3, Math.floor(cd * 0.55));
         fireCooldown = cd;
