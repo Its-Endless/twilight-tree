@@ -33,16 +33,28 @@ window.GAMES = [
   }
   ,
   {
-  "id": "whack-a-mole",
-  "title": "Whack-a-Mole",
-  "description": "Tap the moles, dodge the bombs, and chase the combo multiplier in 30 seconds of pure arcade mayhem.",
-  "category": "Reaction",
-  "emoji": "🔨",
-  "gradient": ["#FFD700", "#FF3DAE"],
-  "accent": "#FFD700",
-  "file": "games/whack-a-mole.html",
-  "isNew": true
-}
+    "id": "whack-a-mole",
+    "title": "Whack-a-Mole",
+    "description": "Tap the moles, dodge the bombs, and chase the combo multiplier in 30 seconds of pure arcade mayhem.",
+    "category": "Reaction",
+    "emoji": "🔨",
+    "gradient": ["#FFD700", "#FF3DAE"],
+    "accent": "#FFD700",
+    "file": "games/whack-a-mole.html",
+    "isNew": true
+  }
+  ,
+  {
+    id: "stickman-archer",
+    title: "Stickman Archer",
+    description: "Short, punchy description of the game.",
+    category: "Action",
+    emoji: "🧩",
+    gradient: ["#00ff88", "#00f0ff"],
+    accent: "#00ff88",
+    file: "games/stickman-archer.html",
+    isNew: true
+  }
   /* === ADD YOUR NEXT GAME HERE ===
   ,
   {
