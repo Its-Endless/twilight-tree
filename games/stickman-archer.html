@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#1b2a4a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Stickman Archer — Endless</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
@@ -32,6 +35,60 @@
     touch-action:none;
   }
   canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+
+  /* =========================================================
+     ROTATE DEVICE OVERLAY (mobile portrait only)
+     ========================================================= */
+  #rotate-overlay{
+    position:fixed;inset:0;
+    display:none;                       /* hidden by default (desktop) */
+    flex-direction:column;align-items:center;justify-content:center;
+    gap:1.4em;
+    background:radial-gradient(circle at 50% 40%, #1b2a4a, #080d16 70%);
+    color:#eaf6ff;text-align:center;
+    z-index:99999;
+    padding:2em;
+    padding-top:calc(2em + env(safe-area-inset-top));
+    padding-bottom:calc(2em + env(safe-area-inset-bottom));
+  }
+  #rotate-overlay .rotIcon{
+    font-size:5em;
+    line-height:1;
+    animation:rotateHint 2.2s ease-in-out infinite;
+    filter:drop-shadow(0 .1em .3em rgba(0,0,0,.6));
+  }
+  @keyframes rotateHint{
+    0%,45%   { transform:rotate(0deg); }
+    55%,100% { transform:rotate(-90deg); }
+  }
+  #rotate-overlay .rotTitle{
+    font-size:1.9em;font-weight:900;letter-spacing:.06em;
+    color:#fff;
+    text-shadow:0 .08em 0 #1b6ca8, 0 .16em .3em rgba(0,0,0,.5);
+  }
+  #rotate-overlay .rotTitle span{color:#ffd93b}
+  #rotate-overlay .rotSub{
+    font-size:1.05em;color:#a9bfd6;max-width:20em;line-height:1.4;
+  }
+  #rotate-overlay .rotArrow{
+    color:#8ef58e;font-size:2.4em;line-height:1;
+    animation:pulseArrow 1.6s ease-in-out infinite;
+  }
+  @keyframes pulseArrow{
+    0%,100%{ opacity:.5; transform:scale(.95); }
+    50%    { opacity:1;  transform:scale(1.08); }
+  }
+
+  /* Show rotate overlay ONLY on touch devices in portrait */
+  @media (orientation: portrait) and (pointer: coarse){
+    #rotate-overlay{ display:flex; }
+    #game{ display:none; }
+  }
+  /* Fallback for devices that report coarse pointer oddly */
+  @media (orientation: portrait) and (hover: none) and (max-width: 1024px){
+    #rotate-overlay{ display:flex; }
+    #game{ display:none; }
+  }
 
   .screen{
     position:absolute;inset:0;
@@ -183,6 +240,17 @@
 </style>
 </head>
 <body>
+
+<!-- ============================================================
+     ROTATE DEVICE OVERLAY (shown only on mobile portrait)
+     ============================================================ -->
+<div id="rotate-overlay">
+  <div class="rotIcon">📱</div>
+  <div class="rotTitle">ROTATE YOUR<span>DEVICE</span></div>
+  <div class="rotArrow">↻</div>
+  <div class="rotSub">Stickman Archer is best played in <b>landscape</b>. Turn your device sideways to continue.</div>
+</div>
+
 <div id="game">
   <canvas id="cv"></canvas>
 
@@ -267,6 +335,51 @@
 'use strict';
 
 /* =========================================================
+   MOBILE / TOUCH DETECTION + LANDSCAPE LOCK
+   ========================================================= */
+const isTouchDevice = (function(){
+  return ('ontouchstart' in window) ||
+         (navigator.maxTouchPoints > 0) ||
+         (navigator.msMaxTouchPoints > 0) ||
+         window.matchMedia('(pointer: coarse)').matches;
+})();
+
+/* Try to lock orientation to landscape (works in some browsers
+   when triggered from a user gesture, e.g. tap). */
+function tryLockLandscape(){
+  if(!isTouchDevice) return;
+  try{
+    if(screen.orientation && typeof screen.orientation.lock === 'function'){
+      screen.orientation.lock('landscape').catch(()=>{ /* ignore */ });
+    }
+  }catch(e){ /* ignore */ }
+}
+
+/* Also try on fullscreen requests (some Android browsers). */
+function tryFullscreen(){
+  if(!isTouchDevice) return;
+  const el = document.documentElement;
+  try{
+    if(!document.fullscreenElement && el.requestFullscreen){
+      el.requestFullscreen({ navigationUI:'hide' }).catch(()=>{});
+    }
+  }catch(e){ /* ignore */ }
+}
+
+/* Fire lock attempt on the first user interaction. */
+['pointerdown','touchstart','click','keydown'].forEach(evt=>{
+  window.addEventListener(evt, ()=>{
+    tryLockLandscape();
+  }, { once:true, passive:true });
+});
+
+/* Re-attempt lock whenever orientation changes (some browsers
+   drop the lock after rotation). */
+window.addEventListener('orientationchange', ()=>{
+  setTimeout(()=>{ tryLockLandscape(); }, 250);
+});
+
+/* =========================================================
    CANVAS SETUP
    ========================================================= */
 const cv  = document.getElementById('cv');
@@ -276,8 +389,6 @@ const W = 960, H = 540, GROUND_Y = 470;
 const GRAVITY = 320;
 const HEADSHOT_MULT = 3;
 const HEAD_RADIUS = 12;
-
-/* Max drag distance (in canvas px) that maps to full pull */
 const MAX_PULL_DIST = 190;
 
 function resizeCanvas(){
@@ -370,7 +481,6 @@ const Sound = {
   },
 
   shoot(){ this.noise(0.10, 4200, 800, 0.20, 1.4); this.tone(880, 0.09, 'triangle', 0.085, 0, 300); },
-  /* satisfying bowstring twang */
   bowRelease(){
     this.noise(0.14, 900, 3800, 0.10, 0.7);
     this.tone(340, 0.13, 'triangle', 0.09, 0, 720);
@@ -573,17 +683,13 @@ const G = {
   player: {
     x:90, y:GROUND_Y, aim:-0.35, cooldown:0,
     flash:0, iframes:0, recoil:0,
-    pullAmount:0,        // 0..1 — how far the string is drawn
-    pullRelease:0        // animates back to 0 after firing
+    pullAmount:0,
+    pullRelease:0
   },
   enemies: [], arrows: [], particles: [], texts: [],
   spawnTimer: 0.4
 };
 
-/* ---------------------------------------------------------
-   INPUT — drag BACK to pull the bowstring,
-   release to fire in the OPPOSITE direction
-   --------------------------------------------------------- */
 const input = {
   mx: 640, my: 260,
   dragActive: false,
@@ -686,7 +792,6 @@ function gameOver(){
   updateHomeStats();
 }
 
-/* ---- FIXED pause / resume ---- */
 function togglePause(){
   if(G.screen === 'playing'){
     G.screen = 'paused';
@@ -770,7 +875,6 @@ function playerShoot(power){
   const isCrit = Math.random() < st.critChance;
   const dmg = st.damage * (isCrit ? st.critMult : 1);
 
-  /* Slight speed scaling with pull power — full power = 100%, half = 78% */
   const powerScale = 0.78 + 0.22 * (power === undefined ? 1 : power);
 
   G.arrows.push({
@@ -785,7 +889,7 @@ function playerShoot(power){
 
   p.cooldown = st.cooldown;
   p.recoil = 0.09;
-  p.pullRelease = 0.14;      // animates the string forward
+  p.pullRelease = 0.14;
 
   Sound.bowRelease();
   Sound.shoot();
@@ -896,30 +1000,21 @@ function updatePlayer(dt){
   if(p.iframes > 0) p.iframes -= dt;
   if(p.cooldown > 0) p.cooldown -= dt;
 
-  /* ---- Drag-pull aiming ----
-     You drag BACKWARD from the anchor point.
-     The aim direction is the OPPOSITE of the drag vector.
-        dragVec = current - start
-        aimDir  = -(dragVec)  =  start - current
-  */
   if(input.dragActive){
     const dx = input.dragCurrentX - input.dragStartX;
     const dy = input.dragCurrentY - input.dragStartY;
     const dist = Math.hypot(dx, dy);
 
     if(dist > 8){
-      // ---- AIM = OPPOSITE of drag ----
       const aimX = input.dragStartX - input.dragCurrentX;
       const aimY = input.dragStartY - input.dragCurrentY;
       p.aim = Math.atan2(aimY, aimX);
 
-      // ---- Pull amount 0..1 ----
       p.pullAmount = Math.min(1, dist / MAX_PULL_DIST);
     } else {
       p.pullAmount = 0;
     }
   } else {
-    // smooth return to rest
     p.pullAmount += (0 - p.pullAmount) * Math.min(1, dt*14);
     if(p.pullAmount < 0.002) p.pullAmount = 0;
   }
@@ -1184,7 +1279,7 @@ function drawPlatforms(){
 }
 
 /* =========================================================
-   DRAWING — PLAYER  (with realistic bowstring pull)
+   DRAWING — PLAYER
    ========================================================= */
 function drawPlayer(){
   const p = G.player;
@@ -1200,22 +1295,16 @@ function drawPlayer(){
   const shoulderY = y - 42;
   const hipY = y - 20;
 
-  /* ---- pull amount drives the string draw-back ---- */
-  //  0    → string at rest
-  //  1    → string pulled far back
   const pullT = clamp(p.pullAmount, 0, 1);
-  //  when releasing, the string snaps forward
   const releaseSnap = p.pullRelease > 0
     ? (p.pullRelease / 0.14) * 0.35
     : 0;
   const effectivePull = Math.max(0, pullT - releaseSnap);
 
-  // string hand position behind the shoulder (in aim-local space)
   const restDist    = -8;
   const fullDist    = -30;
   const handDist    = restDist + (fullDist - restDist) * effectivePull;
 
-  // the whole body leans back slightly when drawing hard
   const lean = effectivePull * 3.0;
 
   ctx.fillStyle = 'rgba(0,0,0,0.18)';
@@ -1224,7 +1313,6 @@ function drawPlayer(){
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  // ---- legs (braced stance, back leg bent more when pulling hard) ----
   const backFootX   = x - 12 - effectivePull * 6;
   const frontFootX  = x + 12 + effectivePull * 2;
   ctx.strokeStyle = bodyCol;
@@ -1234,23 +1322,17 @@ function drawPlayer(){
   ctx.moveTo(x, hipY); ctx.lineTo(x + 9, y - 9); ctx.lineTo(frontFootX, y);
   ctx.stroke();
 
-  // ---- torso (leans backward slightly when drawn) ----
-  const torsoX = x - Math.cos(ang) * lean;
-  const torsoY = hipY - (shoulderY - hipY);
   ctx.beginPath();
   ctx.moveTo(x, hipY); ctx.lineTo(x - Math.cos(ang)*lean*0.5, shoulderY);
   ctx.stroke();
 
-  // ---- shoulder position (body origin for arms) ----
   const shX = x - Math.cos(ang) * lean * 0.5;
   const shY = shoulderY;
 
-  // ---- string hand (pulls back, opposite to aim) ----
   const handX = shX + Math.cos(ang + Math.PI) * (-handDist);
   const handY = shY + Math.sin(ang + Math.PI) * (-handDist);
   ctx.beginPath(); ctx.moveTo(shX, shY); ctx.lineTo(handX, handY); ctx.stroke();
 
-  // ---- head (moves slightly back when drawing) ----
   ctx.beginPath(); ctx.arc(shX - Math.cos(ang)*1.2, headY, 9.6, 0, 7);
   ctx.fillStyle = headCol;
   ctx.fill();
@@ -1264,7 +1346,6 @@ function drawPlayer(){
   ctx.arc(shX - Math.cos(ang)*1.2 + 4, headY - 1.5, 2.1, 0, 7);
   ctx.fill();
 
-  // ---- bow arm (extends forward in aim direction) ----
   const armLen = 27 - effectivePull * 2;
   const hx = shX + Math.cos(ang) * armLen;
   const hy = shY + Math.sin(ang) * armLen;
@@ -1272,7 +1353,6 @@ function drawPlayer(){
   ctx.lineWidth = 3.6;
   ctx.beginPath(); ctx.moveTo(shX, shY); ctx.lineTo(hx, hy); ctx.stroke();
 
-  /* ---- BOW (rotated into aim direction) ---- */
   ctx.save();
   ctx.translate(hx, hy);
   ctx.rotate(ang);
@@ -1280,9 +1360,7 @@ function drawPlayer(){
   const ready = p.cooldown <= 0 && G.screen === 'playing';
   const stringHandLocalX = handDist;
 
-  // ---- nocked arrow (only when drawn back or ready) ----
   if(ready || effectivePull > 0.02){
-    // arrow shaft from string hand forward through the bow
     const arrowTip = 22;
     ctx.strokeStyle = '#6b5334';
     ctx.lineWidth = 2.4;
@@ -1291,7 +1369,6 @@ function drawPlayer(){
     ctx.lineTo(arrowTip, 0);
     ctx.stroke();
 
-    // arrowhead
     ctx.beginPath();
     ctx.moveTo(arrowTip + 6, 0);
     ctx.lineTo(arrowTip - 1, -3.8);
@@ -1300,7 +1377,6 @@ function drawPlayer(){
     ctx.fillStyle = '#6b5334';
     ctx.fill();
 
-    // fletching (at the string hand end)
     ctx.fillStyle = '#e8503a';
     ctx.beginPath();
     ctx.moveTo(stringHandLocalX, 0);
@@ -1309,7 +1385,6 @@ function drawPlayer(){
     ctx.closePath(); ctx.fill();
   }
 
-  // ---- bow limbs (arc) ----
   const R = 18;
   ctx.strokeStyle = '#a9682e';
   ctx.lineWidth = 3.6;
@@ -1317,13 +1392,11 @@ function drawPlayer(){
   ctx.arc(0, 0, R, -1.78, 1.78);
   ctx.stroke();
 
-  // limb tips
   ctx.fillStyle = '#7d4c1e';
   const tx = Math.cos(1.78) * R, ty = Math.sin(1.78) * R;
   ctx.beginPath(); ctx.arc(tx, -ty, 2.2, 0, 7); ctx.fill();
   ctx.beginPath(); ctx.arc(tx,  ty, 2.2, 0, 7); ctx.fill();
 
-  // ---- BOWSTRING (bends back with pull) ----
   ctx.strokeStyle = 'rgba(255,255,255,0.92)';
   ctx.lineWidth = 1.4;
   ctx.beginPath();
@@ -1332,7 +1405,6 @@ function drawPlayer(){
   ctx.lineTo(tx,  ty);
   ctx.stroke();
 
-  // ---- small glint on the string at full draw ----
   if(effectivePull > 0.75){
     ctx.fillStyle = 'rgba(255,217,59,' + (0.7 * (effectivePull - 0.75) / 0.25) + ')';
     ctx.beginPath();
@@ -1342,13 +1414,11 @@ function drawPlayer(){
 
   ctx.restore();
 
-  /* ---- short trajectory preview (only the beginning) ---- */
   if(G.screen === 'playing'){
     drawAimArc(hx, hy, ang, st.arrowSpeed);
   }
 }
 
-/* only the first ~175px of the flight path */
 function drawAimArc(hx, hy, ang, speed){
   const startX = hx + Math.cos(ang)*20;
   const startY = hy + Math.sin(ang)*20;
@@ -1660,7 +1730,6 @@ function drawHUD(){
     ctx.fillText('+' + G.runCoins + ' this run', cx, 64);
   }
 
-  /* ---- Pull power indicator near player ---- */
   if(input.dragActive && G.player.pullAmount > 0.02){
     const p = G.player;
     const barW = 64, barH = 7;
@@ -1675,7 +1744,6 @@ function drawHUD(){
     rr(bx, by, barW, barH, 3.5);
     ctx.fill();
 
-    // gradient: green -> yellow -> red as pull increases
     const t = G.player.pullAmount;
     const col = t < 0.5
       ? 'rgb(' + Math.round(120 + t*2*135) + ',220,90)'
@@ -1716,7 +1784,6 @@ function render(){
 
   drawParticles();
 
-  /* ---- Slingshot pull visual (from drag start to current) ---- */
   if(input.dragActive && G.screen === 'playing'){
     const dx = input.dragCurrentX - input.dragStartX;
     const dy = input.dragCurrentY - input.dragStartY;
@@ -1725,9 +1792,7 @@ function render(){
     if(dist > 8){
       const t = Math.min(1, dist / MAX_PULL_DIST);
 
-      // 1) elastic band from drag start to drag current
       ctx.save();
-      // outer glow
       ctx.strokeStyle = 'rgba(255,217,59,' + (0.20 + t*0.35) + ')';
       ctx.lineWidth = 7;
       ctx.lineCap = 'round';
@@ -1736,7 +1801,6 @@ function render(){
       ctx.lineTo(input.dragCurrentX, input.dragCurrentY);
       ctx.stroke();
 
-      // inner bright line
       ctx.strokeStyle = 'rgba(255,255,255,' + (0.55 + t*0.35) + ')';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
@@ -1744,7 +1808,6 @@ function render(){
       ctx.lineTo(input.dragCurrentX, input.dragCurrentY);
       ctx.stroke();
 
-      // 2) anchor ring at drag start
       ctx.strokeStyle = 'rgba(255,255,255,0.6)';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1755,7 +1818,6 @@ function render(){
       ctx.arc(input.dragStartX, input.dragStartY, 10, 0, 7);
       ctx.fill();
 
-      // 3) "finger" ring at current drag position (the pulled end)
       const ringR = 16 + t * 6;
       ctx.strokeStyle = 'rgba(255,217,59,' + (0.7 + t*0.3) + ')';
       ctx.lineWidth = 2.5;
@@ -1767,8 +1829,6 @@ function render(){
       ctx.arc(input.dragCurrentX, input.dragCurrentY, ringR, 0, 7);
       ctx.fill();
 
-      // 4) arrow direction hint — small arrow pointing AWAY from drag,
-      //    drawn at the drag-start point (this is where the arrow will fly)
       const aimLen = 26 + t * 14;
       const aimX = -dx / dist;
       const aimY = -dy / dist;
@@ -1780,7 +1840,6 @@ function render(){
       ctx.moveTo(input.dragStartX + aimX * 12, input.dragStartY + aimY * 12);
       ctx.lineTo(tipX, tipY);
       ctx.stroke();
-      // arrowhead
       const aHead = 7;
       const perpX = -aimY, perpY = aimX;
       ctx.fillStyle = 'rgba(140,245,140,' + (0.7 + t*0.3) + ')';
@@ -1836,7 +1895,7 @@ function loop(now){
 requestAnimationFrame(loop);
 
 /* =========================================================
-   INPUT — pull-back slingshot / bow
+   INPUT
    ========================================================= */
 function pointerToCanvas(e){
   const rect = cv.getBoundingClientRect();
@@ -1846,6 +1905,7 @@ function pointerToCanvas(e){
 
 cv.addEventListener('pointerdown', e=>{
   Sound.init(); Sound.resume();
+  tryLockLandscape();
   pointerToCanvas(e);
   if(G.screen === 'playing'){
     input.dragActive = true;
@@ -1878,7 +1938,6 @@ function endDrag(e){
     const dy = input.dragCurrentY - input.dragStartY;
     const mag = Math.hypot(dx, dy);
     if(mag > 10){
-      // ---- AIM = OPPOSITE of drag direction ----
       const aimX = input.dragStartX - input.dragCurrentX;
       const aimY = input.dragStartY - input.dragCurrentY;
       G.player.aim = Math.atan2(aimY, aimX);
@@ -1898,7 +1957,6 @@ window.addEventListener('pointercancel', ()=>{
 });
 cv.addEventListener('contextmenu', e=> e.preventDefault());
 
-/* ---- keyboard ---- */
 window.addEventListener('keydown', e=>{
   Sound.init(); Sound.resume();
 
