@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TypeForge — Typing Test</title>
+<style>
+  :root{
+    --bg:#0f0e13;
+    --panel:#17151e;
+    --panel-2:#1e1b27;
+    --text:#f5f2fa;
+    --dim:#5c5670;
+    --accent:#b388ff;
+    --accent-2:#7c4dff;
+    --green:#6ee7b7;
+    --red:#ff5c5c;
+    --red-glow:rgba(255,92,92,.55);
+    --yellow:#fbbf24;
+    --border:rgba(255,255,255,.07);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+
+  body{
+    height:100vh;
+    overflow:hidden;
+    background:
+      radial-gradient(900px 500px at 50% -10%, rgba(179,136,255,.10), transparent 65%),
+      radial-gradient(700px 400px at 100% 110%, rgba(110,231,183,.05), transparent 70%),
+      var(--bg);
+    color:var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    display:flex; align-items:center; justify-content:center;
+    padding:12px 16px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .app{
+    width:100%;
+    max-width:1000px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height:100%;
+  }
+
+  /* ===== TOP BAR ===== */
+  .top{
+    display:flex; justify-content:space-between; align-items:center;
+    gap:12px; flex-wrap:wrap;
+  }
+  .brand{
+    display:flex; align-items:center; gap:8px;
+    font-size:14px; font-weight:700; letter-spacing:.4px;
+  }
+  .brand .mark{
+    width:24px; height:24px; border-radius:7px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:900; color:#0f0e13;
+  }
+  .brand small{color:var(--dim); font-weight:400; font-size:11px;}
+
+  .top-actions{display:flex; gap:6px; align-items:center;}
+  .pill{
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:9px; padding:6px 11px; font-size:11px; color:var(--dim);
+    cursor:pointer; transition:.15s; white-space:nowrap; font-family:inherit;
+  }
+  .pill:hover{color:var(--text); border-color:rgba(255,255,255,.18)}
+  .pill.on{color:var(--accent); border-color:rgba(179,136,255,.35)}
+
+  /* ===== MODE BAR ===== */
+  .mode-bar{
+    display:flex; gap:4px; background:var(--panel);
+    border:1px solid var(--border); padding:4px; border-radius:11px;
+    overflow-x:auto;
+  }
+  .mode-bar button{
+    background:transparent; border:0; color:var(--dim); font:inherit; font-size:12px;
+    padding:6px 13px; border-radius:7px; cursor:pointer; transition:.15s;
+    white-space:nowrap; flex-shrink:0; font-family:inherit;
+  }
+  .mode-bar button:hover{color:var(--text)}
+  .mode-bar button.active{
+    background:var(--panel-2); color:var(--text);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+  }
+
+  /* ===== OPTION ROW ===== */
+  .opt-row{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .opt-group{
+    display:flex; gap:3px; background:var(--panel);
+    border:1px solid var(--border); padding:3px; border-radius:9px;
+  }
+  .opt-group button{
+    background:transparent; border:0; color:var(--dim); font:inherit; font-size:11.5px;
+    padding:5px 10px; border-radius:6px; cursor:pointer; transition:.15s; font-family:inherit;
+  }
+  .opt-group button:hover{color:var(--text)}
+  .opt-group button.active{background:var(--panel-2); color:var(--text)}
+
+  .toggle{
+    display:flex; align-items:center; gap:6px; cursor:pointer;
+    background:var(--panel); border:1px solid var(--border);
+    padding:6px 11px; border-radius:9px; font-size:11.5px; color:var(--dim);
+    transition:.15s; user-select:none;
+  }
+  .toggle:hover{color:var(--text)}
+  .toggle.on{color:var(--accent); border-color:rgba(179,136,255,.35)}
+  .toggle .dot{width:7px; height:7px; border-radius:50%; background:var(--dim); transition:.2s}
+  .toggle.on .dot{background:var(--accent); box-shadow:0 0 7px var(--accent)}
+
+  /* ===== LIVE STATS ===== */
+  .live-bar{display:flex; gap:8px; flex-wrap:wrap}
+  .live-stat{
+    flex:1 1 70px; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:8px 12px; min-width:0;
+  }
+  .live-stat .v{
+    display:block; font-size:18px; font-weight:700; line-height:1.15;
+    font-variant-numeric:tabular-nums;
+  }
+  .live-stat .l{
+    display:block; margin-top:1px; font-size:9px; letter-spacing:1.2px;
+    text-transform:uppercase; color:var(--dim);
+  }
+  .live-stat.hl .v{color:var(--accent); text-shadow:0 0 18px rgba(179,136,255,.3)}
+  .live-stat.timer .v{color:var(--yellow)}
+
+  /* ===== STAGE (4-line viewport) ===== */
+  .stage{
+    position:relative;
+    background:linear-gradient(180deg,#181623,#14121c);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px 28px 18px;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.85);
+    cursor:text;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .stage:focus-within{
+    border-color:rgba(179,136,255,.3);
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.85),0 0 0 3px rgba(179,136,255,.06);
+  }
+
+  .words-viewport{
+    font-size:clamp(16px,1.7vw,22px);
+    line-height:1.9;
+    height:7.6em;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .words-wrap{position:relative;}
+
+  /* ===== WORD ===== */
+  .word{
+    display:inline-block;
+    margin-right:.55em;
+    position:relative;
+    /* NO dimming — completed words stay at full opacity */
+  }
+
+  /* ACTIVE WORD — simple underline (no box) */
+  .word.active::after{
+    content:'';
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:-3px;
+    height:2px;
+    background:rgba(179,136,255,.6);
+    border-radius:2px;
+    box-shadow:0 0 8px rgba(179,136,255,.35);
+    pointer-events:none;
+  }
+
+  /* LOCKED — pulse green underline */
+  .word.locked-flash::after{
+    content:'';
+    position:absolute;
+    left:0; right:0; bottom:-3px;
+    height:2px;
+    border-radius:2px;
+    background:var(--green);
+    box-shadow:0 0 14px rgba(110,231,183,.9);
+    animation:lockPulse .4s ease forwards;
+    pointer-events:none;
+  }
+  @keyframes lockPulse{
+    0%   { opacity:1; transform:scaleX(1); }
+    100% { opacity:0; transform:scaleX(1.15); }
+  }
+
+  /* SHAKE on wrong word */
+  .word.shake{
+    animation:wordShake .22s ease;
+  }
+  @keyframes wordShake{
+    0%, 100% { transform:translateX(0); }
+    25%      { transform:translateX(-3px); }
+    75%      { transform:translateX(3px); }
+  }
+
+  /* ===== LETTER STATES ===== */
+  /* Untyped = grey */
+  .letter{
+    color:var(--dim);
+    position:relative;
+    transition:color .05s linear;
+  }
+  /* Typed correct = white */
+  .letter.correct{
+    color:var(--text);
+  }
+  /* Wrong = red */
+  .letter.incorrect{
+    color:var(--red);
+    text-shadow:0 0 8px var(--red-glow);
+    background:rgba(255,92,92,.12);
+    border-radius:2px;
+  }
+
+  /* Extra chars beyond word (typed too many) */
+  .letter.extra{
+    color:var(--red);
+    text-shadow:0 0 8px var(--red-glow);
+    opacity:.75;
+    text-decoration:line-through;
+    text-decoration-thickness:1.5px;
+  }
+
+  /* Letters never typed (missed) */
+  .letter.missing{
+    color:var(--red);
+    text-decoration:underline;
+    text-decoration-style:dotted;
+    text-underline-offset:5px;
+    opacity:.75;
+  }
+
+  /* Zen */
+  #zenWord{
+    display:block;
+    white-space:pre-wrap;
+    word-break:break-word;
+    margin-right:0;
+  }
+  #zenWord::after{display:none !important}
+  #zenWord .letter{color:var(--text)}
+
+  /* ===== CARET ===== */
+  .caret{
+    position:absolute;
+    top:0;
+    left:0;
+    width:2.5px;
+    border-radius:2px;
+    background:var(--accent);
+    box-shadow:0 0 10px rgba(179,136,255,.7);
+    transition:left .045s linear, top .045s linear, opacity .15s, background .1s;
+    animation:blink 1s steps(1,end) infinite;
+    will-change:left, top;
+    pointer-events:none;
+    z-index:5;
+  }
+  .caret.solid{animation:none; opacity:1}
+  @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+  .stage.unfocused .caret{opacity:0}
+
+  .caret.shake{
+    animation:blink 1s steps(1,end) infinite, caretShake .22s ease;
+  }
+  @keyframes caretShake{
+    0%, 100% { margin-left:0; }
+    20%      { margin-left:-4px; }
+    45%      { margin-left:4px; }
+    70%      { margin-left:-3px; }
+    90%      { margin-left:2px; }
+  }
+
+  .caret.error{
+    background:var(--red);
+    box-shadow:0 0 14px var(--red-glow);
+  }
+
+  .hint{
+    text-align:center; color:var(--dim);
+    font-size:10.5px; letter-spacing:.3px; line-height:1.8;
+  }
+  kbd{
+    background:var(--panel-2); border:1px solid var(--border); border-bottom-width:2px;
+    border-radius:5px; padding:1px 6px; font:inherit; font-size:10px; color:var(--text);
+  }
+
+  /* ===== RESULT OVERLAY ===== */
+  .overlay{
+    position:fixed; inset:0; z-index:80; padding:16px;
+    display:flex; align-items:flex-start; justify-content:center;
+    overflow-y:auto;
+    background:rgba(8,7,12,.78);
+    -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px);
+    opacity:0; visibility:hidden; transition:opacity .25s,visibility .25s;
+  }
+  .overlay.show{opacity:1; visibility:visible}
+
+  .result-card{
+    width:100%; max-width:700px; margin:auto;
+    background:linear-gradient(180deg,#1b1826,#14121c);
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:18px; padding:26px 26px 22px;
+    box-shadow:0 30px 90px -25px rgba(0,0,0,.95);
+    transform:translateY(14px) scale(.97);
+    transition:transform .3s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .overlay.show .result-card{transform:none}
+
+  .result-card.lb-mode .big-wpm,
+  .result-card.lb-mode .stat-grid,
+  .result-card.lb-mode .chart-box,
+  .result-card.lb-mode #rPb{display:none}
+  .result-card.lb-mode .lb-box{margin-top:6px}
+
+  .result-head{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    gap:14px; flex-wrap:wrap; margin-bottom:18px;
+  }
+  .result-head h2{
+    font-size:11px; font-weight:500; letter-spacing:2.5px;
+    text-transform:uppercase; color:var(--dim); margin-bottom:4px;
+  }
+  .big-wpm{
+    font-size:clamp(42px,6vw,62px); font-weight:800; line-height:1;
+    color:var(--accent); letter-spacing:-2px;
+    text-shadow:0 0 40px rgba(179,136,255,.35);
+    font-variant-numeric:tabular-nums;
+  }
+  .big-wpm small{
+    font-size:13px; font-weight:600; color:var(--dim);
+    margin-left:6px; letter-spacing:3px; vertical-align:4px;
+  }
+  .pb-badge{
+    display:none; padding:5px 12px; border-radius:99px;
+    font-size:10.5px; letter-spacing:.5px;
+    background:rgba(110,231,183,.1); color:var(--green);
+    border:1px solid rgba(110,231,183,.28);
+    white-space:nowrap;
+  }
+  .pb-badge.show{display:inline-block}
+
+  .stat-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
+    gap:6px; margin-bottom:18px;
+  }
+  .stat-card{
+    background:rgba(255,255,255,.025); border:1px solid var(--border);
+    border-radius:10px; padding:10px 8px; text-align:center;
+  }
+  .stat-card .val{
+    display:block; font-size:17px; font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat-card .lbl{
+    display:block; margin-top:2px; font-size:8.5px; letter-spacing:1.1px;
+    text-transform:uppercase; color:var(--dim);
+  }
+  .stat-card .val.accent{color:var(--accent)}
+  .stat-card .val.green{color:var(--green)}
+  .stat-card .val.red{color:var(--red)}
+
+  .chart-box{
+    background:rgba(255,255,255,.02); border:1px solid var(--border);
+    border-radius:12px; padding:12px 14px 8px; margin-bottom:18px;
+  }
+  .chart-box .title{
+    font-size:9.5px; letter-spacing:1.4px; text-transform:uppercase;
+    color:var(--dim); margin-bottom:10px;
+  }
+  .chart-canvas{width:100%; height:100px; display:block}
+
+  .lb-box{
+    background:rgba(255,255,255,.02); border:1px solid var(--border);
+    border-radius:12px; padding:12px 14px; margin-bottom:18px;
+  }
+  .lb-box .title{
+    font-size:9.5px; letter-spacing:1.4px; text-transform:uppercase;
+    color:var(--dim); margin-bottom:8px;
+  }
+  .lb-row{
+    display:flex; align-items:center; gap:10px;
+    padding:5px 0; font-size:12px;
+    border-bottom:1px solid rgba(255,255,255,.04);
+  }
+  .lb-row:last-child{border-bottom:none}
+  .lb-rank{width:20px; text-align:center; color:var(--dim); font-weight:700; font-size:11px}
+  .lb-rank.top1{color:var(--yellow)}
+  .lb-rank.top2{color:#cbd5e1}
+  .lb-rank.top3{color:#d97706}
+  .lb-name{flex:1; color:var(--dim)}
+  .lb-name .mode-tag{
+    font-size:9px; padding:1px 5px; border-radius:4px;
+    background:rgba(179,136,255,.1); color:var(--accent);
+    margin-left:5px; letter-spacing:.3px;
+  }
+  .lb-wpm{font-weight:700; color:var(--text); font-variant-numeric:tabular-nums}
+  .lb-acc{color:var(--dim); font-size:10.5px; width:40px; text-align:right}
+
+  .actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+  .btn{
+    font:inherit; font-size:12.5px; padding:9px 18px; border-radius:9px;
+    border:1px solid var(--border); background:var(--panel-2); color:var(--text);
+    cursor:pointer; transition:.15s; white-space:nowrap; font-family:inherit;
+  }
+  .btn:hover{transform:translateY(-1px); border-color:rgba(255,255,255,.2)}
+  .btn:active{transform:translateY(0)}
+  .btn.primary{
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#0f0e13; border-color:transparent; font-weight:700;
+    box-shadow:0 8px 22px -10px rgba(179,136,255,.8);
+  }
+  .btn.primary:hover{filter:brightness(1.1)}
+  .btn.ghost{background:transparent; color:var(--dim)}
+  .btn.ghost:hover{color:var(--text)}
+
+  /* ===== TOAST ===== */
+  .toast{
+    position:fixed; bottom:22px; left:50%; z-index:100;
+    transform:translate(-50%,16px);
+    background:var(--panel-2); border:1px solid var(--border);
+    padding:10px 20px; border-radius:11px; font-size:12px;
+    box-shadow:0 16px 40px -14px rgba(0,0,0,.9);
+    opacity:0; pointer-events:none; transition:.28s;
+  }
+  .toast.show{opacity:1; transform:translate(-50%,0)}
+
+  /* ===== HIDDEN INPUT ===== */
+  #hiddenInput{
+    position:fixed; top:0; left:0; width:1px; height:1px;
+    opacity:0; border:0; padding:0; resize:none; outline:none; z-index:-1;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width:640px){
+    body{padding:8px 10px}
+    .words-viewport{font-size:15px; height:7.6em}
+    .stage{padding:12px 16px 14px}
+    .live-stat{padding:6px 10px}
+    .live-stat .v{font-size:15px}
+    .live-stat .l{font-size:8px}
+    .stat-grid{grid-template-columns:repeat(2,1fr)}
+    .brand small{display:none}
+    .hint{font-size:9.5px}
+  }
+
+  @media (max-height:600px){
+    .stage{padding:10px 20px 12px}
+    .words-viewport{font-size:15px; height:7.6em}
+    .live-stat .v{font-size:15px}
+    .brand{font-size:12px}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <div class="mark">T</div>
+      TypeForge <small>/ typing test</small>
+    </div>
+    <div class="top-actions">
+      <button class="pill" id="btnSound" title="Toggle sound">🔊</button>
+      <button class="pill" id="btnLeaderboard">🏆 Leaderboard</button>
+      <button class="pill" id="btnRestart">↻ Restart</button>
+    </div>
+  </div>
+
+  <div class="mode-bar" id="modeBar">
+    <button data-mode="time" class="active">⏱ time</button>
+    <button data-mode="words">📝 words</button>
+    <button data-mode="quote">❝ quote</button>
+    <button data-mode="zen">🧘 zen</button>
+  </div>
+
+  <div class="opt-row" id="optRow">
+    <div class="opt-group" id="timeOpts">
+      <button data-val="15">15s</button>
+      <button data-val="30" class="active">30s</button>
+      <button data-val="60">60s</button>
+      <button data-val="120">120s</button>
+    </div>
+    <div class="opt-group" id="wordOpts" style="display:none">
+      <button data-val="10">10</button>
+      <button data-val="25" class="active">25</button>
+      <button data-val="50">50</button>
+      <button data-val="100">100</button>
+    </div>
+    <div class="toggle" id="togglePunct"><span class="dot"></span> punctuation</div>
+    <div class="toggle" id="toggleNums"><span class="dot"></span> numbers</div>
+  </div>
+
+  <div class="live-bar">
+    <div class="live-stat hl"><span class="v" id="liveWpm">0</span><span class="l">wpm</span></div>
+    <div class="live-stat"><span class="v" id="liveAcc">100%</span><span class="l">acc</span></div>
+    <div class="live-stat timer"><span class="v" id="liveTimer">30</span><span class="l">timer</span></div>
+    <div class="live-stat"><span class="v" id="liveRaw">0</span><span class="l">raw</span></div>
+    <div class="live-stat"><span class="v" id="liveChars">0/0</span><span class="l">chars</span></div>
+    <div class="live-stat"><span class="v" id="liveErr">0</span><span class="l">errors</span></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="words-viewport" id="wordsViewport">
+      <div class="words-wrap" id="wordsWrap"></div>
+    </div>
+    <div class="caret" id="caret"></div>
+  </div>
+
+  <div class="hint">
+    <kbd>Tab</kbd> restart &nbsp;·&nbsp; <kbd>Esc</kbd> new text &nbsp;·&nbsp; <kbd>⌫</kbd> fix last word (only if it had errors)
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="result-card" id="resultCard">
+    <div class="result-head">
+      <div>
+        <h2 id="resultTitle">Test Complete</h2>
+        <div class="big-wpm"><span id="rWpm">0</span><small>WPM</small></div>
+      </div>
+      <div class="pb-badge" id="rPb">🏆 New Personal Best</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><span class="val accent" id="rRaw">0</span><span class="lbl">raw wpm</span></div>
+      <div class="stat-card"><span class="val" id="rAcc">0%</span><span class="lbl">accuracy</span></div>
+      <div class="stat-card"><span class="val green" id="rCons">0%</span><span class="lbl">consistency</span></div>
+      <div class="stat-card"><span class="val" id="rTime">0s</span><span class="lbl">time</span></div>
+      <div class="stat-card"><span class="val" id="rChars">0</span><span class="lbl">characters</span></div>
+      <div class="stat-card"><span class="val red" id="rErr">0</span><span class="lbl">errors</span></div>
+    </div>
+
+    <div class="chart-box">
+      <div class="title">WPM over time</div>
+      <canvas class="chart-canvas" id="chartCanvas"></canvas>
+    </div>
+
+    <div class="lb-box" id="lbBox">
+      <div class="title">Personal Bests</div>
+      <div id="lbRows"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnShare">Share Result</button>
+      <button class="btn" id="btnNext">Next Test</button>
+      <button class="btn ghost" id="btnRetry">Retry</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<textarea id="hiddenInput" autocomplete="off" autocorrect="off" autocapitalize="off"
+          spellcheck="false" aria-label="Typing input"></textarea>
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   SOUND ENGINE
+   ============================================================ */
+const Sound = {
+  ctx: null,
+  enabled: true,
+  volume: 0.18,
+  _noiseBuffer: null,
+
+  init(){
+    if(this.ctx){
+      if(this.ctx.state === 'suspended') this.ctx.resume().catch(()=>{});
+      return;
+    }
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC){ this.enabled = false; return; }
+      this.ctx = new AC();
+      const len = Math.floor(this.ctx.sampleRate * 0.04);
+      const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<len;i++) data[i] = (Math.random()*2 - 1) * Math.pow(1 - i/len, 2.5);
+      this._noiseBuffer = buf;
+    }catch(e){ this.enabled = false; }
+  },
+
+  play(kind){
+    if(!this.enabled) return;
+    this.init();
+    if(!this.ctx) return;
+    const t = this.ctx.currentTime;
+    try{
+      if(kind === 'key')           this._key(t);
+      else if(kind === 'error')    this._error(t);
+      else if(kind === 'commit')   this._commit(t);
+      else if(kind === 'complete') this._complete(t);
+      else if(kind === 'pb')       this._pb(t);
+      else if(kind === 'click')    this._uiClick(t);
+      else if(kind === 'locked')   this._locked(t);
+    }catch(e){}
+  },
+
+  _key(t){
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    const g1 = ctx.createGain();
+    osc.type = 'sine';
+    const f = 1600 + Math.random() * 400;
+    osc.frequency.setValueAtTime(f, t);
+    osc.frequency.exponentialRampToValueAtTime(f * 0.55, t + 0.025);
+    g1.gain.setValueAtTime(0, t);
+    g1.gain.linearRampToValueAtTime(this.volume * 0.55, t + 0.002);
+    g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.028);
+    osc.connect(g1).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.035);
+
+    if(this._noiseBuffer){
+      const src = ctx.createBufferSource();
+      src.buffer = this._noiseBuffer;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 1.2;
+      const g2 = ctx.createGain();
+      g2.gain.setValueAtTime(this.volume * 0.35, t);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.022);
+      src.connect(bp).connect(g2).connect(ctx.destination);
+      src.start(t); src.stop(t + 0.04);
+    }
+  },
+
+  _error(t){
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    const g1 = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(240, t);
+    osc.frequency.exponentialRampToValueAtTime(110, t + 0.09);
+    g1.gain.setValueAtTime(0, t);
+    g1.gain.linearRampToValueAtTime(this.volume * 0.7, t + 0.003);
+    g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    osc.connect(g1).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.11);
+
+    if(this._noiseBuffer){
+      const src = ctx.createBufferSource();
+      src.buffer = this._noiseBuffer;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = 900;
+      const g2 = ctx.createGain();
+      g2.gain.setValueAtTime(this.volume * 0.3, t);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+      src.connect(lp).connect(g2).connect(ctx.destination);
+      src.start(t); src.stop(t + 0.07);
+    }
+  },
+
+  _commit(t){
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(520, t);
+    osc.frequency.exponentialRampToValueAtTime(280, t + 0.05);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(this.volume * 0.28, t + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.06);
+  },
+
+  _locked(t){
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(180, t);
+    osc.frequency.setValueAtTime(140, t + 0.04);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(this.volume * 0.22, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.1);
+  },
+
+  _complete(t){
+    const ctx = this.ctx;
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((f, i)=>{
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      const s = t + i * 0.075;
+      g.gain.setValueAtTime(0, s);
+      g.gain.linearRampToValueAtTime(this.volume * 0.42, s + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.38);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(s); osc.stop(s + 0.42);
+    });
+  },
+
+  _pb(t){
+    const ctx = this.ctx;
+    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
+    notes.forEach((f, i)=>{
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = f;
+      const s = t + i * 0.06;
+      g.gain.setValueAtTime(0, s);
+      g.gain.linearRampToValueAtTime(this.volume * 0.4, s + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.55);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(s); osc.stop(s + 0.6);
+    });
+  },
+
+  _uiClick(t){
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(900, t);
+    osc.frequency.exponentialRampToValueAtTime(500, t + 0.04);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(this.volume * 0.3, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.06);
+  }
+};
+
+/* ============================================================
+   HAPTICS
+   ============================================================ */
+function vibrate(pattern){
+  if(!navigator.vibrate) return;
+  try{ navigator.vibrate(pattern); }catch(e){}
+}
+
+/* ============================================================
+   WORD POOLS
+   ============================================================ */
+const COMMON_200 = `the be to of and a in that have I it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back every use two how our work first well way even new want because any these give day most us`.split(/\s+/);
+
+const COMMON_1000 = COMMON_200.concat(`water been call who oil find long down did made may part new sound little place year live back give very after thing just name good sentence man great where help through much before line right too mean old same tell boy follow came want show also around form three small set put end does another well large must big such turn here why ask went men read need land different home move try kind hand picture again change off play spell air away animal house point page letter mother answer found study still learn should world port add high follow act light near build self earth father`.split(/\s+/).filter(w=>w && !COMMON_200.includes(w)));
+
+const PUNCT = ['.',',','!','?',';',':','-'];
+
+const QUOTES = [
+  "The only way to do great work is to love what you do.",
+  "In the middle of difficulty lies opportunity.",
+  "It does not matter how slowly you go as long as you do not stop.",
+  "Whether you think you can or you think you can't, you're right.",
+  "The journey of a thousand miles begins with a single step.",
+  "Talk is cheap. Show me the code.",
+  "Premature optimization is the root of all evil.",
+  "Any sufficiently advanced technology is indistinguishable from magic.",
+  "The best way to predict the future is to invent it.",
+  "Good design is as little design as possible.",
+  "Creativity is intelligence having fun.",
+  "Not all those who wander are lost.",
+  "The best time to plant a tree was twenty years ago. The second best time is now.",
+  "You miss one hundred percent of the shots you don't take.",
+  "The unexamined life is not worth living.",
+  "Do what you can, with what you have, where you are.",
+  "Life is what happens when you're busy making other plans.",
+  "The future belongs to those who believe in the beauty of their dreams.",
+  "Imagination is more important than knowledge.",
+  "It always seems impossible until it is done.",
+  "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+  "Be the change that you wish to see in the world.",
+  "Two roads diverged in a wood, and I took the one less traveled by.",
+  "Genius is one percent inspiration and ninety-nine percent perspiration.",
+  "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+  "First, solve the problem. Then, write the code.",
+  "Make it work, make it right, make it fast.",
+  "Programs must be written for people to read, and only incidentally for machines to execute.",
+  "Simplicity is the soul of efficiency.",
+  "The computer was born to solve problems that did not exist before.",
+  "Simplicity is the ultimate sophistication.",
+  "A room without books is like a body without a soul.",
+  "Happiness depends upon ourselves.",
+  "Stay hungry, stay foolish."
+];
+
+/* ============================================================
+   DOM
+   ============================================================ */
+const $ = id => document.getElementById(id);
+
+const stage      = $('stage');
+const viewport   = $('wordsViewport');
+const wordsWrap  = $('wordsWrap');
+const caret      = $('caret');
+const hidden     = $('hiddenInput');
+const overlay    = $('overlay');
+const resultCard = $('resultCard');
+const toastEl    = $('toast');
+const liveWpm    = $('liveWpm');
+const liveAcc    = $('liveAcc');
+const liveTimer  = $('liveTimer');
+const liveRaw    = $('liveRaw');
+const liveChars  = $('liveChars');
+const liveErr    = $('liveErr');
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let mode = 'time';
+let timeLimit = 30;
+let wordCount = 25;
+let punctuation = false;
+let numbers = false;
+
+let words = [];
+let wordEls = [];
+let wordCorrect = [];
+let typedWords = [];
+let currentWordIndex = 0;
+let currentInput = '';
+let prevInputLen = 0;
+
+let perSecondWpm = [];
+let perSecondRaw = [];
+
+let started = false;
+let finished = false;
+let startTime = 0;
+let timerId = null;
+let tickId = null;
+let elapsed = 0;
+
+let totalCorrect = 0;
+let totalIncorrect = 0;
+let totalExtra = 0;
+let totalMissed = 0;
+
+let currentScrollY = 0;
+let bestResults = {};
+
+/* ============================================================
+   WORD GENERATION
+   ============================================================ */
+function pickWords(n){
+  const pool = COMMON_1000;
+  const out = [];
+  for(let i=0;i<n;i++) out.push(pool[Math.floor(Math.random()*pool.length)]);
+  return out;
+}
+
+function applyPunctuation(list){
+  if(!punctuation) return list;
+  return list.map(w=>{
+    const r = Math.random();
+    if(r < .35) return w + PUNCT[Math.floor(Math.random()*PUNCT.length)];
+    if(r < .42) return w.charAt(0).toUpperCase() + w.slice(1);
+    return w;
+  });
+}
+
+function applyNumbers(list){
+  if(!numbers) return list;
+  return list.map(w=> Math.random() < .08 ? String(Math.floor(Math.random()*9999)) : w);
+}
+
+function generateWords(){
+  let base;
+  if(mode === 'time')       base = pickWords(180);
+  else if(mode === 'words') base = pickWords(wordCount);
+  else if(mode === 'quote') base = QUOTES[Math.floor(Math.random()*QUOTES.length)].split(' ');
+  else                      base = [];
+  base = applyPunctuation(base);
+  base = applyNumbers(base);
+  return base;
+}
+
+/* ============================================================
+   RENDER WORDS
+   ============================================================ */
+function renderWords(){
+  wordsWrap.style.transform = 'translateY(0px)';
+  currentScrollY = 0;
+  wordsWrap.innerHTML = '';
+  wordEls = [];
+
+  if(mode === 'zen'){
+    const w = document.createElement('div');
+    w.className = 'word active';
+    w.id = 'zenWord';
+    wordsWrap.appendChild(w);
+    wordEls.push(w);
+    updateActiveWord();
+    return;
+  }
+
+  words.forEach((word, wi)=>{
+    const w = document.createElement('div');
+    w.className = 'word';
+    w.dataset.index = wi;
+    for(let ci=0; ci<word.length; ci++){
+      const s = document.createElement('span');
+      s.className = 'letter';
+      s.textContent = word[ci];
+      w.appendChild(s);
+    }
+    wordsWrap.appendChild(w);
+    wordEls.push(w);
+  });
+
+  updateActiveWord();
+}
+
+/* ============================================================
+   AUTO SCROLL
+   ============================================================ */
+function updateScroll(){
+  if(!wordEls.length) return;
+
+  let anchor = null;
+
+  if(mode === 'zen'){
+    const w = wordEls[0];
+    if(!w) return;
+    const letters = w.querySelectorAll('.letter');
+    anchor = letters.length > 0 ? letters[letters.length - 1] : w;
+  } else {
+    if(currentWordIndex >= wordEls.length) return;
+    anchor = wordEls[currentWordIndex];
+    if(!anchor) return;
+  }
+
+  const lh = parseFloat(getComputedStyle(viewport).lineHeight);
+  if(!lh || isNaN(lh) || lh <= 0) return;
+
+  const wrapRect   = wordsWrap.getBoundingClientRect();
+  const anchorRect = anchor.getBoundingClientRect();
+  const offsetInWrap = anchorRect.top - wrapRect.top;
+  const lineIndex = Math.round(offsetInWrap / lh);
+
+  const scrollLines = lineIndex > 1 ? lineIndex - 1 : 0;
+  const offsetY = -scrollLines * lh;
+
+  if(Math.abs(currentScrollY - offsetY) > 0.5){
+    currentScrollY = offsetY;
+    wordsWrap.style.transform = 'translateY(' + offsetY + 'px)';
+  }
+}
+
+/* ============================================================
+   ACTIVE WORD
+   — only the active word gets the underline; completed words
+     stay at full opacity and keep their letter colors.
+   ============================================================ */
+function updateActiveWord(){
+  wordEls.forEach((el,i)=>{
+    el.classList.toggle('active', i === currentWordIndex);
+  });
+  updateScroll();
+}
+
+/* ============================================================
+   CARET
+   ============================================================ */
+let caretBlinkTimer = null;
+function updateCaret(){
+  if(finished) return;
+
+  let targetEl = null;
+  let positionAfter = false;
+
+  if(mode === 'zen'){
+    const w = wordEls[0];
+    if(!w) return;
+    const letters = w.querySelectorAll('.letter');
+    if(letters.length > 0){
+      targetEl = letters[letters.length - 1];
+      positionAfter = true;
+    } else {
+      targetEl = w;
+    }
+  } else {
+    const activeWord = wordEls[currentWordIndex];
+    if(!activeWord) return;
+    const letters = activeWord.querySelectorAll('.letter:not(.extra)');
+    if(currentInput.length < letters.length){
+      targetEl = letters[currentInput.length];
+    } else if(letters.length > 0){
+      targetEl = letters[letters.length - 1];
+      positionAfter = true;
+    } else {
+      targetEl = activeWord;
+    }
+  }
+
+  if(!targetEl) return;
+
+  const r  = targetEl.getBoundingClientRect();
+  const sr = stage.getBoundingClientRect();
+  const bx = stage.clientLeft || 0;
+  const by = stage.clientTop  || 0;
+
+  const x = positionAfter
+    ? r.right - sr.left - bx
+    : r.left  - sr.left - bx;
+  const y = r.top - sr.top - by;
+
+  caret.style.height = r.height + 'px';
+  caret.style.left = x + 'px';
+  caret.style.top  = y + 'px';
+  pulseCaret();
+}
+
+function pulseCaret(){
+  caret.classList.add('solid');
+  clearTimeout(caretBlinkTimer);
+  caretBlinkTimer = setTimeout(()=>caret.classList.remove('solid'), 600);
+}
+
+/* ============================================================
+   ERROR FEEDBACK
+   ============================================================ */
+function errorFeedback(wordEl){
+  caret.classList.remove('shake','error');
+  void caret.offsetWidth;
+  caret.classList.add('shake','error');
+  setTimeout(()=>{
+    caret.classList.remove('shake');
+    caret.classList.remove('error');
+  }, 260);
+
+  if(wordEl){
+    wordEl.classList.remove('shake');
+    void wordEl.offsetWidth;
+    wordEl.classList.add('shake');
+    setTimeout(()=>wordEl.classList.remove('shake'), 240);
+  }
+
+  vibrate([12, 30, 18]);
+}
+
+/* ============================================================
+   RENDER CURRENT WORD
+   ============================================================ */
+function renderCurrentWord(target, input){
+  const w = wordEls[currentWordIndex];
+  if(!w) return;
+
+  w.querySelectorAll('.letter.extra').forEach(el=>el.remove());
+  const letters = w.querySelectorAll('.letter:not(.extra)');
+
+  for(let i=0;i<letters.length;i++){
+    const el = letters[i];
+    el.classList.remove('correct','incorrect','missing');
+    if(i < input.length){
+      if(input[i] === target[i]) el.classList.add('correct');
+      else el.classList.add('incorrect');
+    }
+  }
+
+  if(input.length > target.length){
+    for(let i=target.length; i<input.length; i++){
+      const s = document.createElement('span');
+      s.className = 'letter extra';
+      s.textContent = input[i];
+      w.appendChild(s);
+    }
+  }
+}
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+function handleInput(){
+  if(finished) return;
+
+  const val = hidden.value.replace(/[\n\r\t]/g,'');
+  if(!started && val.length > 0) startTest();
+
+  if(mode === 'zen'){
+    if(val.length > prevInputLen) Sound.play('key');
+    prevInputLen = val.length;
+    handleZenInput(val);
+    return;
+  }
+
+  if(currentWordIndex >= words.length){
+    hidden.value = currentInput;
+    return;
+  }
+
+  const targetWord = words[currentWordIndex];
+
+  if(val.length > currentInput.length){
+    const idx = val.length - 1;
+    const typedChar = val[idx];
+    const expected = targetWord[idx];
+
+    if(idx >= targetWord.length || typedChar !== expected){
+      Sound.play('error');
+      errorFeedback(wordEls[currentWordIndex]);
+    } else {
+      Sound.play('key');
+    }
+  }
+
+  currentInput = val;
+
+  if(currentInput.length > targetWord.length + 5){
+    currentInput = currentInput.slice(0, targetWord.length + 5);
+    hidden.value = currentInput;
+  }
+
+  renderCurrentWord(targetWord, currentInput);
+  updateLiveStats();
+  updateCaret();
+  updateScroll();
+}
+
+/* ============================================================
+   ZEN
+   ============================================================ */
+function handleZenInput(val){
+  const w = wordEls[0];
+  if(!w) return;
+
+  w.innerHTML = '';
+  if(val.length === 0){
+    const s = document.createElement('span');
+    s.className = 'letter';
+    s.textContent = ' ';
+    w.appendChild(s);
+  } else {
+    for(let i=0;i<val.length;i++){
+      const s = document.createElement('span');
+      s.className = 'letter correct';
+      s.textContent = val[i];
+      w.appendChild(s);
+    }
+  }
+
+  currentInput = val;
+  updateLiveStats();
+  updateCaret();
+  updateScroll();
+}
+
+/* ============================================================
+   COMMIT WORD
+   ============================================================ */
+function commitWord(){
+  if(mode === 'zen') return;
+  if(currentWordIndex >= words.length) return;
+
+  const target = words[currentWordIndex];
+  const input = currentInput;
+
+  for(let i=0;i<Math.max(target.length, input.length);i++){
+    if(i < target.length && i < input.length){
+      if(input[i] === target[i]) totalCorrect++;
+      else totalIncorrect++;
+    } else if(i < target.length && i >= input.length){
+      totalMissed++;
+    } else if(i >= target.length && i < input.length){
+      totalExtra++;
+    }
+  }
+
+  typedWords[currentWordIndex] = input;
+  wordCorrect[currentWordIndex] = (target === input);
+
+  const w = wordEls[currentWordIndex];
+  const letters = w.querySelectorAll('.letter:not(.extra)');
+  for(let i=input.length; i<target.length; i++){
+    if(letters[i]) letters[i].classList.add('missing');
+  }
+
+  currentWordIndex++;
+  currentInput = '';
+  prevInputLen = 0;
+  hidden.value = '';
+
+  if(currentWordIndex >= words.length){
+    if(mode === 'words' || mode === 'quote'){
+      finishTest();
+      return;
+    }
+  }
+
+  updateActiveWord();
+  updateCaret();
+  updateLiveStats();
+}
+
+/* ============================================================
+   BACKSPACE
+   ============================================================ */
+function goBackWord(){
+  if(mode === 'zen') return false;
+  if(currentInput.length !== 0) return false;
+  if(currentWordIndex === 0) return false;
+
+  const prevIdx = currentWordIndex - 1;
+  const prevWasCorrect = wordCorrect[prevIdx] === true;
+
+  if(prevWasCorrect){
+    Sound.play('locked');
+    vibrate([20, 40, 20]);
+    const wEl = wordEls[prevIdx];
+    if(wEl){
+      wEl.classList.remove('locked-flash');
+      void wEl.offsetWidth;
+      wEl.classList.add('locked-flash');
+      setTimeout(()=>wEl.classList.remove('locked-flash'), 420);
+    }
+    return true;
+  }
+
+  const prevInput = typedWords[prevIdx] || '';
+  const target = words[prevIdx];
+
+  for(let i=0;i<Math.max(target.length, prevInput.length);i++){
+    if(i < target.length && i < prevInput.length){
+      if(prevInput[i] === target[i]) totalCorrect--;
+      else totalIncorrect--;
+    } else if(i < target.length && i >= prevInput.length){
+      totalMissed--;
+    } else if(i >= target.length && i < prevInput.length){
+      totalExtra--;
+    }
+  }
+
+  const w = wordEls[prevIdx];
+  w.querySelectorAll('.letter.missing').forEach(el=>el.classList.remove('missing'));
+  w.querySelectorAll('.letter.extra').forEach(el=>el.remove());
+
+  currentWordIndex = prevIdx;
+  currentInput = prevInput;
+  prevInputLen = prevInput.length;
+  hidden.value = prevInput;
+
+  wordCorrect[prevIdx] = false;
+
+  updateActiveWord();
+  renderCurrentWord(target, prevInput);
+  updateLiveStats();
+  requestAnimationFrame(()=>{ updateCaret(); });
+  updateScroll();
+
+  Sound.play('click');
+  vibrate(8);
+  return true;
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+function startTest(){
+  started = true;
+  startTime = performance.now();
+  finished = false;
+
+  if(mode === 'time'){
+    liveTimer.textContent = timeLimit;
+    timerId = setInterval(()=>{
+      elapsed = (performance.now() - startTime)/1000;
+      const remaining = Math.max(0, timeLimit - elapsed);
+      liveTimer.textContent = Math.ceil(remaining);
+      if(remaining <= 0) finishTest();
+    }, 100);
+  } else {
+    liveTimer.textContent = '0';
+    timerId = setInterval(()=>{
+      elapsed = (performance.now() - startTime)/1000;
+      liveTimer.textContent = elapsed.toFixed(1);
+    }, 100);
+  }
+
+  let lastSec = 0;
+  tickId = setInterval(()=>{
+    if(!started || finished) return;
+    const sec = Math.floor((performance.now() - startTime)/1000);
+    if(sec > lastSec){
+      lastSec = sec;
+      const minutes = sec / 60;
+      if(minutes <= 0) return;
+      const c = mode === 'zen' ? currentInput.replace(/\s/g,'').length : totalCorrect;
+      const errs = mode === 'zen' ? 0 : (totalIncorrect + totalExtra);
+      perSecondWpm.push(Math.max(0, Math.round((c/5)/minutes)));
+      perSecondRaw.push(Math.max(0, Math.round(((c+errs)/5)/minutes)));
+    }
+  }, 250);
+}
+
+/* ============================================================
+   LIVE STATS
+   ============================================================ */
+function updateLiveStats(){
+  const now = performance.now();
+  const secs = started ? (now - startTime)/1000 : 0;
+  const minutes = Math.max(secs, 0.1) / 60;
+
+  if(mode === 'zen'){
+    const chars = currentInput.replace(/\s/g,'').length;
+    const wpm = started ? Math.round((chars / 5) / minutes) : 0;
+    liveWpm.textContent = wpm;
+    liveRaw.textContent = wpm;
+    liveAcc.textContent = '100%';
+    liveChars.textContent = chars + '/' + chars;
+    liveErr.textContent = 0;
+    return;
+  }
+
+  let correctChars = totalCorrect;
+  let incorrectChars = totalIncorrect + totalExtra;
+
+  if(currentWordIndex < words.length){
+    const target = words[currentWordIndex];
+    for(let i=0;i<Math.min(currentInput.length, target.length);i++){
+      if(currentInput[i] === target[i]) correctChars++;
+      else incorrectChars++;
+    }
+    if(currentInput.length > target.length){
+      incorrectChars += (currentInput.length - target.length);
+    }
+  }
+
+  const wpm = started ? Math.round((correctChars / 5) / minutes) : 0;
+  const raw = started ? Math.round(((correctChars + incorrectChars) / 5) / minutes) : 0;
+  const totalTyped = correctChars + incorrectChars;
+  const acc = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 100;
+
+  liveWpm.textContent = wpm;
+  liveRaw.textContent = raw;
+  liveAcc.textContent = acc + '%';
+  liveErr.textContent = incorrectChars;
+
+  if(mode === 'words' || mode === 'quote'){
+    liveChars.textContent = currentWordIndex + '/' + words.length;
+  } else {
+    liveChars.textContent = correctChars + '/' + totalTyped;
+  }
+}
+
+/* ============================================================
+   FINISH
+   ============================================================ */
+function finishTest(){
+  if(finished) return;
+  finished = true;
+  started = false;
+  clearInterval(timerId);
+  clearInterval(tickId);
+
+  const totalSecs = Math.max((performance.now() - startTime)/1000, 0.5);
+
+  let correct = totalCorrect;
+  let incorrect = totalIncorrect + totalExtra;
+
+  if(mode !== 'zen' && currentWordIndex < words.length){
+    const target = words[currentWordIndex];
+    for(let i=0;i<Math.min(currentInput.length, target.length);i++){
+      if(currentInput[i] === target[i]) correct++;
+      else incorrect++;
+    }
+    if(currentInput.length > target.length){
+      incorrect += (currentInput.length - target.length);
+    }
+  }
+
+  const minutes = totalSecs / 60;
+  const wpm = Math.round((correct / 5) / minutes);
+  const raw = Math.round(((correct + incorrect) / 5) / minutes);
+  const acc = (correct + incorrect) > 0 ? Math.round((correct / (correct + incorrect)) * 100) : 100;
+
+  let consistency = 100;
+  if(perSecondWpm.length > 1){
+    const mean = perSecondWpm.reduce((a,b)=>a+b,0) / perSecondWpm.length;
+    const variance = perSecondWpm.reduce((a,b)=>a + Math.pow(b-mean,2),0) / perSecondWpm.length;
+    const std = Math.sqrt(variance);
+    const cv = mean > 0 ? std / mean : 0;
+    consistency = Math.round(Math.max(0, Math.min(100, (1 - cv) * 100)));
+  }
+
+  const key = getTestKey();
+  let isPb = false;
+  if(mode !== 'zen'){
+    try{
+      const saved = JSON.parse(localStorage.getItem('typeforge_bests') || '{}');
+      if(!saved[key] || wpm > saved[key].wpm){
+        saved[key] = {wpm, acc, raw, consistency, time: totalSecs, date: Date.now(), mode, config: key};
+        localStorage.setItem('typeforge_bests', JSON.stringify(saved));
+        isPb = true;
+      }
+      bestResults = saved;
+    }catch(e){}
+  }
+
+  showResults({wpm, raw, acc, consistency, time: totalSecs, chars: correct + incorrect, errors: incorrect, isPb});
+
+  if(isPb){ Sound.play('pb'); vibrate([30, 50, 30, 50, 60]); }
+  else { Sound.play('complete'); vibrate([20, 40, 20]); }
+}
+
+function getTestKey(){
+  if(mode === 'time')  return 'time_' + timeLimit;
+  if(mode === 'words') return 'words_' + wordCount;
+  if(mode === 'quote') return 'quote';
+  return 'zen';
+}
+
+/* ============================================================
+   RESULTS
+   ============================================================ */
+function showResults(r){
+  resultCard.classList.remove('lb-mode');
+  $('resultTitle').textContent = 'Test Complete';
+  $('rWpm').textContent  = r.wpm;
+  $('rRaw').textContent  = r.raw;
+  $('rAcc').textContent  = r.acc + '%';
+  $('rCons').textContent = r.consistency + '%';
+  $('rTime').textContent = r.time.toFixed(1) + 's';
+  $('rChars').textContent = r.chars;
+  $('rErr').textContent  = r.errors;
+  $('rPb').classList.toggle('show', r.isPb);
+
+  drawChart();
+  renderLeaderboard(getTestKey());
+  overlay.classList.add('show');
+}
+
+function drawChart(){
+  const canvas = $('chartCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  if(rect.width === 0) return;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0,0,w,h);
+
+  const data = perSecondWpm.length > 0 ? perSecondWpm : [0];
+  const rawData = perSecondRaw.length > 0 ? perSecondRaw : [0];
+  const maxVal = Math.max(...data, ...rawData, 10);
+
+  const pad = {top:10, right:8, bottom:18, left:28};
+  const plotW = w - pad.left - pad.right;
+  const plotH = h - pad.top - pad.bottom;
+
+  ctx.strokeStyle = 'rgba(255,255,255,.05)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<=4;i++){
+    const y = pad.top + (plotH/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(w-pad.right,y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.18)';
+    ctx.font = '9px ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxVal - (maxVal/4)*i), pad.left-5, y+3);
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,.18)';
+  ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(data.length/6));
+  for(let i=0;i<data.length;i+=step){
+    const x = pad.left + (data.length>1 ? (i/(data.length-1))*plotW : plotW/2);
+    ctx.fillText(i+'s', x, h-4);
+  }
+
+  if(rawData.length > 1){
+    ctx.strokeStyle = 'rgba(255,255,255,.15)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    rawData.forEach((v,i)=>{
+      const x = pad.left + (i/(rawData.length-1))*plotW;
+      const y = pad.top + plotH - (v/maxVal)*plotH;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  }
+
+  if(data.length > 1){
+    const grad = ctx.createLinearGradient(pad.left,0,w-pad.right,0);
+    grad.addColorStop(0,'#b388ff');
+    grad.addColorStop(1,'#7c4dff');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    data.forEach((v,i)=>{
+      const x = pad.left + (i/(data.length-1))*plotW;
+      const y = pad.top + plotH - (v/maxVal)*plotH;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = '#b388ff';
+    data.forEach((v,i)=>{
+      const x = pad.left + (i/(data.length-1))*plotW;
+      const y = pad.top + plotH - (v/maxVal)*plotH;
+      ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2); ctx.fill();
+    });
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,.1)';
+    ctx.font = '12px ui-monospace, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('not enough data', w/2, h/2);
+  }
+}
+
+function renderLeaderboard(currentKey){
+  const rows = $('lbRows');
+  rows.innerHTML = '';
+
+  const entries = Object.entries(bestResults);
+  if(entries.length === 0){
+    rows.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:6px 0">No personal bests yet. Finish a test to set one!</div>';
+    return;
+  }
+
+  entries.sort((a,b)=>b[1].wpm - a[1].wpm);
+
+  entries.slice(0,8).forEach(([key,val],i)=>{
+    const row = document.createElement('div');
+    row.className = 'lb-row';
+    const parts = key.split('_');
+    const modeLabel = parts[0];
+    const cfg = parts[1] || '';
+    const cfgLabel = modeLabel==='time'?cfg+'s':modeLabel==='words'?cfg+'w':'';
+    const isCurrent = key === currentKey;
+    row.innerHTML = `
+      <div class="lb-rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</div>
+      <div class="lb-name">${isCurrent?'▶ ':''}${modeLabel}${cfgLabel?' <span class="mode-tag">'+cfgLabel+'</span>':''}</div>
+      <div class="lb-wpm">${val.wpm}</div>
+      <div class="lb-acc">${val.acc}%</div>
+    `;
+    rows.appendChild(row);
+  });
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+function resetRunState(){
+  finished = false;
+  started = false;
+  clearInterval(timerId);
+  clearInterval(tickId);
+  timerId = null; tickId = null;
+  elapsed = 0;
+  currentScrollY = 0;
+  prevInputLen = 0;
+
+  typedWords = [];
+  wordCorrect = [];
+  currentWordIndex = 0;
+  currentInput = '';
+  perSecondWpm = [];
+  perSecondRaw = [];
+  totalCorrect = 0; totalIncorrect = 0; totalExtra = 0; totalMissed = 0;
+
+  wordsWrap.style.transform = 'translateY(0px)';
+  hidden.value = '';
+  overlay.classList.remove('show');
+
+  caret.classList.remove('shake','error');
+
+  liveWpm.textContent = '0';
+  liveAcc.textContent = '100%';
+  liveRaw.textContent = '0';
+  liveErr.textContent = '0';
+  liveChars.textContent = mode==='words' ? '0/'+wordCount : '0/0';
+  if(mode === 'time') liveTimer.textContent = timeLimit;
+  else liveTimer.textContent = '0';
+}
+
+function restartTest(pickNewWords){
+  if(pickNewWords === undefined) pickNewWords = true;
+  if(pickNewWords) words = generateWords();
+  resetRunState();
+  renderWords();
+  updateCaret();
+  hidden.focus();
+}
+
+/* ============================================================
+   SHARE
+   ============================================================ */
+function shareResult(){
+  const wpm = $('rWpm').textContent;
+  const acc = $('rAcc').textContent;
+  const text = `I type ${wpm} WPM with ${acc} accuracy on TypeForge. Can you beat me?`;
+  if(navigator.share){
+    navigator.share({title:'TypeForge',text}).catch(()=>{});
+    return;
+  }
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text)
+      .then(()=>toast('Copied to clipboard!'))
+      .catch(()=>legacyCopy(text));
+  } else legacyCopy(text);
+}
+
+function legacyCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('Copied!')}catch(e){toast(text)}
+  document.body.removeChild(ta);
+}
+
+let toastTimer = null;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+hidden.addEventListener('input', handleInput);
+hidden.addEventListener('paste', e=>e.preventDefault());
+hidden.addEventListener('drop', e=>e.preventDefault());
+
+hidden.addEventListener('keydown', e=>{
+  if(e.key === ' ' || e.key === 'Spacebar'){
+    e.preventDefault();
+    if(mode === 'zen'){
+      hidden.value += ' ';
+      handleInput();
+      return;
+    }
+    if(currentWordIndex < words.length){
+      Sound.play('commit');
+      commitWord();
+    }
+    return;
+  }
+
+  if(e.key === 'Backspace'){
+    if(currentInput.length === 0 && currentWordIndex > 0){
+      e.preventDefault();
+      goBackWord();
+    }
+    return;
+  }
+});
+
+window.addEventListener('keydown', e=>{
+  if(e.key === 'Tab'){
+    e.preventDefault();
+    restartTest(false);
+  }
+  if(e.key === 'Escape'){
+    e.preventDefault();
+    restartTest(true);
+  }
+});
+
+$('modeBar').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  Sound.play('click');
+  document.querySelectorAll('#modeBar button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  mode = btn.dataset.mode;
+
+  $('timeOpts').style.display = mode==='time' ? 'flex' : 'none';
+  $('wordOpts').style.display = mode==='words' ? 'flex' : 'none';
+
+  const dis = mode==='quote' || mode==='zen';
+  $('togglePunct').style.display = dis ? 'none' : 'flex';
+  $('toggleNums').style.display = dis ? 'none' : 'flex';
+
+  restartTest(true);
+});
+
+$('timeOpts').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  Sound.play('click');
+  document.querySelectorAll('#timeOpts button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  timeLimit = parseInt(btn.dataset.val);
+  restartTest(true);
+});
+
+$('wordOpts').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  Sound.play('click');
+  document.querySelectorAll('#wordOpts button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  wordCount = parseInt(btn.dataset.val);
+  restartTest(true);
+});
+
+$('togglePunct').addEventListener('click', function(){
+  Sound.play('click');
+  punctuation = !punctuation;
+  this.classList.toggle('on', punctuation);
+  restartTest(true);
+});
+$('toggleNums').addEventListener('click', function(){
+  Sound.play('click');
+  numbers = !numbers;
+  this.classList.toggle('on', numbers);
+  restartTest(true);
+});
+
+$('btnSound').addEventListener('click', function(){
+  Sound.enabled = !Sound.enabled;
+  if(Sound.enabled){ Sound.init(); Sound.play('click'); }
+  this.textContent = Sound.enabled ? '🔊' : '🔇';
+  this.classList.toggle('on', Sound.enabled);
+  try { localStorage.setItem('typeforge_sound', Sound.enabled ? '1' : '0'); } catch(e){}
+});
+
+$('btnRestart').addEventListener('click', ()=>{ Sound.play('click'); restartTest(true); });
+$('btnLeaderboard').addEventListener('click', ()=>{
+  Sound.play('click');
+  resultCard.classList.add('lb-mode');
+  $('resultTitle').textContent = 'Personal Bests';
+  drawChart();
+  renderLeaderboard('');
+  overlay.classList.add('show');
+});
+
+$('btnShare').addEventListener('click', ()=>{ Sound.play('click'); shareResult(); });
+$('btnNext').addEventListener('click', ()=>{ Sound.play('click'); overlay.classList.remove('show'); restartTest(true); });
+$('btnRetry').addEventListener('click', ()=>{ Sound.play('click'); overlay.classList.remove('show'); restartTest(false); });
+
+hidden.addEventListener('focus', ()=>{ stage.classList.remove('unfocused'); updateCaret(); });
+hidden.addEventListener('blur',  ()=>{ stage.classList.add('unfocused'); });
+stage.addEventListener('click', ()=>{ hidden.focus(); Sound.init(); });
+
+window.addEventListener('resize', ()=>{ updateCaret(); updateScroll(); });
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+try{
+  bestResults = JSON.parse(localStorage.getItem('typeforge_bests') || '{}');
+}catch(e){}
+
+try{
+  const s = localStorage.getItem('typeforge_sound');
+  if(s === '0'){ Sound.enabled = false; $('btnSound').textContent = '🔇'; }
+  else { $('btnSound').classList.add('on'); }
+}catch(e){ $('btnSound').classList.add('on'); }
+
+const initAudio = ()=>{ Sound.init(); };
+document.addEventListener('mousedown', initAudio, { once: true });
+document.addEventListener('keydown', initAudio, { once: true });
+document.addEventListener('touchstart', initAudio, { once: true });
+
+words = generateWords();
+resetRunState();
+renderWords();
+hidden.focus();
+setTimeout(()=>{ hidden.focus(); updateCaret(); updateScroll(); }, 150);
+
+})();
+</script>
+</body>
+</html>
