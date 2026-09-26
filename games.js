@@ -64,19 +64,60 @@ window.GAMES = [
     accent: "#00ff88",
     file: "games/typeforge.html",
     isNew: true
-  }
-  /* === ADD YOUR NEXT GAME HERE ===
-  ,
+  },
   {
-    id: "my-new-game",
-    title: "My New Game",
-    description: "Short, punchy description.",
-    category: "Puzzle",
-    thumbnail: "thumbnails/my-new-game.jpg",
+    id: "hungrybird",
+    title: "Hungry Bird",
+    description: "EAT-FLY-REPEAT",
+    category: "Reaction",
+    thumbnail: "thumbnails/hungry.png",
     gradient: ["#00ff88", "#00f0ff"],
     accent: "#00ff88",
-    file: "games/my-new-game.html",
+    file: "games/hungry-bird.html",
+    isNew: true
+  },
+  {
+    id: "snake",
+    title: "Snake",
+    description: "The old retro snake game with new taste.",
+    category: "Reaction",
+    thumbnail: "thumbnails/snake.png",
+    gradient: ["#00ff88", "#00f0ff"],
+    accent: "#00ff88",
+    file: "games/snake.html",
+    isNew: true
+  },
+  {
+    id: "don't look behind",
+    title: "Don't look behind",
+    description: "You Die, if you look Behind.",
+    category: "Horror",
+    thumbnail: "thumbnails/dlb.png",
+    gradient: ["#00ff88", "#00f0ff"],
+    accent: "#00ff88",
+    file: "games/dlb.html",
+    isNew: true
+  },
+  {
+    id: "racetown",
+    title: "Race Town",
+    description: "Bring back old  days of raing with a cool drift.",
+    category: "Racing",
+    thumbnail: "thumbnails/racetown.png",
+    gradient: ["#00ff88", "#00f0ff"],
+    accent: "#00ff88",
+    file: "games/racetown.html",
+    isNew: true
+  },
+  {
+    id: "terrahaven",
+    title: "TerraHaven",
+    description: "Build and Destroy in this Endless World, Show you creativity.",
+    category: "Creative",
+    thumbnail: "thumbnails/terrahaven.png",
+    gradient: ["#00ff88", "#00f0ff"],
+    accent: "#00ff88",
+    file: "games/terrahaven.html",
     isNew: true
   }
-  */
 ];
