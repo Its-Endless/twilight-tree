@@ -119,5 +119,27 @@ window.GAMES = [
     accent: "#00ff88",
     file: "games/terrahaven.html",
     isNew: true
+  },
+  {
+    id: "appleshooter",
+    title: "Apple Shooter",
+    description: "Shoot the Apple not the Guy and Build a HighScore.",
+    category: "Shooting",
+    thumbnail: "thumbnails/appleshooter.png",
+    gradient: ["#00ff88", "#00f0ff"],
+    accent: "#00ff88",
+    file: "games/appleshooter.html",
+    isNew: true
+  },
+  {
+    id: "endless_shooter",
+    title: "Endless Shooter",
+    description: "An endless shooter game.",
+    category: "Shooting",
+    thumbnail: "thumbnails/endless_shooter.png",
+    gradient: ["#ff00aa", "#ffe600"],
+    accent: "#00ff88",
+    file: "games/endless_shooter.html",
+    isNew: true
   }
 ];
