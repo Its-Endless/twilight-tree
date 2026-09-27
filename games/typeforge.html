@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>TypeForge — Typing Test</title>
 <style>
   :root{
@@ -161,10 +161,8 @@
     display:inline-block;
     margin-right:.55em;
     position:relative;
-    /* NO dimming — completed words stay at full opacity */
   }
 
-  /* ACTIVE WORD — simple underline (no box) */
   .word.active::after{
     content:'';
     position:absolute;
@@ -178,7 +176,6 @@
     pointer-events:none;
   }
 
-  /* LOCKED — pulse green underline */
   .word.locked-flash::after{
     content:'';
     position:absolute;
@@ -195,7 +192,6 @@
     100% { opacity:0; transform:scaleX(1.15); }
   }
 
-  /* SHAKE on wrong word */
   .word.shake{
     animation:wordShake .22s ease;
   }
@@ -206,17 +202,14 @@
   }
 
   /* ===== LETTER STATES ===== */
-  /* Untyped = grey */
   .letter{
     color:var(--dim);
     position:relative;
     transition:color .05s linear;
   }
-  /* Typed correct = white */
   .letter.correct{
     color:var(--text);
   }
-  /* Wrong = red */
   .letter.incorrect{
     color:var(--red);
     text-shadow:0 0 8px var(--red-glow);
@@ -224,7 +217,6 @@
     border-radius:2px;
   }
 
-  /* Extra chars beyond word (typed too many) */
   .letter.extra{
     color:var(--red);
     text-shadow:0 0 8px var(--red-glow);
@@ -233,7 +225,6 @@
     text-decoration-thickness:1.5px;
   }
 
-  /* Letters never typed (missed) */
   .letter.missing{
     color:var(--red);
     text-decoration:underline;
@@ -441,9 +432,181 @@
   #hiddenInput{
     position:fixed; top:0; left:0; width:1px; height:1px;
     opacity:0; border:0; padding:0; resize:none; outline:none; z-index:-1;
+    font-size:16px; /* prevents iOS focus zoom */
   }
 
-  /* ===== RESPONSIVE ===== */
+  /* ============================================================
+     ON-SCREEN RETRO KEYBOARD  (touch devices only)
+     ============================================================ */
+  .kb{
+    display:none;
+    flex-direction:column;
+    gap:6px;
+    position:relative;
+    padding:9px 6px calc(9px + env(safe-area-inset-bottom, 0px));
+    background:
+      linear-gradient(180deg,#211d2e 0%,#161320 45%,#100e18 100%);
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:16px;
+    box-shadow:
+      0 -18px 50px -26px rgba(0,0,0,.95),
+      inset 0 1px 0 rgba(255,255,255,.07),
+      inset 0 -1px 0 rgba(0,0,0,.6);
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:none;
+    overflow:hidden;
+  }
+  /* retro scanlines */
+  .kb::after{
+    content:'';
+    position:absolute; inset:0;
+    background:repeating-linear-gradient(180deg, rgba(255,255,255,.022) 0 1px, transparent 1px 3px);
+    pointer-events:none;
+    border-radius:inherit;
+    mix-blend-mode:overlay;
+  }
+
+  .kb-row{
+    display:flex;
+    gap:6px;
+    position:relative;
+    z-index:1;
+  }
+  .kb-row--inset{padding:0 4.5%}
+
+  .kb-key{
+    flex:1 1 0;
+    height:clamp(36px, 6vh, 52px);
+    display:flex; align-items:center; justify-content:center;
+    font-family:inherit;
+    font-size:clamp(13px, 3.6vw, 16px);
+    font-weight:600;
+    letter-spacing:.4px;
+    color:#e9e4f5;
+    background:linear-gradient(180deg,#302b42 0%,#241f33 55%,#1b1727 100%);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:9px;
+    box-shadow:
+      0 3px 0 #0b0a11,
+      0 5px 12px -5px rgba(0,0,0,.9),
+      inset 0 1px 0 rgba(255,255,255,.12),
+      inset 0 -2px 4px rgba(0,0,0,.35);
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:none;
+    transition:transform .06s ease, box-shadow .06s ease, background .06s ease, color .06s ease;
+    padding:0;
+  }
+  .kb-key.pressed{
+    transform:translateY(3px);
+    color:#fff;
+    background:linear-gradient(180deg,#5b4a86 0%,#3d3160 60%,#2c2447 100%);
+    box-shadow:
+      0 0 0 #0b0a11,
+      0 0 22px rgba(179,136,255,.55),
+      inset 0 1px 0 rgba(255,255,255,.22);
+    text-shadow:0 0 10px rgba(255,255,255,.7);
+  }
+
+  .kb-key.mod{
+    color:var(--accent);
+    font-size:13px;
+    background:linear-gradient(180deg,#262034 0%,#1c1729 55%,#151120 100%);
+  }
+  .kb-key.mod.pressed{
+    color:#fff;
+    background:linear-gradient(180deg,#4a3e6e 0%,#332a4e 60%,#241e39 100%);
+  }
+  .kb-key.on{
+    color:#0f0e13;
+    background:linear-gradient(180deg,#c9a8ff 0%,var(--accent) 45%,var(--accent-2) 100%);
+    box-shadow:
+      0 3px 0 #2a1b52,
+      0 0 20px rgba(179,136,255,.65),
+      inset 0 1px 0 rgba(255,255,255,.5);
+    text-shadow:none;
+  }
+  .kb-key.space{
+    font-size:10px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:#8b83a8;
+  }
+  .kb-key.space.pressed{color:#fff}
+
+  /* ===== BODY LAYOUT WHEN KEYBOARD IS ACTIVE ===== */
+  body.kb-active{
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    height:100vh;
+    height:100dvh;
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+    gap:6px;
+    overflow:hidden;
+    overscroll-behavior:none;
+    touch-action:manipulation;
+  }
+  body.kb-active .app{
+    width:100%;
+    max-width:1000px;
+    max-height:none;
+    flex:1 1 auto;
+    min-height:0;
+    gap:6px;
+  }
+  body.kb-active .kb{
+    display:flex;
+    width:100%;
+    max-width:1000px;
+    flex:0 0 auto;
+  }
+
+  /* --- mobile compaction --- */
+  body.kb-active .brand small{display:none}
+  body.kb-active .brand{font-size:13px}
+  body.kb-active .pill{padding:5px 9px; font-size:10.5px}
+
+  body.kb-active .mode-bar button{padding:6px 11px; font-size:11.5px}
+  body.kb-active .opt-group button{padding:5px 9px; font-size:11px}
+  body.kb-active .toggle{padding:5px 9px; font-size:11px}
+
+  body.kb-active .live-bar{gap:5px; flex-wrap:nowrap}
+  body.kb-active .live-stat{padding:5px 7px; border-radius:9px; flex:1 1 0}
+  body.kb-active .live-stat .v{font-size:14px}
+  body.kb-active .live-stat .l{font-size:7.5px; letter-spacing:.8px}
+  body.kb-active .live-stat.hide-mobile{display:none}
+
+  body.kb-active .stage{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:10px 14px 12px;
+    border-radius:12px;
+  }
+  body.kb-active .words-viewport{
+    font-size:clamp(15px, 4.2vw, 19px);
+    height:5.7em;
+    flex:0 1 auto;
+    min-height:0;
+  }
+  body.kb-active .hint{display:none}
+
+  body.kb-active .overlay{padding:10px}
+  body.kb-active .result-card{padding:18px 16px 16px; border-radius:14px}
+  body.kb-active .stat-grid{grid-template-columns:repeat(3,1fr); gap:5px; margin-bottom:12px}
+  body.kb-active .stat-card{padding:8px 4px}
+  body.kb-active .stat-card .val{font-size:15px}
+  body.kb-active .stat-card .lbl{font-size:7.5px}
+  body.kb-active .chart-box{margin-bottom:12px}
+  body.kb-active .chart-canvas{height:80px}
+  body.kb-active .lb-box{margin-bottom:12px}
+  body.kb-active .btn{padding:8px 14px; font-size:12px}
+
+  /* ===== RESPONSIVE (non keyboard) ===== */
   @media (max-width:640px){
     body{padding:8px 10px}
     .words-viewport{font-size:15px; height:7.6em}
@@ -507,7 +670,7 @@
     <div class="live-stat hl"><span class="v" id="liveWpm">0</span><span class="l">wpm</span></div>
     <div class="live-stat"><span class="v" id="liveAcc">100%</span><span class="l">acc</span></div>
     <div class="live-stat timer"><span class="v" id="liveTimer">30</span><span class="l">timer</span></div>
-    <div class="live-stat"><span class="v" id="liveRaw">0</span><span class="l">raw</span></div>
+    <div class="live-stat hide-mobile"><span class="v" id="liveRaw">0</span><span class="l">raw</span></div>
     <div class="live-stat"><span class="v" id="liveChars">0/0</span><span class="l">chars</span></div>
     <div class="live-stat"><span class="v" id="liveErr">0</span><span class="l">errors</span></div>
   </div>
@@ -523,6 +686,8 @@
     <kbd>Tab</kbd> restart &nbsp;·&nbsp; <kbd>Esc</kbd> new text &nbsp;·&nbsp; <kbd>⌫</kbd> fix last word (only if it had errors)
   </div>
 </div>
+
+<div class="kb" id="kb" aria-hidden="true"></div>
 
 <div class="overlay" id="overlay">
   <div class="result-card" id="resultCard">
@@ -602,13 +767,16 @@ const Sound = {
     if(!this.ctx) return;
     const t = this.ctx.currentTime;
     try{
-      if(kind === 'key')           this._key(t);
-      else if(kind === 'error')    this._error(t);
-      else if(kind === 'commit')   this._commit(t);
-      else if(kind === 'complete') this._complete(t);
-      else if(kind === 'pb')       this._pb(t);
-      else if(kind === 'click')    this._uiClick(t);
-      else if(kind === 'locked')   this._locked(t);
+      if(kind === 'key')            this._key(t);
+      else if(kind === 'error')     this._error(t);
+      else if(kind === 'commit')    this._commit(t);
+      else if(kind === 'complete')  this._complete(t);
+      else if(kind === 'pb')        this._pb(t);
+      else if(kind === 'click')     this._uiClick(t);
+      else if(kind === 'locked')    this._locked(t);
+      else if(kind === 'tap')       this._tap(t);
+      else if(kind === 'space')     this._tapSpace(t);
+      else if(kind === 'back')      this._tapBack(t);
     }catch(e){}
   },
 
@@ -739,6 +907,120 @@ const Sound = {
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
     osc.connect(g).connect(ctx.destination);
     osc.start(t); osc.stop(t + 0.06);
+  },
+
+  /* ---- mechanical keyboard "thock" ---- */
+  _tap(t){
+    const ctx = this.ctx;
+    const v = this.volume;
+    const p = 0.92 + Math.random() * 0.16;   // slight per-key variance
+
+    /* 1. sharp click transient */
+    if(this._noiseBuffer){
+      const src = ctx.createBufferSource();
+      src.buffer = this._noiseBuffer;
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 1500 * p;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v * 0.55, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.026);
+      src.connect(hp).connect(g).connect(ctx.destination);
+      src.start(t); src.stop(t + 0.03);
+    }
+
+    /* 2. low body "thock" */
+    const osc = ctx.createOscillator();
+    const og  = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(190 * p, t);
+    osc.frequency.exponentialRampToValueAtTime(72 * p, t + 0.055);
+    og.gain.setValueAtTime(0, t);
+    og.gain.linearRampToValueAtTime(v * 0.85, t + 0.004);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.085);
+    osc.connect(og).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.1);
+
+    /* 3. bright tick */
+    const o2 = ctx.createOscillator();
+    const g2 = ctx.createGain();
+    o2.type = 'triangle';
+    o2.frequency.setValueAtTime(1250 * p, t);
+    o2.frequency.exponentialRampToValueAtTime(620 * p, t + 0.028);
+    g2.gain.setValueAtTime(0, t);
+    g2.gain.linearRampToValueAtTime(v * 0.22, t + 0.002);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.038);
+    o2.connect(g2).connect(ctx.destination);
+    o2.start(t); o2.stop(t + 0.05);
+  },
+
+  /* ---- deeper spacebar ---- */
+  _tapSpace(t){
+    const ctx = this.ctx;
+    const v = this.volume;
+
+    if(this._noiseBuffer){
+      const src = ctx.createBufferSource();
+      src.buffer = this._noiseBuffer;
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass'; hp.frequency.value = 900;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v * 0.5, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
+      src.connect(hp).connect(g).connect(ctx.destination);
+      src.start(t); src.stop(t + 0.04);
+    }
+
+    const osc = ctx.createOscillator();
+    const og  = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(132, t);
+    osc.frequency.exponentialRampToValueAtTime(46, t + 0.09);
+    og.gain.setValueAtTime(0, t);
+    og.gain.linearRampToValueAtTime(v * 1.05, t + 0.005);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.135);
+    osc.connect(og).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.15);
+
+    const o2 = ctx.createOscillator();
+    const g2 = ctx.createGain();
+    o2.type = 'triangle';
+    o2.frequency.setValueAtTime(700, t);
+    o2.frequency.exponentialRampToValueAtTime(300, t + 0.03);
+    g2.gain.setValueAtTime(0, t);
+    g2.gain.linearRampToValueAtTime(v * 0.14, t + 0.002);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+    o2.connect(g2).connect(ctx.destination);
+    o2.start(t); o2.stop(t + 0.05);
+  },
+
+  /* ---- backspace snap ---- */
+  _tapBack(t){
+    const ctx = this.ctx;
+    const v = this.volume;
+
+    const osc = ctx.createOscillator();
+    const og  = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(340, t);
+    osc.frequency.exponentialRampToValueAtTime(175, t + 0.05);
+    og.gain.setValueAtTime(0, t);
+    og.gain.linearRampToValueAtTime(v * 0.26, t + 0.003);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    osc.connect(og).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.07);
+
+    if(this._noiseBuffer){
+      const src = ctx.createBufferSource();
+      src.buffer = this._noiseBuffer;
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass'; hp.frequency.value = 2000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v * 0.42, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.02);
+      src.connect(hp).connect(g).connect(ctx.destination);
+      src.start(t); src.stop(t + 0.025);
+    }
   }
 };
 
@@ -815,6 +1097,7 @@ const liveTimer  = $('liveTimer');
 const liveRaw    = $('liveRaw');
 const liveChars  = $('liveChars');
 const liveErr    = $('liveErr');
+const kbEl       = $('kb');
 
 /* ============================================================
    STATE
@@ -850,6 +1133,10 @@ let totalMissed = 0;
 
 let currentScrollY = 0;
 let bestResults = {};
+
+/* virtual keyboard state */
+let virtualInput = false;
+let kbActive = false;
 
 /* ============================================================
    WORD GENERATION
@@ -961,8 +1248,6 @@ function updateScroll(){
 
 /* ============================================================
    ACTIVE WORD
-   — only the active word gets the underline; completed words
-     stay at full opacity and keep their letter colors.
    ============================================================ */
 function updateActiveWord(){
   wordEls.forEach((el,i)=>{
@@ -1090,7 +1375,7 @@ function handleInput(){
   if(!started && val.length > 0) startTest();
 
   if(mode === 'zen'){
-    if(val.length > prevInputLen) Sound.play('key');
+    if(!virtualInput && val.length > prevInputLen) Sound.play('key');
     prevInputLen = val.length;
     handleZenInput(val);
     return;
@@ -1109,9 +1394,9 @@ function handleInput(){
     const expected = targetWord[idx];
 
     if(idx >= targetWord.length || typedChar !== expected){
-      Sound.play('error');
       errorFeedback(wordEls[currentWordIndex]);
-    } else {
+      if(!virtualInput) Sound.play('error');
+    } else if(!virtualInput){
       Sound.play('key');
     }
   }
@@ -1634,6 +1919,211 @@ function toast(msg){
 }
 
 /* ============================================================
+   ON-SCREEN RETRO KEYBOARD  (touch devices only)
+   ============================================================ */
+const KEY_META = {
+  shift: { label:'⇧', mod:true, grow:1.5, action:'shift' },
+  back:  { label:'⌫', mod:true, grow:1.5, action:'back'  },
+  layer: { label:'?123', mod:true, grow:1.5, action:'layer' },
+  space: { label:'space', space:true, grow:5, action:'space' }
+};
+
+const KB_ROWS = {
+  abc: [
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l'],
+    ['shift','z','x','c','v','b','n','m','back'],
+    ['layer',',','space','.','!']
+  ],
+  sym: [
+    ['1','2','3','4','5','6','7','8','9','0'],
+    ['-','/',':',';','(',')','$','&','@','"'],
+    ['shift','.','?','!','\'','"','+','=','back'],
+    ['layer',',','space','.','!']
+  ]
+};
+
+let kbLayer = 'abc';
+let kbShift = false;
+let kbCaps  = false;
+let lastShiftTap = 0;
+let shiftKeyEl = null;
+
+function buildKeyboard(){
+  kbEl.innerHTML = '';
+  shiftKeyEl = null;
+  const rows = KB_ROWS[kbLayer];
+
+  rows.forEach(row=>{
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row' + (row.length === 9 ? ' kb-row--inset' : '');
+    row.forEach(k => rowEl.appendChild(makeKey(k)));
+    kbEl.appendChild(rowEl);
+  });
+
+  updateShiftUI();
+}
+
+function makeKey(k){
+  const meta = KEY_META[k] || {};
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'kb-key'
+    + (meta.mod ? ' mod' : '')
+    + (meta.space ? ' space' : '');
+  btn.style.flexGrow = String(meta.grow || 1);
+
+  if(k === 'layer')      btn.textContent = kbLayer === 'abc' ? '?123' : 'ABC';
+  else if(meta.label !== undefined) btn.textContent = meta.label;
+  else                   btn.textContent = k;
+
+  if(k === 'shift') shiftKeyEl = btn;
+
+  const spec = { char:k, action: meta.action || 'char' };
+
+  btn.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    Sound.init();
+    btn.classList.add('pressed');
+    handleKey(spec);
+  });
+  const release = ()=> btn.classList.remove('pressed');
+  btn.addEventListener('pointerup', release);
+  btn.addEventListener('pointercancel', release);
+  btn.addEventListener('pointerleave', release);
+  btn.addEventListener('contextmenu', e=>e.preventDefault());
+
+  return btn;
+}
+
+function updateShiftUI(){
+  if(!shiftKeyEl) return;
+  shiftKeyEl.classList.toggle('on', kbShift || kbCaps);
+  shiftKeyEl.textContent = kbCaps ? '⇪' : '⇧';
+}
+
+function handleKey(spec){
+  switch(spec.action){
+    case 'shift': {
+      const now = performance.now();
+      if(now - lastShiftTap < 420){
+        kbCaps = !kbCaps;
+        kbShift = kbCaps;
+      } else {
+        kbCaps = false;
+        kbShift = !kbShift;
+      }
+      lastShiftTap = now;
+      updateShiftUI();
+      Sound.play('tap');
+      vibrate(6);
+      return;
+    }
+    case 'back':
+      virtualBackspace();
+      return;
+    case 'layer':
+      kbLayer = kbLayer === 'abc' ? 'sym' : 'abc';
+      kbShift = false;
+      kbCaps  = false;
+      buildKeyboard();
+      Sound.play('tap');
+      vibrate(6);
+      return;
+    case 'space':
+      virtualSpace();
+      return;
+    default: {
+      let ch = spec.char;
+      if(kbShift || kbCaps) ch = ch.toUpperCase();
+      if(kbShift && !kbCaps){ kbShift = false; updateShiftUI(); }
+      virtualChar(ch);
+    }
+  }
+}
+
+function virtualChar(ch){
+  if(finished) return;
+
+  if(mode === 'zen'){
+    hidden.value += ch;
+  } else {
+    if(currentWordIndex >= words.length) return;
+    const target = words[currentWordIndex];
+    if(hidden.value.length >= target.length + 5) return;
+    hidden.value += ch;
+  }
+
+  Sound.play('tap');
+  vibrate(7);
+  virtualInput = true;
+  handleInput();
+  virtualInput = false;
+}
+
+function virtualSpace(){
+  if(finished) return;
+
+  if(mode === 'zen'){
+    hidden.value += ' ';
+    Sound.play('space');
+    vibrate(7);
+    virtualInput = true;
+    handleInput();
+    virtualInput = false;
+    return;
+  }
+
+  if(currentWordIndex >= words.length) return;
+  Sound.play('space');
+  vibrate(11);
+  commitWord();
+}
+
+function virtualBackspace(){
+  if(finished) return;
+
+  if(hidden.value.length > 0){
+    hidden.value = hidden.value.slice(0, -1);
+    Sound.play('back');
+    vibrate(7);
+    virtualInput = true;
+    handleInput();
+    virtualInput = false;
+    return;
+  }
+
+  if(mode !== 'zen') goBackWord();
+}
+
+/* ---- touch-device detection ---- */
+const touchMQ = window.matchMedia('(hover: none) and (pointer: coarse)');
+
+function applyTouchMode(){
+  const on = touchMQ.matches;
+
+  document.body.classList.toggle('kb-active', on);
+
+  if(on && !kbActive){
+    kbActive = true;
+    hidden.setAttribute('inputmode','none');
+    buildKeyboard();
+  } else if(!on && kbActive){
+    kbActive = false;
+    kbEl.innerHTML = '';
+    shiftKeyEl = null;
+    hidden.removeAttribute('inputmode');
+  } else {
+    kbActive = on;
+  }
+
+  requestAnimationFrame(()=>{
+    updateCaret();
+    updateScroll();
+  });
+}
+
+/* ============================================================
    EVENTS
    ============================================================ */
 hidden.addEventListener('input', handleInput);
@@ -1753,6 +2243,12 @@ hidden.addEventListener('blur',  ()=>{ stage.classList.add('unfocused'); });
 stage.addEventListener('click', ()=>{ hidden.focus(); Sound.init(); });
 
 window.addEventListener('resize', ()=>{ updateCaret(); updateScroll(); });
+window.addEventListener('orientationchange', ()=>{
+  setTimeout(()=>{ updateCaret(); updateScroll(); }, 250);
+});
+
+if(touchMQ.addEventListener) touchMQ.addEventListener('change', applyTouchMode);
+else if(touchMQ.addListener) touchMQ.addListener(applyTouchMode);
 
 /* ============================================================
    BOOT
@@ -1770,7 +2266,9 @@ try{
 const initAudio = ()=>{ Sound.init(); };
 document.addEventListener('mousedown', initAudio, { once: true });
 document.addEventListener('keydown', initAudio, { once: true });
-document.addEventListener('touchstart', initAudio, { once: true });
+document.addEventListener('touchstart', initAudio, { once: true, passive: true });
+
+applyTouchMode();
 
 words = generateWords();
 resetRunState();
