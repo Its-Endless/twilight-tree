@@ -99,14 +99,14 @@ window.GAMES = [
     isNew: true
   },
   {
-    id: "racetown",
-    title: "Race Town",
+    id: "gravityrace",
+    title: "Gravity Race",
     description: "Bring back old  days of raing with a cool drift.",
     category: "Racing",
-    thumbnail: "thumbnails/racetown.png",
+    thumbnail: "thumbnails/gravityrace.png",
     gradient: ["#00ff88", "#00f0ff"],
     accent: "#00ff88",
-    file: "games/racetown.html",
+    file: "games/gravityrace.html",
     isNew: true
   },
   {
@@ -140,6 +140,17 @@ window.GAMES = [
     gradient: ["#ff00aa", "#ffe600"],
     accent: "#00ff88",
     file: "games/endless_shooter.html",
+    isNew: true
+  },
+    {
+    id: "neonfill",
+    title: "Neon Fill",
+    description: "A retro type old border builder game.",
+    category: "Shooting",
+    thumbnail: "thumbnails/neonfill.png",
+    gradient: ["#ff00aa", "#ffe600"],
+    accent: "#00ff88",
+    file: "games/neonfill.html",
     isNew: true
   }
 ];

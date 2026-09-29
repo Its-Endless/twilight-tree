@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08000f">
+<title>NEON DASH — Personal Life Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   NEON DASH — 80s Synthwave Personal Dashboard
+   ============================================================ */
+:root{
+  --bg:#08000f;
+  --pink:#ff2e88;
+  --cyan:#00e5ff;
+  --purple:#a24bff;
+  --yellow:#ffd400;
+  --green:#2bff88;
+  --orange:#ff8a3d;
+  --red:#ff4d5e;
+  --text:#e9e2ff;
+  --muted:#9a8bc4;
+  --line:rgba(162,75,255,.35);
+  --radius:14px;
+  --font-head:'Orbitron', 'Trebuchet MS', sans-serif;
+  --font-body:'Share Tech Mono', ui-monospace, 'Courier New', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.45;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* ---------- Background FX ---------- */
+.bg{position:fixed;inset:0;z-index:-3;pointer-events:none;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(162,75,255,.40), transparent 65%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(255,46,136,.22), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 0% 90%, rgba(0,229,255,.16), transparent 70%),
+    #08000f;
+}
+.grid-floor{position:fixed;bottom:-2px;left:-60%;width:220%;height:42vh;z-index:-2;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,229,255,.30) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.30) 1px, transparent 1px);
+  background-size:64px 64px;
+  transform:perspective(320px) rotateX(62deg);
+  transform-origin:bottom center;
+  -webkit-mask-image:linear-gradient(to top, #000 10%, transparent 85%);
+  mask-image:linear-gradient(to top, #000 10%, transparent 85%);
+  opacity:.55;
+  animation:gridmove 5s linear infinite;
+}
+@keyframes gridmove{from{background-position:0 0,0 0}to{background-position:0 64px,0 0}}
+.scan{position:fixed;inset:0;z-index:9998;pointer-events:none;
+  background:repeating-linear-gradient(to bottom, rgba(0,0,0,.30) 0 1px, transparent 1px 3px);
+  opacity:.35;}
+.vignette{position:fixed;inset:0;z-index:9997;pointer-events:none;
+  background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.65) 100%);}
+
+/* ---------- Layout ---------- */
+.app{display:flex;min-height:100vh;position:relative}
+.sidebar{
+  width:236px;flex:0 0 236px;height:100vh;position:sticky;top:0;
+  display:flex;flex-direction:column;gap:4px;
+  padding:20px 14px;
+  background:rgba(14,3,30,.82);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border-right:1px solid var(--line);
+  overflow-y:auto;z-index:60;
+}
+.logo{font-family:var(--font-head);font-weight:900;font-size:19px;letter-spacing:2px;margin-bottom:4px;
+  background:linear-gradient(180deg,#fff 0%,#ffd400 38%,#ff2e88 58%,#a24bff 85%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 10px rgba(255,46,136,.55));}
+.logo-sub{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:18px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;
+  color:var(--muted);font-family:var(--font-head);font-size:10.5px;font-weight:500;letter-spacing:1.4px;
+  text-transform:uppercase;border:1px solid transparent;transition:.16s;white-space:nowrap;user-select:none}
+.nav-item .ico{font-size:15px;width:18px;text-align:center;filter:saturate(1.3)}
+.nav-item:hover{color:#fff;background:rgba(162,75,255,.16);border-color:rgba(162,75,255,.4)}
+.nav-item.active{color:#fff;background:linear-gradient(90deg,rgba(255,46,136,.30),rgba(162,75,255,.14));
+  border-color:var(--pink);box-shadow:0 0 18px rgba(255,46,136,.35), inset 0 0 18px rgba(255,46,136,.12)}
+.sidebar-foot{margin-top:auto;padding-top:16px;font-size:10px;color:var(--muted);letter-spacing:1px;line-height:1.7}
+.sidebar-foot b{color:var(--cyan)}
+
+main{flex:1;min-width:0;padding:0 22px 60px;max-width:1500px;margin:0 auto;width:100%}
+
+/* ---------- Topbar ---------- */
+.topbar{position:sticky;top:0;z-index:50;padding:16px 0 14px;margin-bottom:6px;
+  background:linear-gradient(180deg, rgba(8,0,15,.96) 60%, rgba(8,0,15,0));
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.topbar-row{display:flex;align-items:center;gap:14px}
+.search-wrap{position:relative;flex:1;max-width:640px}
+.search-box{display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:12px;
+  border:1px solid var(--line);background:rgba(0,0,0,.5);transition:.2s}
+.search-box:focus-within{border-color:var(--cyan);box-shadow:0 0 22px rgba(0,229,255,.35)}
+.search-box .mag{color:var(--cyan);font-size:16px}
+.search-box input{border:none;background:transparent;padding:12px 0;font-size:15px;color:var(--text);width:100%;outline:none}
+.search-box input::placeholder{color:#6e5f96}
+.search-results{position:absolute;top:calc(100% + 8px);left:0;right:0;max-height:64vh;overflow-y:auto;
+  background:rgba(16,4,34,.98);border:1px solid var(--line);border-radius:12px;z-index:100;
+  box-shadow:0 20px 50px rgba(0,0,0,.75), 0 0 30px rgba(162,75,255,.25);display:none}
+.search-results.open{display:block}
+.sr-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;
+  cursor:pointer;border-bottom:1px solid rgba(162,75,255,.14);transition:.12s}
+.sr-item:last-child{border-bottom:none}
+.sr-item:hover,.sr-item.hl{background:rgba(0,229,255,.12)}
+.sr-item .nm{font-weight:700;color:#fff}
+.sr-item .sv{font-size:11.5px;color:var(--muted)}
+.sr-item .kc{font-family:var(--font-head);font-size:12px;color:var(--yellow);white-space:nowrap}
+.sr-empty{padding:16px;color:var(--muted);font-size:13px;text-align:center}
+.quick-chip{display:inline-block;padding:4px 9px;margin:3px 4px 3px 0;border-radius:20px;font-size:11.5px;
+  border:1px solid var(--line);color:var(--muted);cursor:pointer;transition:.15s}
+.quick-chip:hover{color:#fff;border-color:var(--cyan);background:rgba(0,229,255,.12)}
+
+/* ---------- Cards ---------- */
+.card{
+  position:relative;border-radius:var(--radius);padding:16px;
+  background:linear-gradient(160deg, rgba(40,15,78,.72), rgba(16,5,34,.86));
+  border:1px solid var(--line);
+  box-shadow:0 0 0 1px rgba(0,0,0,.35) inset, 0 8px 28px rgba(0,0,0,.45), 0 0 26px rgba(162,75,255,.10);
+  overflow:hidden;
+}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--pink),var(--purple),var(--cyan));opacity:.75}
+.card-title{font-family:var(--font-head);font-size:10.5px;font-weight:700;letter-spacing:2.2px;
+  text-transform:uppercase;color:var(--cyan);margin-bottom:14px;display:flex;align-items:center;
+  justify-content:space-between;gap:8px}
+.card-title .tag{font-size:9px;color:var(--muted);letter-spacing:1px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.span2{grid-column:span 2}
+.mt{margin-top:14px}
+.mb{margin-bottom:14px}
+
+/* ---------- Typography helpers ---------- */
+h1.page-title{font-family:var(--font-head);font-size:22px;font-weight:900;letter-spacing:3px;text-transform:uppercase;
+  margin-bottom:16px;
+  background:linear-gradient(180deg,#fff,#ffd400 45%,#ff2e88 75%,#a24bff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 12px rgba(255,46,136,.45));}
+h2.sec-title{font-family:var(--font-head);font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#fff;margin-bottom:10px}
+.muted{color:var(--muted);font-size:12.5px}
+.small{font-size:11.5px}
+.big{font-family:var(--font-head);font-weight:700;font-size:22px}
+.mono{font-family:var(--font-body)}
+.pink{color:var(--pink)}.cyan{color:var(--cyan)}.yellow{color:var(--yellow)}
+.green{color:var(--green)}.orange{color:var(--orange)}.red{color:var(--red)}.purple{color:var(--purple)}
+
+/* ---------- Tiles ---------- */
+.tile{background:rgba(0,0,0,.30);border:1px solid var(--line);border-radius:12px;padding:12px;
+  display:flex;flex-direction:column;gap:3px;transition:.18s}
+.tile:hover{border-color:rgba(0,229,255,.5);box-shadow:0 0 18px rgba(0,229,255,.15)}
+.tile .k{font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);font-family:var(--font-head)}
+.tile .v{font-family:var(--font-head);font-weight:700;font-size:19px;line-height:1.2}
+.tile .s{font-size:11px;color:var(--muted)}
+
+/* ---------- Progress bars ---------- */
+.bar{height:9px;border-radius:20px;background:rgba(255,255,255,.09);overflow:hidden;position:relative}
+.bar > span{display:block;height:100%;border-radius:20px;transition:width .55s cubic-bezier(.2,.8,.2,1);
+  box-shadow:0 0 12px currentColor}
+.bar-row{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.bar-row:last-child{margin-bottom:0}
+.bar-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px}
+.bar-head b{font-weight:700;color:#fff}
+
+/* ---------- Ring ---------- */
+.ring-wrap{position:relative;width:132px;height:132px;flex:0 0 auto}
+.ring-wrap svg{width:100%;height:100%;display:block}
+.ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.ring-txt b{font-family:var(--font-head);font-size:22px;font-weight:900;line-height:1;color:#fff;
+  text-shadow:0 0 12px rgba(0,229,255,.7)}
+.ring-txt span{font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin-top:3px}
+
+/* ---------- Buttons ---------- */
+.btn{font-family:var(--font-head);font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;
+  padding:10px 14px;border-radius:9px;cursor:pointer;transition:.16s;border:1px solid var(--cyan);
+  background:linear-gradient(180deg,rgba(0,229,255,.20),rgba(0,229,255,.04));color:#cdf6ff;white-space:nowrap}
+.btn:hover{background:var(--cyan);color:#04121a;box-shadow:0 0 20px rgba(0,229,255,.7)}
+.btn:active{transform:translateY(1px)}
+.btn.pink{border-color:var(--pink);color:#ffd0e6;background:linear-gradient(180deg,rgba(255,46,136,.22),rgba(255,46,136,.04))}
+.btn.pink:hover{background:var(--pink);color:#1a0010;box-shadow:0 0 20px rgba(255,46,136,.7)}
+.btn.green{border-color:var(--green);color:#c9ffe2;background:linear-gradient(180deg,rgba(43,255,136,.20),rgba(43,255,136,.04))}
+.btn.green:hover{background:var(--green);color:#00190c;box-shadow:0 0 20px rgba(43,255,136,.7)}
+.btn.ghost{border-color:var(--line);color:var(--muted);background:transparent}
+.btn.ghost:hover{color:#fff;border-color:#fff;background:rgba(255,255,255,.08);box-shadow:none}
+.btn.tiny{padding:6px 9px;font-size:9px;letter-spacing:1px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- Forms ---------- */
+label.fld{display:flex;flex-direction:column;gap:5px;font-size:10px;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--muted);font-family:var(--font-head)}
+input,select,textarea{font-family:var(--font-body);font-size:14px;background:rgba(0,0,0,.48);
+  border:1px solid var(--line);color:var(--text);padding:9px 11px;border-radius:9px;outline:none;
+  width:100%;transition:.16s;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--cyan) 50%),linear-gradient(135deg,var(--cyan) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:32px}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.35)}
+input[type=date]{color-scheme:dark}
+.form-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.form-grid .wide{grid-column:1/-1}
+option{background:#1a0733;color:#fff}
+
+/* ---------- Lists / tables ---------- */
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+  background:rgba(0,0,0,.28);border:1px solid rgba(162,75,255,.20);transition:.15s}
+.row:hover{border-color:rgba(0,229,255,.45);background:rgba(0,229,255,.06)}
+.row .grow{flex:1;min-width:0}
+.row .ttl{font-weight:700;color:#fff;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .sub{font-size:11px;color:var(--muted)}
+.row .amt{font-family:var(--font-head);font-weight:700;font-size:13px;white-space:nowrap}
+.x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:3px 6px;border-radius:6px;line-height:1;transition:.15s}
+.x:hover{color:var(--red);background:rgba(255,77,94,.14)}
+.pill{display:inline-block;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;padding:3px 8px;
+  border-radius:20px;border:1px solid currentColor;font-family:var(--font-head)}
+.empty{padding:22px 10px;text-align:center;color:var(--muted);font-size:12.5px;
+  border:1px dashed rgba(162,75,255,.35);border-radius:12px}
+
+/* task check */
+.chk{width:22px;height:22px;flex:0 0 auto;border-radius:6px;border:1.5px solid var(--purple);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent;transition:.16s;background:rgba(0,0,0,.35)}
+.chk:hover{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.5)}
+.chk.on{background:linear-gradient(180deg,var(--green),#0f9c53);border-color:var(--green);color:#00210f;
+  box-shadow:0 0 14px rgba(43,255,136,.7)}
+.row.done .ttl{text-decoration:line-through;color:var(--muted)}
+
+/* ---------- Bar charts ---------- */
+.bars{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:8px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;min-width:0}
+.bar-val{font-size:10px;color:var(--muted);font-family:var(--font-head);white-space:nowrap}
+.bar-track{flex:1;width:100%;display:flex;align-items:flex-end;background:rgba(255,255,255,.05);
+  border-radius:7px;overflow:hidden;min-height:20px}
+.bar-fill{width:100%;border-radius:7px;transition:height .5s cubic-bezier(.2,.8,.2,1);min-height:2px}
+.bar-lab{font-size:9.5px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px}
+
+/* ---------- Modal ---------- */
+.modal-backdrop{position:fixed;inset:0;z-index:500;background:rgba(4,0,10,.82);backdrop-filter:blur(5px);
+  display:flex;align-items:center;justify-content:center;padding:18px;animation:fade .18s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{width:100%;max-width:520px;max-height:88vh;overflow-y:auto;border-radius:16px;
+  background:linear-gradient(160deg,#2a0f52,#12042a);border:1px solid var(--pink);
+  box-shadow:0 0 60px rgba(255,46,136,.4), 0 30px 70px rgba(0,0,0,.8);animation:pop .22s cubic-bezier(.2,1.2,.4,1)}
+@keyframes pop{from{transform:scale(.94) translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;
+  border-bottom:1px solid var(--line)}
+.modal-head h2{font-family:var(--font-head);font-size:13px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--yellow);text-shadow:0 0 14px rgba(255,212,0,.5)}
+.modal-body{padding:18px;display:flex;flex-direction:column;gap:14px}
+.modal-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.macro-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center}
+.macro{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;padding:9px 4px}
+.macro b{display:block;font-family:var(--font-head);font-size:14px;color:#fff}
+.macro span{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.preview{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.35);border-radius:10px;
+  padding:12px;font-size:13px;display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between}
+
+/* ---------- Toast ---------- */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(30px);z-index:900;
+  background:linear-gradient(180deg,#2a0f52,#12042a);border:1px solid var(--cyan);color:#fff;
+  padding:12px 20px;border-radius:11px;font-size:13px;opacity:0;pointer-events:none;transition:.3s;
+  box-shadow:0 0 30px rgba(0,229,255,.45)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- Exercise rows ---------- */
+.ex-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;align-items:end}
+@media(max-width:700px){.ex-row{grid-template-columns:1fr 1fr;}}
+
+/* ---------- Meals ---------- */
+.meal-block{margin-bottom:14px}
+.meal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;
+  padding-bottom:6px;border-bottom:1px dashed rgba(162,75,255,.35)}
+.meal-head h4{font-family:var(--font-head);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--purple)}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1100px){
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  .app{flex-direction:column}
+  .sidebar{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;width:100%;flex:0 0 auto;
+    flex-direction:row;gap:6px;overflow-x:auto;overflow-y:hidden;padding:8px;
+    border-right:none;border-top:1px solid var(--line);background:rgba(12,2,26,.97);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:80;scrollbar-width:none}
+  .sidebar::-webkit-scrollbar{display:none}
+  .logo,.logo-sub,.sidebar-foot{display:none}
+  .nav-item{flex:0 0 auto;flex-direction:column;gap:3px;font-size:8.5px;padding:7px 11px;letter-spacing:.8px}
+  .nav-item .ico{font-size:16px}
+  main{padding:0 14px 110px}
+  .topbar{padding:12px 0 10px}
+  .g4,.g3,.g2{grid-template-columns:1fr}
+  .span2{grid-column:auto}
+  .bars{height:120px;gap:5px}
+  h1.page-title{font-size:17px;letter-spacing:2px}
+  .modal{max-width:100%}
+}
+@media(max-width:520px){
+  .macro-row{grid-template-columns:repeat(3,1fr)}
+  .ring-wrap{width:112px;height:112px}
+  .tile .v{font-size:16px}
+}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,.35)}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--purple),var(--pink));border-radius:10px}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="grid-floor"></div>
+<div class="scan"></div>
+<div class="vignette"></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">NEON&nbsp;DASH</div>
+    <div class="logo-sub">Life OS // v1.0</div>
+    <nav id="nav"></nav>
+    <div class="sidebar-foot">
+      <div>SYSTEM <b>ONLINE</b></div>
+      <div id="clock">--:--:--</div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="search-wrap">
+          <div class="search-box">
+            <span class="mag">⌕</span>
+            <input id="globalSearch" type="text" autocomplete="off" placeholder="Search food & calories… (apple, roti, paneer, pizza)">
+          </div>
+          <div class="search-results" id="searchResults"></div>
+        </div>
+        <button class="btn pink" data-action="go-search">Food DB</button>
+      </div>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   1. FOOD DATABASE  (per common serving)
+   ============================================================ */
+const FOODS = [
+  {n:'Apple',s:'1 medium (182g)',k:95,p:0.5,c:25,f:0.3,fi:4.4},
+  {n:'Banana',s:'1 medium (118g)',k:105,p:1.3,c:27,f:0.3,fi:3.1},
+  {n:'Orange',s:'1 medium (131g)',k:62,p:1.2,c:15.4,f:0.2,fi:3.1},
+  {n:'Mango',s:'1 cup sliced',k:99,p:1.4,c:24.7,f:0.6,fi:2.6},
+  {n:'Grapes',s:'1 cup (151g)',k:104,p:1.1,c:27.3,f:0.2,fi:1.4},
+  {n:'Watermelon',s:'1 cup diced',k:46,p:0.9,c:11.5,f:0.2,fi:0.6},
+  {n:'Papaya',s:'1 cup cubes',k:62,p:0.7,c:15.7,f:0.4,fi:2.5},
+  {n:'Strawberry',s:'1 cup (152g)',k:49,p:1,c:11.7,f:0.5,fi:3},
+  {n:'Rice (cooked white)',s:'1 cup (158g)',k:205,p:4.3,c:44.5,f:0.4,fi:0.6},
+  {n:'Brown Rice (cooked)',s:'1 cup (195g)',k:216,p:5,c:44.8,f:1.8,fi:3.5},
+  {n:'Roti / Chapati',s:'1 piece (40g)',k:104,p:3,c:18,f:2.5,fi:2},
+  {n:'Naan',s:'1 piece',k:262,p:8.7,c:45,f:4.6,fi:1.9},
+  {n:'Idli',s:'1 piece',k:58,p:2,c:12,f:0.3,fi:0.6},
+  {n:'Dosa (plain)',s:'1 piece',k:168,p:3.9,c:28.6,f:3.7,fi:1.1},
+  {n:'Poha',s:'1 cup',k:250,p:5,c:45,f:6,fi:2.5},
+  {n:'Upma',s:'1 cup',k:250,p:6,c:40,f:8,fi:3},
+  {n:'Biryani (chicken)',s:'1 cup',k:300,p:12,c:38,f:11,fi:2},
+  {n:'Samosa',s:'1 piece',k:262,p:4,c:24,f:17,fi:2},
+  {n:'Chicken Breast (cooked)',s:'100 g',k:165,p:31,c:0,f:3.6,fi:0},
+  {n:'Chicken Curry',s:'1 cup',k:250,p:20,c:8,f:15,fi:2},
+  {n:'Chicken Tandoori',s:'100 g',k:195,p:25,c:3,f:9,fi:0},
+  {n:'Egg (boiled)',s:'1 large (50g)',k:72,p:6.3,c:0.4,f:4.8,fi:0},
+  {n:'Egg Omelette (2 eggs)',s:'1 serving',k:188,p:13,c:1.6,f:14,fi:0},
+  {n:'Fish (Salmon)',s:'100 g',k:208,p:20,c:0,f:13,fi:0},
+  {n:'Tuna (canned in water)',s:'100 g',k:116,p:26,c:0,f:1,fi:0},
+  {n:'Prawns (cooked)',s:'100 g',k:99,p:24,c:0.2,f:0.3,fi:0},
+  {n:'Paneer',s:'100 g',k:265,p:18.3,c:3.4,f:20.8,fi:0},
+  {n:'Paneer Butter Masala',s:'1 cup',k:400,p:12,c:15,f:32,fi:2},
+  {n:'Dal (Toor, cooked)',s:'1 cup',k:198,p:14,c:30,f:1,fi:8},
+  {n:'Rajma (cooked)',s:'1 cup',k:225,p:15,c:40,f:1,fi:13},
+  {n:'Chickpeas (cooked)',s:'1 cup',k:269,p:14.5,c:45,f:4.2,fi:12.5},
+  {n:'Milk (whole)',s:'1 cup (244ml)',k:149,p:7.7,c:11.7,f:8,fi:0},
+  {n:'Milk (toned/skim)',s:'1 cup (244ml)',k:102,p:8.2,c:12,f:2.4,fi:0},
+  {n:'Curd / Yogurt',s:'1 cup (245g)',k:149,p:8.5,c:11.4,f:8,fi:0},
+  {n:'Greek Yogurt (plain)',s:'1 cup (200g)',k:130,p:22,c:8,f:0.7,fi:0},
+  {n:'Oats (dry)',s:'1/2 cup (40g)',k:150,p:5,c:27,f:3,fi:4},
+  {n:'Bread (white slice)',s:'1 slice (25g)',k:79,p:2.7,c:14.8,f:1,fi:0.8},
+  {n:'Bread (brown slice)',s:'1 slice (28g)',k:82,p:4,c:13.8,f:1.1,fi:1.9},
+  {n:'Butter',s:'1 tbsp (14g)',k:102,p:0.1,c:0,f:11.5,fi:0},
+  {n:'Ghee',s:'1 tbsp (13g)',k:112,p:0,c:0,f:12.7,fi:0},
+  {n:'Olive Oil',s:'1 tbsp',k:119,p:0,c:0,f:13.5,fi:0},
+  {n:'Peanut Butter',s:'1 tbsp (16g)',k:94,p:4,c:3.2,f:8,fi:1},
+  {n:'Almonds',s:'10 pieces',k:70,p:2.6,c:2.5,f:6,fi:1.5},
+  {n:'Peanuts (roasted)',s:'1 oz (28g)',k:161,p:7.3,c:4.6,f:14,fi:2.4},
+  {n:'Cashews',s:'10 pieces',k:88,p:2.6,c:5,f:7,fi:0.5},
+  {n:'Cheese Slice',s:'1 slice (21g)',k:104,p:6,c:0.5,f:8.5,fi:0},
+  {n:'Potato (boiled)',s:'1 medium (150g)',k:130,p:2.9,c:30,f:0.2,fi:2.5},
+  {n:'Sweet Potato',s:'1 medium (150g)',k:103,p:2.3,c:24,f:0.2,fi:3.8},
+  {n:'French Fries',s:'medium serving',k:365,p:4,c:48,f:17,fi:4},
+  {n:'Tomato',s:'1 medium (123g)',k:22,p:1.1,c:4.8,f:0.2,fi:1.5},
+  {n:'Onion',s:'1 medium (110g)',k:44,p:1.2,c:10.3,f:0.1,fi:1.9},
+  {n:'Carrot',s:'1 medium (61g)',k:25,p:0.6,c:5.8,f:0.1,fi:1.7},
+  {n:'Broccoli',s:'1 cup (91g)',k:31,p:2.6,c:6,f:0.3,fi:2.4},
+  {n:'Spinach',s:'1 cup (30g)',k:7,p:0.9,c:1.1,f:0.1,fi:0.7},
+  {n:'Cauliflower',s:'1 cup (107g)',k:27,p:2,c:5.3,f:0.3,fi:2.1},
+  {n:'Cucumber',s:'1 cup (104g)',k:16,p:0.7,c:3.8,f:0.1,fi:0.5},
+  {n:'Mixed Salad (veg)',s:'1 bowl',k:50,p:2,c:9,f:1,fi:3},
+  {n:'Pasta (cooked)',s:'1 cup (140g)',k:221,p:8,c:43,f:1.3,fi:2.5},
+  {n:'Noodles (cooked)',s:'1 cup (160g)',k:219,p:8,c:40,f:3.3,fi:2},
+  {n:'Pizza (cheese slice)',s:'1 slice',k:285,p:12,c:36,f:10,fi:2.5},
+  {n:'Burger (cheeseburger)',s:'1 burger',k:303,p:15,c:30,f:14,fi:1.5},
+  {n:'Sandwich (veg)',s:'1 sandwich',k:250,p:8,c:35,f:9,fi:3},
+  {n:'Momos (steamed veg)',s:'6 pieces',k:210,p:6,c:35,f:5,fi:3},
+  {n:'Chocolate Bar',s:'40 g',k:210,p:3,c:24,f:12,fi:1.5},
+  {n:'Ice Cream',s:'1 cup (132g)',k:273,p:4.6,c:31,f:14.5,fi:1},
+  {n:'Cola / Soda',s:'330 ml can',k:139,p:0,c:35,f:0,fi:0},
+  {n:'Orange Juice',s:'1 cup (248g)',k:112,p:1.7,c:25.8,f:0.5,fi:0.5},
+  {n:'Coconut Water',s:'1 cup (240ml)',k:46,p:1.7,c:8.9,f:0.5,fi:2.6},
+  {n:'Tea (with milk & sugar)',s:'1 cup',k:105,p:3,c:12,f:4.5,fi:0},
+  {n:'Coffee (black)',s:'1 cup',k:2,p:0.3,c:0,f:0,fi:0},
+  {n:'Coffee (with milk)',s:'1 cup',k:60,p:3,c:6,f:2.5,fi:0},
+  {n:'Protein Powder (whey)',s:'1 scoop (30g)',k:120,p:24,c:3,f:1.5,fi:1},
+  {n:'Honey',s:'1 tbsp (21g)',k:64,p:0,c:17.3,f:0,fi:0},
+  {n:'Sugar',s:'1 tsp (4g)',k:16,p:0,c:4.2,f:0,fi:0},
+  {n:'Dates (medjool)',s:'1 date',k:23,p:0.2,c:6.2,f:0,fi:0.6},
+  {n:'Banana Shake',s:'1 glass',k:280,p:9,c:48,f:6,fi:2},
+  {n:'Khichdi',s:'1 cup',k:220,p:8,c:38,f:4,fi:5},
+  {n:'Vegetable Pulao',s:'1 cup',k:250,p:6,c:42,f:7,fi:3},
+  {n:'Chole Bhature',s:'1 plate',k:650,p:14,c:78,f:30,fi:9},
+  {n:'Paratha (plain)',s:'1 piece',k:210,p:5,c:30,f:8,fi:2},
+  {n:'Dahi Vada',s:'2 pieces',k:180,p:6,c:22,f:7,fi:3}
+];
+
+const MEALS = ['Breakfast','Lunch','Dinner','Snack'];
+const EXPENSE_CATS = ['Groceries','Dining','Transport','Rent','Utilities','Health','Shopping','Entertainment','Education','Other'];
+const INCOME_CATS  = ['Salary','Freelance','Business','Investment','Gift','Other'];
+const TASK_CATS = ['Personal','Work','Fitness','Diet','Study','Finance','Other'];
+
+/* ============================================================
+   2. UTILITIES
+   ============================================================ */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
+const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+
+function iso(d = new Date()){
+  const x = new Date(d);
+  x.setMinutes(x.getMinutes() - x.getTimezoneOffset());
+  return x.toISOString().slice(0,10);
+}
+function fromISO(s){ return new Date(s + 'T00:00:00'); }
+function dayLabel(s){ return fromISO(s).toLocaleDateString('en-US',{weekday:'short'}); }
+function prettyDate(s){
+  return fromISO(s).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
+}
+function esc(str){
+  return String(str == null ? '' : str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function money(n){
+  const v = Math.round(num(n));
+  return (S.settings.currency || '₹') + v.toLocaleString('en-IN');
+}
+function nf(n, d=1){
+  const v = num(n);
+  return Number.isInteger(v) ? v.toString() : v.toFixed(d);
+}
+function lastNDays(n){
+  const out = [];
+  for(let i = n-1; i >= 0; i--){
+    const d = new Date(); d.setDate(d.getDate() - i);
+    out.push(iso(d));
+  }
+  return out;
+}
+function daysLeftInMonth(){
+  const now = new Date();
+  const total = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  return Math.max(1, total - now.getDate() + 1);
+}
+function startOfWeek(d = new Date()){
+  const x = new Date(d);
+  const day = (x.getDay() + 6) % 7; // Monday = 0
+  x.setDate(x.getDate() - day);
+  return iso(x);
+}
+function toast(msg){
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   3. STATE
+   ============================================================ */
+const KEY = 'neondash_v1';
+let S = null;
+let RESULTS = [];        // current search results
+let pendingFood = null;  // food being added
+
+function defaultSettings(){
+  return {
+    name: 'Commander',
+    currency: '₹',
+    calorieGoal: 2200,
+    proteinGoal: 120,
+    carbGoal: 275,
+    fatGoal: 70,
+    fiberGoal: 30,
+    waterGoal: 3000,
+    monthlyBudget: 30000,
+    savingsGoal: 15000,
+    weeklyWorkoutGoal: 5,
+    weightGoal: 70,
+    weightUnit: 'kg'
+  };
+}
+function emptyState(){
+  return {
+    settings: defaultSettings(),
+    txs: [],
+    diet: [],
+    water: [],
+    workouts: [],
+    tasks: [],
+    goals: [],
+    recentFoods: [],
+    foodCounts: {}
+  };
+}
+function seedState(){
+  const st = emptyState();
+  const t = iso();
+  const m = t.slice(0,7);
+
+  st.txs = [
+    {id:uid(), type:'income',  amount:50000, category:'Salary',  note:'Monthly salary',   date: m + '-01'},
+    {id:uid(), type:'expense', amount:1250,  category:'Groceries', note:'Weekly groceries', date: t},
+    {id:uid(), type:'expense', amount:320,   category:'Transport', note:'Fuel',             date: t},
+    {id:uid(), type:'expense', amount:780,   category:'Dining',    note:'Lunch out',        date: t},
+    {id:uid(), type:'expense', amount:4200,  category:'Rent',      note:'Room rent share',  date: m + '-03'},
+    {id:uid(), type:'expense', amount:1900,  category:'Utilities', note:'Electricity + net',date: m + '-05'}
+  ];
+
+  st.diet = [
+    {id:uid(), date:t, meal:'Breakfast', name:'Oats (dry)',    qty:1, serving:'1/2 cup (40g)',   kcal:150, p:5,   c:27, f:3,   fi:4},
+    {id:uid(), date:t, meal:'Breakfast', name:'Milk (whole)',  qty:1, serving:'1 cup (244ml)',   kcal:149, p:7.7, c:11.7, f:8, fi:0},
+    {id:uid(), date:t, meal:'Snack',     name:'Banana',        qty:1, serving:'1 medium (118g)', kcal:105, p:1.3, c:27, f:0.3, fi:3.1}
+  ];
+
+  st.water = [{id:uid(), date:t, ml:1500}];
+
+  st.workouts = [{
+    id:uid(), date:t, name:'Upper Body + Cardio', duration:45, calories:320,
+    exercises:[
+      {name:'Push-ups', sets:3, reps:15, weight:0},
+      {name:'Dumbbell Rows', sets:3, reps:12, weight:12}
+    ]
+  }];
+
+  st.tasks = [
+    {id:uid(), date:t, name:'Wake up',  start:'06:30', end:'06:45', category:'Personal', priority:'High',   done:true,  reminder:false},
+    {id:uid(), date:t, name:'Workout',  start:'07:00', end:'08:00', category:'Fitness',  priority:'High',   done:true,  reminder:true},
+    {id:uid(), date:t, name:'Breakfast',start:'08:00', end:'08:30', category:'Diet',     priority:'Medium', done:false, reminder:false},
+    {id:uid(), date:t, name:'Work',     start:'09:00', end:'13:00', category:'Work',     priority:'High',   done:false, reminder:false},
+    {id:uid(), date:t, name:'Lunch',    start:'13:00', end:'13:45', category:'Diet',     priority:'Medium', done:false, reminder:false},
+    {id:uid(), date:t, name:'Walk',     start:'18:00', end:'18:40', category:'Fitness',  priority:'Low',    done:false, reminder:false},
+    {id:uid(), date:t, name:'Sleep',    start:'22:30', end:'23:00', category:'Personal', priority:'Medium', done:false, reminder:false}
+  ];
+
+  st.goals = [
+    {id:uid(), title:'Monthly Savings', type:'Savings',  current:0, target:15000, unit:'₹', auto:'savings'},
+    {id:uid(), title:'Lose 4 kg',        type:'Weight',   current:1.5, target:4, unit:'kg'},
+    {id:uid(), title:'Read 12 books',    type:'Habit',    current:5, target:12, unit:'books'},
+    {id:uid(), title:'Run 50 km',        type:'Fitness',  current:22, target:50, unit:'km'}
+  ];
+
+  st.recentFoods = ['Banana','Oats (dry)','Milk (whole)'];
+  st.foodCounts = {'Banana':3,'Oats (dry)':2,'Milk (whole)':2};
+  return st;
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return seedState();
+    const parsed = JSON.parse(raw);
+    const base = emptyState();
+    const merged = Object.assign(base, parsed);
+    merged.settings = Object.assign(defaultSettings(), parsed.settings || {});
+    ['txs','diet','water','workouts','tasks','goals','recentFoods'].forEach(k=>{
+      if(!Array.isArray(merged[k])) merged[k] = [];
+    });
+    if(typeof merged.foodCounts !== 'object' || !merged.foodCounts) merged.foodCounts = {};
+    return merged;
+  }catch(e){
+    console.warn('State load failed, using seed.', e);
+    return seedState();
+  }
+}
+function saveState(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch(e){ console.warn('Save failed', e); }
+}
+
+/* ============================================================
+   4. DERIVED DATA
+   ============================================================ */
+const today = () => iso();
+
+function txSum(type, filterFn){
+  return S.txs.filter(t => t.type === type && (!filterFn || filterFn(t))).reduce((a,b)=> a + num(b.amount), 0);
+}
+function todayNutrition(){
+  const t = today();
+  const e = S.diet.filter(x => x.date === t);
+  return e.reduce((a,x)=>({
+    kcal: a.kcal + num(x.kcal), p: a.p + num(x.p), c: a.c + num(x.c),
+    f: a.f + num(x.f), fi: a.fi + num(x.fi)
+  }), {kcal:0,p:0,c:0,f:0,fi:0});
+}
+function waterToday(){
+  const t = today();
+  return S.water.filter(w => w.date === t).reduce((a,b)=> a + num(b.ml), 0);
+}
+function workoutsThisWeek(){
+  const s = startOfWeek();
+  return S.workouts.filter(w => w.date >= s);
+}
+function tasksToday(){
+  const t = today();
+  return S.tasks.filter(x => x.date === t).sort((a,b)=> (a.start||'').localeCompare(b.start||''));
+}
+function overallProgress(){
+  const t = today();
+  const nut = todayNutrition();
+  const tsk = tasksToday();
+  const tDone = tsk.filter(x=>x.done).length;
+  const wk = workoutsThisWeek().length;
+
+  const cPct  = clamp((nut.kcal / (S.settings.calorieGoal||1)) * 100, 0, 100);
+  const wPct  = clamp((waterToday() / (S.settings.waterGoal||1)) * 100, 0, 100);
+  const tPct  = tsk.length ? (tDone / tsk.length) * 100 : 0;
+  const wkPct = clamp((wk / (S.settings.weeklyWorkoutGoal||1)) * 100, 0, 100);
+  return Math.round((cPct + wPct + tPct + wkPct) / 4);
+}
+
+/* ============================================================
+   5. UI COMPONENTS
+   ============================================================ */
+function card(title, body, extra=''){
+  return `<section class="card ${extra}">
+    <h3 class="card-title">${title}</h3>
+    ${body}
+  </section>`;
+}
+function bar(pct, color='var(--cyan)'){
+  const v = clamp(num(pct), 0, 100);
+  return `<div class="bar"><span style="width:${v}%;background:${color};color:${color}"></span></div>`;
+}
+function barRow(label, valueText, pct, color='var(--cyan)', sub=''){
+  return `<div class="bar-row">
+    <div class="bar-head"><b>${label}</b><span class="muted">${valueText}</span></div>
+    ${bar(pct, color)}
+    ${sub ? `<div class="small muted">${sub}</div>` : ''}
+  </div>`;
+}
+function ring(pct, color, big, small){
+  const r = 52, c = 2 * Math.PI * r;
+  const v = clamp(num(pct), 0, 100);
+  const off = c * (1 - v/100);
+  return `<div class="ring-wrap">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="${r}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="10"/>
+      <circle cx="60" cy="60" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
+        transform="rotate(-90 60 60)" style="filter:drop-shadow(0 0 7px ${color});transition:stroke-dashoffset .6s ease"/>
+    </svg>
+    <div class="ring-txt"><b>${big}</b><span>${small}</span></div>
+  </div>`;
+}
+function tile(k, v, s, color=''){
+  return `<div class="tile"><div class="k">${k}</div><div class="v ${color}">${v}</div>${s?`<div class="s">${s}</div>`:''}</div>`;
+}
+function barChart(items, height=150){
+  const max = Math.max(1, ...items.map(i => num(i.value)));
+  return `<div class="bars" style="height:${height}px">
+    ${items.map(i => `
+      <div class="bar-col" title="${esc(i.label)}: ${esc(i.display ?? i.value)}">
+        <div class="bar-val">${esc(i.display ?? Math.round(i.value))}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="height:${clamp((num(i.value)/max)*100,1,100)}%;background:${i.color||'var(--cyan)'};box-shadow:0 0 12px ${i.color||'var(--cyan)'}"></div>
+        </div>
+        <div class="bar-lab">${esc(i.label)}</div>
+      </div>`).join('')}
+  </div>`;
+}
+function emptyBox(msg){
+  return `<div class="empty">${msg}</div>`;
+}
+
+/* ============================================================
+   6. NAVIGATION
+   ============================================================ */
+const NAV = [
+  {id:'dashboard', ico:'◈', label:'Dashboard'},
+  {id:'search',    ico:'⌕', label:'Search'},
+  {id:'finance',   ico:'₹', label:'Finance'},
+  {id:'diet',      ico:'🍽', label:'Diet'},
+  {id:'water',     ico:'💧', label:'Water'},
+  {id:'workout',   ico:'🏋', label:'Workout'},
+  {id:'tasks',     ico:'✓', label:'Tasks'},
+  {id:'goals',     ico:'🎯', label:'Goals'},
+  {id:'reports',   ico:'📊', label:'Reports'},
+  {id:'settings',  ico:'⚙', label:'Settings'}
+];
+let currentView = 'dashboard';
+
+function buildNav(){
+  $('#nav').innerHTML = NAV.map(n =>
+    `<div class="nav-item ${n.id===currentView?'active':''}" data-view="${n.id}">
+       <span class="ico">${n.ico}</span><span>${n.label}</span>
+     </div>`).join('');
+}
+function go(view){
+  currentView = view;
+  buildNav();
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ============================================================
+   7. VIEWS
+   ============================================================ */
+
+/* ---------- 7.1 DASHBOARD ---------- */
+function renderDashboard(){
+  const t = today();
+  const m = t.slice(0,7);
+  const st = S.settings;
+
+  const incToday = txSum('income',  x => x.date === t);
+  const expToday = txSum('expense', x => x.date === t);
+  const incMonth = txSum('income',  x => (x.date||'').startsWith(m));
+  const expMonth = txSum('expense', x => (x.date||'').startsWith(m));
+  const savedMonth = incMonth - expMonth;
+  const budgetLeft = st.monthlyBudget - expMonth;
+  const dLeft = daysLeftInMonth();
+  const dailyLimit = budgetLeft > 0 ? budgetLeft / dLeft : 0;
+
+  const nut = todayNutrition();
+  const kcalLeft = st.calorieGoal - nut.kcal;
+  const water = waterToday();
+  const waterLeft = Math.max(0, st.waterGoal - water);
+
+  const wk = workoutsThisWeek();
+  const wkPct = clamp((wk.length / (st.weeklyWorkoutGoal||1)) * 100, 0, 100);
+  const wkToday = S.workouts.some(w => w.date === t);
+
+  const tsk = tasksToday();
+  const tDone = tsk.filter(x => x.done).length;
+  const tPend = tsk.length - tDone;
+  const tOverdue = S.tasks.filter(x => x.date < t && !x.done).length;
+
+  const overall = overallProgress();
+
+  /* savings goal */
+  const savingsGoal = S.goals.find(g => g.auto === 'savings');
+  const savTarget = savingsGoal ? num(savingsGoal.target) : num(st.savingsGoal);
+  const savCurrent = Math.max(0, savedMonth);
+  const savPct = savTarget ? (savCurrent / savTarget) * 100 : 0;
+
+  /* goals list (top 4) */
+  const goalsHTML = S.goals.slice(0,4).map(g => {
+    const cur = goalCurrent(g);
+    const pct = num(g.target) ? (cur / num(g.target)) * 100 : 0;
+    const color = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--cyan)' : 'var(--yellow)';
+    return barRow(
+      `${esc(g.title)} <span class="pill" style="color:${color}">${Math.round(clamp(pct,0,100))}%</span>`,
+      `${nf(cur)} / ${nf(g.target)} ${esc(g.unit||'')}`,
+      pct, color,
+      `Remaining: ${nf(Math.max(0, num(g.target) - cur))} ${esc(g.unit||'')}`
+    );
+  }).join('') || emptyBox('No goals yet. Add some in the Goals tab.');
+
+  /* upcoming tasks */
+  const upcoming = tsk.filter(x => !x.done).slice(0,6);
+  const upcomingHTML = upcoming.length ? upcoming.map(x => `
+    <div class="row">
+      <div class="chk" data-action="toggle-task" data-id="${x.id}">✓</div>
+      <div class="grow">
+        <div class="ttl">${esc(x.name)}</div>
+        <div class="sub">${esc(x.start||'--:--')} – ${esc(x.end||'--:--')} · ${esc(x.category||'')}</div>
+      </div>
+      <span class="pill" style="color:${x.priority==='High'?'var(--red)':x.priority==='Medium'?'var(--yellow)':'var(--muted)'}">${esc(x.priority||'Low')}</span>
+    </div>`).join('') : emptyBox('All tasks done. Legend. 🏆');
+
+  /* 7-day spending chart */
+  const days = lastNDays(7);
+  const spendItems = days.map(d => ({
+    label: dayLabel(d),
+    value: txSum('expense', x => x.date === d),
+    display: '',
+    color: d === t ? 'var(--pink)' : 'var(--purple)'
+  }));
+
+  /* calorie 7-day */
+  const kcalItems = days.map(d => ({
+    label: dayLabel(d),
+    value: S.diet.filter(x=>x.date===d).reduce((a,b)=>a+num(b.kcal),0),
+    color: 'var(--orange)'
+  }));
+
+  return `
+  <h1 class="page-title">Daily Command Center</h1>
+
+  <div class="grid g2 mb">
+    ${card('Overall Daily Progress', `
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+        ${ring(overall, 'var(--pink)', overall + '%', 'Complete')}
+        <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:10px">
+          ${barRow('Tasks', `${tDone}/${tsk.length}`, tsk.length? (tDone/tsk.length)*100 : 0, 'var(--green)')}
+          ${barRow('Calories', `${Math.round(nut.kcal)}/${st.calorieGoal}`, (nut.kcal/st.calorieGoal)*100, 'var(--orange)')}
+          ${barRow('Water', `${water}/${st.waterGoal} ml`, (water/st.waterGoal)*100, 'var(--cyan)')}
+          ${barRow('Workouts (week)', `${wk.length}/${st.weeklyWorkoutGoal}`, wkPct, 'var(--purple)')}
+        </div>
+      </div>
+    `)}
+    ${card('Monthly Financial Summary', `
+      <div class="grid g2" style="gap:10px">
+        ${tile('Income (today)', money(incToday), '', 'green')}
+        ${tile('Expenses (today)', money(expToday), '', 'red')}
+        ${tile('Income (month)', money(incMonth), '', 'green')}
+        ${tile('Expenses (month)', money(expMonth), '', 'red')}
+      </div>
+      <div class="mt">
+        ${barRow('Monthly budget used',
+           money(expMonth) + ' / ' + money(st.monthlyBudget),
+           (expMonth / (st.monthlyBudget||1)) * 100,
+           expMonth > st.monthlyBudget ? 'var(--red)' : 'var(--yellow)')}
+        <div class="grid g2 mt" style="gap:10px">
+          ${tile('Remaining budget', money(Math.max(0,budgetLeft)), `${dLeft} days left`, budgetLeft<0?'red':'cyan')}
+          ${tile('Safe daily spend', money(dailyLimit), 'recommended limit', 'yellow')}
+        </div>
+      </div>
+    `)}
+  </div>
+
+  <div class="grid g3 mb">
+    ${card('Calories & Macros', `
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+        ${ring((nut.kcal/st.calorieGoal)*100, 'var(--orange)', Math.round(nut.kcal), 'of ' + st.calorieGoal + ' kcal')}
+        <div style="flex:1;min-width:160px">
+          <div class="tile mb" style="border-color:${kcalLeft<0?'var(--red)':'var(--green)'}">
+            <div class="k">${kcalLeft < 0 ? 'Over by' : 'Remaining'}</div>
+            <div class="v ${kcalLeft<0?'red':'green'}">${Math.abs(Math.round(kcalLeft))} kcal</div>
+          </div>
+          ${barRow('Protein', `${nf(nut.p)}/${st.proteinGoal} g`, (nut.p/st.proteinGoal)*100, 'var(--pink)')}
+          ${barRow('Carbs', `${nf(nut.c)}/${st.carbGoal} g`, (nut.c/st.carbGoal)*100, 'var(--cyan)')}
+          ${barRow('Fat', `${nf(nut.f)}/${st.fatGoal} g`, (nut.f/st.fatGoal)*100, 'var(--yellow)')}
+        </div>
+      </div>
+    `)}
+    ${card('Water Intake', `
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+        ${ring((water/st.waterGoal)*100, 'var(--cyan)', water, 'of ' + st.waterGoal + ' ml')}
+        <div style="flex:1;min-width:160px">
+          <div class="grid g2" style="gap:10px">
+            ${tile('Consumed', water + ' ml', '', 'cyan')}
+            ${tile('Remaining', waterLeft + ' ml', '', waterLeft===0?'green':'yellow')}
+          </div>
+          <div class="btn-row mt">
+            <button class="btn tiny" data-action="add-water" data-ml="250">+250</button>
+            <button class="btn tiny" data-action="add-water" data-ml="500">+500</button>
+            <button class="btn tiny" data-action="add-water" data-ml="750">+750</button>
+          </div>
+        </div>
+      </div>
+    `)}
+    ${card('Workout Status', `
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+        ${ring(wkPct, 'var(--purple)', wk.length, 'of ' + st.weeklyWorkoutGoal + ' this week')}
+        <div style="flex:1;min-width:160px">
+          <div class="grid g2" style="gap:10px">
+            ${tile('Today', wkToday ? 'DONE ✅' : 'PENDING', wkToday?'':'No session logged', wkToday?'green':'yellow')}
+            ${tile('Calories burned', wk.reduce((a,b)=>a+num(b.calories),0) + ' kcal', 'this week', 'orange')}
+          </div>
+          <div class="small muted mt">Total time: ${wk.reduce((a,b)=>a+num(b.duration),0)} min this week</div>
+        </div>
+      </div>
+    `)}
+  </div>
+
+  <div class="grid g2 mb">
+    ${card('Savings Goal', `
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+        ${ring(savPct, 'var(--green)', Math.round(clamp(savPct,0,100)) + '%', 'of goal')}
+        <div style="flex:1;min-width:180px">
+          <div class="grid g2" style="gap:10px">
+            ${tile('Saved this month', money(savCurrent), '', 'green')}
+            ${tile('Target', money(savTarget), '', 'cyan')}
+            ${tile('Remaining', money(Math.max(0, savTarget - savCurrent)), 'to reach goal', 'yellow')}
+            ${tile('Net worth flow', money(savedMonth), 'income − expense', savedMonth>=0?'green':'red')}
+          </div>
+        </div>
+      </div>
+    `)}
+    ${card('Task Progress', `
+      <div class="grid g2 mb" style="gap:10px">
+        ${tile('Completed', tDone, 'tasks today', 'green')}
+        ${tile('Remaining', tPend, 'tasks today', 'yellow')}
+        ${tile('Overdue', tOverdue, 'from previous days', tOverdue ? 'red' : 'muted')}
+        ${tile('Completion', (tsk.length ? Math.round((tDone/tsk.length)*100) : 0) + '%', 'today', 'cyan')}
+      </div>
+      ${barRow('Today\'s checklist', `${tDone} of ${tsk.length} done`, tsk.length?(tDone/tsk.length)*100:0, 'var(--green)')}
+      <div class="list mt">${upcomingHTML}</div>
+    `)}
+  </div>
+
+  <div class="grid g2 mb">
+    ${card('Goals Overview', `<div class="list">${goalsHTML}</div>`)}
+    ${card('Spending — Last 7 Days', `
+      ${barChart(spendItems, 160)}
+      <div class="legend"><span><i style="background:var(--pink)"></i>Today</span><span><i style="background:var(--purple)"></i>Previous days</span></div>
+      <div class="mt">${barRow('Average daily spend',
+        money(days.reduce((a,d)=>a+txSum('expense',x=>x.date===d),0) / 7),
+        0, 'var(--cyan)')}</div>
+    `)}
+  </div>
+
+  <div class="grid g2">
+    ${card('Calories — Last 7 Days', `
+      ${barChart(kcalItems, 160)}
+      <div class="legend"><span><i style="background:var(--orange)"></i>kcal consumed</span>
+        <span class="muted">Goal: ${st.calorieGoal} kcal/day</span></div>
+    `)}
+    ${card('Daily Summary', dailySummaryHTML())}
+  </div>
+  `;
+}
+
+function dailySummaryHTML(){
+  const t = today();
+  const m = t.slice(0,7);
+  const inc = txSum('income',  x => x.date === t);
+  const exp = txSum('expense', x => x.date === t);
+  const nut = todayNutrition();
+  const water = waterToday();
+  const tsk = tasksToday();
+  const tDone = tsk.filter(x=>x.done).length;
+  const wk = S.workouts.filter(w => w.date === t);
+  const overall = overallProgress();
+
+  const remaining = [];
+  if(nut.kcal < S.settings.calorieGoal) remaining.push(`${Math.round(S.settings.calorieGoal - nut.kcal)} kcal left to eat`);
+  if(water < S.settings.waterGoal) remaining.push(`${S.settings.waterGoal - water} ml water left`);
+  if(!wk.length) remaining.push('No workout logged today');
+  const pending = tsk.filter(x=>!x.done);
+  if(pending.length) remaining.push(`${pending.length} task(s) pending: ${pending.slice(0,3).map(x=>esc(x.name)).join(', ')}${pending.length>3?'…':''}`);
+
+  return `
+    <div class="grid g2" style="gap:10px">
+      ${tile('Income', money(inc), 'today', 'green')}
+      ${tile('Expenses', money(exp), 'today', 'red')}
+      ${tile('Money saved', money(inc - exp), 'today', (inc-exp)>=0?'green':'red')}
+      ${tile('Calories', Math.round(nut.kcal), 'of ' + S.settings.calorieGoal, 'orange')}
+      ${tile('Protein', nf(nut.p) + ' g', 'of ' + S.settings.proteinGoal + ' g', 'pink')}
+      ${tile('Water', water + ' ml', 'of ' + S.settings.waterGoal + ' ml', 'cyan')}
+      ${tile('Workout', wk.length ? 'DONE' : 'NONE', wk.length ? wk[0].name : '—', wk.length?'green':'muted')}
+      ${tile('Tasks done', `${tDone}/${tsk.length}`, 'today', 'green')}
+    </div>
+    <div class="mt">
+      ${barRow('Overall daily progress', overall + '%', overall, 'var(--pink)')}
+    </div>
+    <div class="mt">
+      <div class="muted small" style="margin-bottom:6px;letter-spacing:1.5px;text-transform:uppercase">Still to do before midnight</div>
+      ${remaining.length ? `<ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+        ${remaining.map(r=>`<li class="small" style="color:var(--yellow)">▸ ${r}</li>`).join('')}
+      </ul>` : `<div class="small green">Everything complete. Outstanding. 🌴</div>`}
+    </div>`;
+}
+
+function goalCurrent(g){
+  if(g.auto === 'savings'){
+    const m = today().slice(0,7);
+    const net = txSum('income', x => (x.date||'').startsWith(m)) - txSum('expense', x => (x.date||'').startsWith(m));
+    return Math.max(0, net);
+  }
+  return num(g.current);
+}
+
+/* ---------- 7.2 SEARCH ---------- */
+function renderSearch(){
+  const recent = S.recentFoods.slice(0,8);
+  const frequent = Object.entries(S.foodCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  return `
+  <h1 class="page-title">Food & Nutrition Search</h1>
+
+  <div class="card mb">
+    <h3 class="card-title">Search Database <span class="tag">${FOODS.length} built-in foods + live online lookup</span></h3>
+    <div class="search-box" style="margin-bottom:14px">
+      <span class="mag">⌕</span>
+      <input id="pageSearch" type="text" placeholder="Type a food: apple, banana, rice, roti, paneer, dal, pizza, burger…" autocomplete="off">
+    </div>
+    <div class="btn-row mb">
+      ${['Apple','Banana','Rice','Chicken Breast','Egg','Roti','Paneer','Dal','Pizza','Burger','Milk','Oats']
+        .map(f=>`<span class="quick-chip" data-action="quick-search" data-q="${f}">${f}</span>`).join('')}
+    </div>
+    <div id="pageResults"></div>
+  </div>
+
+  <div class="grid g2">
+    ${card('Recently Searched', recent.length
+      ? `<div class="btn-row">${recent.map(r=>`<span class="quick-chip" data-action="quick-search" data-q="${esc(r)}">${esc(r)}</span>`).join('')}</div>`
+      : emptyBox('No recent searches yet.'))}
+    ${card('Frequently Used', frequent.length
+      ? `<div class="list">${frequent.map(([n,c])=>`
+          <div class="row">
+            <div class="grow"><div class="ttl">${esc(n)}</div><div class="sub">used ${c}×</div></div>
+            <button class="btn tiny" data-action="quick-search" data-q="${esc(n)}">View</button>
+          </div>`).join('')}</div>`
+      : emptyBox('Nothing logged yet.'))}
+  </div>
+
+  <div class="card mt">
+    <h3 class="card-title">Add Custom Food Manually</h3>
+    <div class="form-grid">
+      <label class="fld">Food name<input id="cf-name" placeholder="e.g. Homemade Khichdi"></label>
+      <label class="fld">Serving size<input id="cf-serving" placeholder="1 bowl (200g)" value="1 serving"></label>
+      <label class="fld">Calories (kcal)<input id="cf-kcal" type="number" min="0" step="1" placeholder="0"></label>
+      <label class="fld">Protein (g)<input id="cf-p" type="number" min="0" step="0.1" placeholder="0"></label>
+      <label class="fld">Carbs (g)<input id="cf-c" type="number" min="0" step="0.1" placeholder="0"></label>
+      <label class="fld">Fat (g)<input id="cf-f" type="number" min="0" step="0.1" placeholder="0"></label>
+      <label class="fld">Fiber (g)<input id="cf-fi" type="number" min="0" step="0.1" placeholder="0"></label>
+    </div>
+    <div class="btn-row mt">
+      <button class="btn pink" data-action="add-custom-food">Save & Add to Diet</button>
+    </div>
+  </div>`;
+}
+
+function foodResultHTML(food, i){
+  return `<div class="sr-item" data-action="add-food" data-i="${i}">
+    <div class="grow">
+      <div class="nm">${esc(food.n)} ${food.online ? '<span class="pill" style="color:var(--purple)">online</span>' : ''}</div>
+      <div class="sv">${esc(food.s)} · P ${nf(food.p)}g · C ${nf(food.c)}g · F ${nf(food.f)}g${food.fi?` · Fiber ${nf(food.fi)}g`:''}</div>
+    </div>
+    <div class="kc">${Math.round(food.k)} kcal</div>
+  </div>`;
+}
+
+function runSearch(q){
+  q = (q||'').trim().toLowerCase();
+  if(!q){ RESULTS = []; return []; }
+
+  const local = FOODS
+    .map(f => ({f, score: scoreFood(f.n.toLowerCase(), q)}))
+    .filter(x => x.score > 0)
+    .sort((a,b) => b.score - a.score || a.f.n.length - b.f.n.length)
+    .slice(0,12)
+    .map(x => x.f);
+
+  RESULTS = local;
+  return local;
+}
+function scoreFood(name, q){
+  if(name === q) return 100;
+  if(name.startsWith(q)) return 80;
+  if(name.includes(q)) return 60;
+  // token match
+  const words = q.split(/\s+/).filter(Boolean);
+  const hit = words.every(w => name.includes(w));
+  return hit ? 40 : 0;
+}
+
+async function onlineSearch(q){
+  const url = 'https://world.openfoodfacts.org/cgi/search.pl?search_terms='
+    + encodeURIComponent(q)
+    + '&search_simple=1&action=process&json=1&page_size=12&fields=product_name,brands,nutriments,serving_size';
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('Network error');
+  const data = await res.json();
+  return (data.products || [])
+    .map(p => {
+      const nm = (p.product_name || '').trim();
+      if(!nm) return null;
+      const nu = p.nutriments || {};
+      const kcal = num(nu['energy-kcal_100g'] ?? nu['energy-kcal'] ?? (num(nu.energy_100g) / 4.184));
+      if(!kcal) return null;
+      return {
+        n: p.brands ? `${nm} (${p.brands.split(',')[0]})` : nm,
+        s: '100 g' + (p.serving_size ? ` · pack: ${p.serving_size}` : ''),
+        k: kcal,
+        p: num(nu.proteins_100g),
+        c: num(nu.carbohydrates_100g),
+        f: num(nu.fat_100g),
+        fi: num(nu.fiber_100g),
+        online: true
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 10);
+}
+
+/* ---------- 7.3 FINANCE ---------- */
+function renderFinance(){
+  const t = today();
+  const m = t.slice(0,7);
+  const st = S.settings;
+
+  const incMonth = txSum('income',  x => (x.date||'').startsWith(m));
+  const expMonth = txSum('expense', x => (x.date||'').startsWith(m));
+  const incToday = txSum('income',  x => x.date === t);
+  const expToday = txSum('expense', x => x.date === t);
+  const budgetLeft = st.monthlyBudget - expMonth;
+  const dLeft = daysLeftInMonth();
+  const dailyLimit = budgetLeft > 0 ? budgetLeft / dLeft : 0;
+  const saved = incMonth - expMonth;
+
+  /* category breakdown */
+  const byCat = {};
+  S.txs.filter(x => x.type === 'expense' && (x.date||'').startsWith(m))
+       .forEach(x => { byCat[x.category] = (byCat[x.category]||0) + num(x.amount); });
+  const catSorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const catTotal = catSorted.reduce((a,b)=>a+b[1],0) || 1;
+  const catColors = ['var(--pink)','var(--cyan)','var(--yellow)','var(--purple)','var(--green)','var(--orange)','var(--red)','#7dd3fc','#f0abfc'];
+
+  const catHTML = catSorted.length ? catSorted.map(([c,v],i) =>
+    barRow(`${esc(c)}`, money(v) + ` · ${Math.round((v/catTotal)*100)}%`, (v/catTotal)*100, catColors[i%catColors.length])
+  ).join('') : emptyBox('No expenses recorded this month.');
+
+  /* last 7 days spending */
+  const days = lastNDays(7);
+  const items = days.map(d => ({
+    label: dayLabel(d),
+    value: txSum('expense', x => x.date === d),
+    color: d === t ? 'var(--pink)' : 'var(--cyan)'
+  }));
+
+  /* transactions */
+  const recentTx = S.txs.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'')).slice(0,25);
+  const txHTML = recentTx.length ? recentTx.map(x => `
+    <div class="row">
+      <span class="pill" style="color:${x.type==='income'?'var(--green)':'var(--red)'}">${x.type==='income'?'IN':'OUT'}</span>
+      <div class="grow">
+        <div class="ttl">${esc(x.note || x.category)}</div>
+        <div class="sub">${esc(x.category)} · ${prettyDate(x.date)}</div>
+      </div>
+      <div class="amt ${x.type==='income'?'green':'red'}">${x.type==='income'?'+':'−'}${money(x.amount)}</div>
+      <button class="x" data-action="del-tx" data-id="${x.id}">✕</button>
+    </div>`).join('') : emptyBox('No transactions yet. Add your first one above.');
+
+  return `
+  <h1 class="page-title">Finance Control</h1>
+
+  <div class="grid g4 mb">
+    ${tile('Income today', money(incToday), '', 'green')}
+    ${tile('Expenses today', money(expToday), '', 'red')}
+    ${tile('Income this month', money(incMonth), '', 'green')}
+    ${tile('Expenses this month', money(expMonth), '', 'red')}
+  </div>
+
+  <div class="grid g3 mb">
+    ${card('Budget Status', `
+      ${barRow('Budget used', money(expMonth) + ' / ' + money(st.monthlyBudget),
+        (expMonth/(st.monthlyBudget||1))*100, expMonth > st.monthlyBudget ? 'var(--red)' : 'var(--yellow)')}
+      <div class="grid g2 mt" style="gap:10px">
+        ${tile('Remaining', money(Math.max(0,budgetLeft)), `${dLeft} days left`, budgetLeft<0?'red':'cyan')}
+        ${tile('Safe daily limit', money(dailyLimit), 'auto-calculated', 'yellow')}
+      </div>
+      <div class="small muted mt">Calculated as remaining budget ÷ days left in month.</div>
+    `)}
+    ${card('Savings', `
+      ${ring((Math.max(0,saved)/(st.savingsGoal||1))*100, 'var(--green)',
+        money(saved), 'of ' + money(st.savingsGoal))}
+      <div class="mt">
+        ${barRow('Monthly savings goal', money(saved) + ' / ' + money(st.savingsGoal),
+          (Math.max(0,saved)/(st.savingsGoal||1))*100, 'var(--green)')}
+      </div>
+    `)}
+    ${card('Spending by Category', `<div class="list">${catHTML}</div>`)}
+  </div>
+
+  <div class="card mb">
+    <h3 class="card-title">Add Transaction</h3>
+    <div class="form-grid">
+      <label class="fld">Type
+        <select id="tx-type">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+      </label>
+      <label class="fld">Amount<input id="tx-amount" type="number" min="0" step="1" placeholder="0"></label>
+      <label class="fld">Category<select id="tx-cat">${EXPENSE_CATS.map(c=>`<option>${c}</option>`).join('')}</select></label>
+      <label class="fld">Date<input id="tx-date" type="date" value="${t}"></label>
+      <label class="fld wide">Note<input id="tx-note" placeholder="What was it for?"></label>
+    </div>
+    <div class="btn-row mt">
+      <button class="btn pink" data-action="add-tx">+ Add Transaction</button>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    ${card('Last 7 Days Spending', `
+      ${barChart(items, 160)}
+      <div class="legend"><span><i style="background:var(--pink)"></i>Today</span><span><i style="background:var(--cyan)"></i>Other days</span></div>
+    `)}
+    ${card('Recent Transactions', `<div class="list">${txHTML}</div>`)}
+  </div>`;
+}
+
+/* ---------- 7.4 DIET ---------- */
+function renderDiet(){
+  const t = today();
+  const st = S.settings;
+  const nut = todayNutrition();
+  const left = st.calorieGoal - nut.kcal;
+
+  const mealBlocks = MEALS.map(meal => {
+    const items = S.diet.filter(x => x.date === t && x.meal === meal);
+    const mealKcal = items.reduce((a,b)=>a+num(b.kcal),0);
+    const rows = items.length ? items.map(x => `
+      <div class="row">
+        <div class="grow">
+          <div class="ttl">${esc(x.name)}</div>
+          <div class="sub">${nf(x.qty)} × ${esc(x.serving)} · P ${nf(x.p)}g · C ${nf(x.c)}g · F ${nf(x.f)}g</div>
+        </div>
+        <div class="amt yellow">${Math.round(x.kcal)} kcal</div>
+        <button class="x" data-action="del-diet" data-id="${x.id}">✕</button>
+      </div>`).join('') : `<div class="small muted">Nothing logged for ${meal.toLowerCase()} yet.</div>`;
+    return `<div class="meal-block">
+      <div class="meal-head">
+        <h4>${meal}</h4>
+        <span class="small yellow">${Math.round(mealKcal)} kcal</span>
+      </div>
+      <div class="list">${rows}</div>
+    </div>`;
+  }).join('');
+
+  /* 7-day calories */
+  const days = lastNDays(7);
+  const kcalItems = days.map(d => ({
+    label: dayLabel(d),
+    value: S.diet.filter(x=>x.date===d).reduce((a,b)=>a+num(b.kcal),0),
+    color: d === t ? 'var(--orange)' : 'var(--purple)'
+  }));
+
+  return `
+  <h1 class="page-title">Diet & Nutrition</h1>
+
+  <div class="grid g2 mb">
+    ${card('Today\'s Energy', `
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+        ${ring((nut.kcal/st.calorieGoal)*100, 'var(--orange)', Math.round(nut.kcal), 'of ' + st.calorieGoal)}
+        <div style="flex:1;min-width:180px">
+          <div class="grid g2" style="gap:10px">
+            ${tile('Consumed', Math.round(nut.kcal) + ' kcal', '', 'orange')}
+            ${tile('Remaining', Math.abs(Math.round(left)) + ' kcal', left<0?'over goal':'available', left<0?'red':'green')}
+          </div>
+        </div>
+      </div>
+    `)}
+    ${card('Macronutrients', `
+      ${barRow('Protein', `${nf(nut.p)} / ${st.proteinGoal} g`, (nut.p/st.proteinGoal)*100, 'var(--pink)')}
+      ${barRow('Carbohydrates', `${nf(nut.c)} / ${st.carbGoal} g`, (nut.c/st.carbGoal)*100, 'var(--cyan)')}
+      ${barRow('Fat', `${nf(nut.f)} / ${st.fatGoal} g`, (nut.f/st.fatGoal)*100, 'var(--yellow)')}
+      ${barRow('Fiber', `${nf(nut.fi)} / ${st.fiberGoal} g`, (nut.fi/st.fiberGoal)*100, 'var(--green)')}
+    `)}
+  </div>
+
+  <div class="card mb">
+    <h3 class="card-title">Today's Meals <span class="tag">${prettyDate(t)}</span></h3>
+    ${mealBlocks}
+  </div>
+
+  <div class="grid g2">
+    ${card('Quick Add Custom Food', `
+      <div class="form-grid">
+        <label class="fld">Name<input id="d-name" placeholder="Food name"></label>
+        <label class="fld">Calories<input id="d-kcal" type="number" min="0" placeholder="0"></label>
+        <label class="fld">Protein (g)<input id="d-p" type="number" min="0" step="0.1" placeholder="0"></label>
+        <label class="fld">Carbs (g)<input id="d-c" type="number" min="0" step="0.1" placeholder="0"></label>
+        <label class="fld">Fat (g)<input id="d-f" type="number" min="0" step="0.1" placeholder="0"></label>
+        <label class="fld">Meal<select id="d-meal">${MEALS.map(x=>`<option>${x}</option>`).join('')}</select></label>
+      </div>
+      <div class="btn-row mt">
+        <button class="btn green" data-action="add-manual-food">+ Add to Diet</button>
+        <button class="btn ghost" data-action="go-search">Search Food Database</button>
+      </div>
+    `)}
+    ${card('Calories — Last 7 Days', `${barChart(kcalItems, 170)}
+      <div class="legend"><span><i style="background:var(--orange)"></i>Today</span><span><i style="background:var(--purple)"></i>Previous</span></div>`)}
+  </div>`;
+}
+
+/* ---------- 7.5 WATER ---------- */
+function renderWater(){
+  const t = today();
+  const st = S.settings;
+  const consumed = waterToday();
+  const remaining = Math.max(0, st.waterGoal - consumed);
+  const pct = (consumed / (st.waterGoal||1)) * 100;
+
+  const days = lastNDays(7);
+  const items = days.map(d => ({
+    label: dayLabel(d),
+    value: S.water.filter(w=>w.date===d).reduce((a,b)=>a+num(b.ml),0),
+    color: d === t ? 'var(--cyan)' : 'var(--purple)'
+  }));
+
+  const todayLogs = S.water.filter(w=>w.date===t).slice().reverse();
+  const logsHTML = todayLogs.length ? todayLogs.map(w => `
+    <div class="row">
+      <div class="grow"><div class="ttl">${w.ml} ml</div><div class="sub">logged today</div></div>
+      <button class="x" data-action="del-water" data-id="${w.id}">✕</button>
+    </div>`).join('') : emptyBox('No water logged yet today.');
+
+  const weekAvg = Math.round(days.reduce((a,d)=>a + S.water.filter(w=>w.date===d).reduce((x,y)=>x+num(y.ml),0), 0)/7);
+
+  return `
+  <h1 class="page-title">Water Tracking</h1>
+
+  <div class="grid g2 mb">
+    ${card('Hydration Level', `
+      <div style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">
+        ${ring(pct, 'var(--cyan)', consumed, 'of ' + st.waterGoal + ' ml')}
+        <div style="flex:1;min-width:180px">
+          <div class="grid g2" style="gap:10px">
+            ${tile('Consumed', consumed + ' ml', '', 'cyan')}
+            ${tile('Remaining', remaining + ' ml', remaining===0?'goal reached':'keep going', remaining===0?'green':'yellow')}
+            ${tile('Glasses', Math.round(consumed/250) + ' × 250ml', 'approx.', 'purple')}
+            ${tile('7-day average', weekAvg + ' ml', 'per day', 'cyan')}
+          </div>
+        </div>
+      </div>
+      <div class="btn-row mt" style="margin-top:18px">
+        <button class="btn tiny" data-action="add-water" data-ml="250">+250 ml</button>
+        <button class="btn tiny" data-action="add-water" data-ml="500">+500 ml</button>
+        <button class="btn tiny" data-action="add-water" data-ml="750">+750 ml</button>
+        <button class="btn tiny" data-action="add-water" data-ml="1000">+1 L</button>
+      </div>
+      <div class="form-grid mt">
+        <label class="fld">Custom amount (ml)<input id="w-custom" type="number" min="1" step="50" placeholder="e.g. 300"></label>
+        <label class="fld">&nbsp;<button class="btn green" data-action="add-water-custom">Add Water</button></label>
+      </div>
+    `)}
+    ${card('Intake — Last 7 Days', `
+      ${barChart(items, 170)}
+      <div class="legend"><span><i style="background:var(--cyan)"></i>Today</span><span><i style="background:var(--purple)"></i>Previous</span></div>
+    `)}
+  </div>
+
+  ${card('Today\'s Log', `<div class="list">${logsHTML}</div>`)}
+  `;
+}
+
+/* ---------- 7.6 WORKOUT ---------- */
+function renderWorkout(){
+  const t = today();
+  const st = S.settings;
+  const wk = workoutsThisWeek();
+  const wkMinutes = wk.reduce((a,b)=>a+num(b.duration),0);
+  const wkCals = wk.reduce((a,b)=>a+num(b.calories),0);
+  const wkPct = (wk.length / (st.weeklyWorkoutGoal||1)) * 100;
+
+  const history = S.workouts.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'')).slice(0,15);
+  const histHTML = history.length ? history.map(w => `
+    <div class="row">
+      <div class="grow">
+        <div class="ttl">${esc(w.name)}</div>
+        <div class="sub">${prettyDate(w.date)} · ${num(w.duration)} min · ${num(w.calories)} kcal${w.exercises && w.exercises.length ? ' · ' + w.exercises.length + ' exercises' : ''}</div>
+        ${w.exercises && w.exercises.length ? `<div class="small muted" style="margin-top:4px">${w.exercises.map(e=>`${esc(e.name)} ${e.sets}×${e.reps}${num(e.weight)?' @'+e.weight+'kg':''}`).join(' · ')}</div>` : ''}
+      </div>
+      <button class="x" data-action="del-workout" data-id="${w.id}">✕</button>
+    </div>`).join('') : emptyBox('No workouts logged yet. Time to move!');
+
+  /* last 4 weeks */
+  const weeks = [];
+  for(let i = 3; i >= 0; i--){
+    const d = new Date(); d.setDate(d.getDate() - i*7);
+    const s = startOfWeek(d);
+    const end = new Date(fromISO(s)); end.setDate(end.getDate()+6);
+    const e = iso(end);
+    const count = S.workouts.filter(w => w.date >= s && w.date <= e).length;
+    weeks.push({label: i === 0 ? 'This wk' : 'W-' + i, value: count, color: i===0?'var(--purple)':'var(--pink)'});
+  }
+
+  return `
+  <h1 class="page-title">Workout & Fitness</h1>
+
+  <div class="grid g3 mb">
+    ${card('Weekly Goal', `
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+        ${ring(wkPct, 'var(--purple)', wk.length, 'of ' + st.weeklyWorkoutGoal + ' sessions')}
+        <div style="flex:1;min-width:150px">
+          ${tile('Remaining', Math.max(0, st.weeklyWorkoutGoal - wk.length), 'workouts this week', 'yellow')}
+          <div class="mt">${barRow('Progress', Math.round(clamp(wkPct,0,100)) + '%', wkPct, 'var(--purple)')}</div>
+        </div>
+      </div>
+    `)}
+    ${card('Weekly Stats', `
+      <div class="grid g2" style="gap:10px">
+        ${tile('Sessions', wk.length, 'this week', 'purple')}
+        ${tile('Total time', wkMinutes + ' min', 'this week', 'cyan')}
+        ${tile('Calories burned', wkCals + ' kcal', 'this week', 'orange')}
+        ${tile('Today', S.workouts.some(w=>w.date===t) ? 'DONE' : 'NONE', '', S.workouts.some(w=>w.date===t)?'green':'muted')}
+      </div>
+    `)}
+    ${card('Last 4 Weeks', `${barChart(weeks, 160)}`)}
+  </div>
+
+  <div class="card mb">
+    <h3 class="card-title">Log a Workout</h3>
+    <div class="form-grid">
+      <label class="fld">Workout name<input id="wk-name" placeholder="e.g. Push Day / Morning Run"></label>
+      <label class="fld">Date<input id="wk-date" type="date" value="${t}"></label>
+      <label class="fld">Duration (min)<input id="wk-duration" type="number" min="0" placeholder="45"></label>
+      <label class="fld">Calories burned<input id="wk-calories" type="number" min="0" placeholder="300"></label>
+    </div>
+
+    <div class="mt">
+      <div class="small muted" style="margin-bottom:8px;letter-spacing:1.4px;text-transform:uppercase">Exercises (optional)</div>
+      <div id="exerciseList"></div>
+      <button class="btn ghost tiny mt" data-action="add-exercise-row">+ Add Exercise</button>
+    </div>
+
+    <div class="btn-row mt">
+      <button class="btn pink" data-action="add-workout">Save Workout</button>
+    </div>
+  </div>
+
+  ${card('Workout History', `<div class="list">${histHTML}</div>`)}
+  `;
+}
+function exerciseRowHTML(){
+  return `<div class="ex-row mb" style="margin-bottom:8px">
+    <label class="fld">Exercise<input class="ex-name" placeholder="Bench Press"></label>
+    <label class="fld">Sets<input class="ex-sets" type="number" min="0" placeholder="3"></label>
+    <label class="fld">Reps<input class="ex-reps" type="number" min="0" placeholder="10"></label>
+    <label class="fld">Weight (kg)<input class="ex-weight" type="number" min="0" step="0.5" placeholder="20"></label>
+    <button class="x" data-action="del-exercise-row" style="margin-bottom:8px">✕</button>
+  </div>`;
+}
+
+/* ---------- 7.7 TASKS ---------- */
+function renderTasks(){
+  const t = today();
+  const list = tasksToday();
+  const done = list.filter(x=>x.done).length;
+  const pending = list.length - done;
+  const overdue = S.tasks.filter(x => x.date < t && !x.done);
+
+  const nowHM = new Date().toTimeString().slice(0,5);
+  const rows = list.length ? list.map(x => {
+    const isOverdue = !x.done && x.end && x.end < nowHM;
+    return `<div class="row ${x.done?'done':''}">
+      <div class="chk ${x.done?'on':''}" data-action="toggle-task" data-id="${x.id}">✓</div>
+      <div class="grow">
+        <div class="ttl">${esc(x.name)}</div>
+        <div class="sub">
+          ${esc(x.start||'--:--')} – ${esc(x.end||'--:--')} · ${esc(x.category||'General')}
+          ${isOverdue ? ' · <span class="red">OVERDUE</span>' : ''}
+        </div>
+      </div>
+      <span class="pill" style="color:${x.priority==='High'?'var(--red)':x.priority==='Medium'?'var(--yellow)':'var(--muted)'}">${esc(x.priority||'Low')}</span>
+      <button class="x" data-action="del-task" data-id="${x.id}">✕</button>
+    </div>`;
+  }).join('') : emptyBox('No tasks scheduled for today. Add one below.');
+
+  const overdueHTML = overdue.length ? overdue.map(x => `
+    <div class="row">
+      <div class="chk" data-action="toggle-task" data-id="${x.id}">✓</div>
+      <div class="grow">
+        <div class="ttl">${esc(x.name)}</div>
+        <div class="sub red">Was due ${prettyDate(x.date)}</div>
+      </div>
+      <button class="x" data-action="del-task" data-id="${x.id}">✕</button>
+    </div>`).join('') : emptyBox('Nothing overdue. Clean slate. ✨');
+
+  /* 7-day completion */
+  const days = lastNDays(7);
+  const items = days.map(d => {
+    const dl = S.tasks.filter(x=>x.date===d);
+    const dd = dl.filter(x=>x.done).length;
+    return {
+      label: dayLabel(d),
+      value: dl.length ? (dd/dl.length)*100 : 0,
+      display: dl.length ? Math.round((dd/dl.length)*100)+'%' : '—',
+      color: d === t ? 'var(--green)' : 'var(--cyan)'
+    };
+  });
+
+  return `
+  <h1 class="page-title">Daily Timetable & Tasks</h1>
+
+  <div class="grid g4 mb">
+    ${tile('Total tasks', list.length, 'today', 'cyan')}
+    ${tile('Completed', done, 'today', 'green')}
+    ${tile('Pending', pending, 'today', 'yellow')}
+    ${tile('Overdue', overdue.length, 'from earlier', overdue.length ? 'red' : 'muted')}
+  </div>
+
+  <div class="card mb">
+    ${barRow('Daily completion', (list.length ? Math.round((done/list.length)*100) : 0) + '%',
+      list.length ? (done/list.length)*100 : 0, 'var(--green)')}
+  </div>
+
+  <div class="card mb">
+    <h3 class="card-title">Add Task <span class="tag">${prettyDate(t)}</span></h3>
+    <div class="form-grid">
+      <label class="fld wide">Task name<input id="tk-name" placeholder="e.g. Morning Workout"></label>
+      <label class="fld">Start time<input id="tk-start" type="time" value="09:00"></label>
+      <label class="fld">End time<input id="tk-end" type="time" value="10:00"></label>
+      <label class="fld">Category<select id="tk-cat">${TASK_CATS.map(c=>`<option>${c}</option>`).join('')}</select></label>
+      <label class="fld">Priority<select id="tk-priority"><option>Low</option><option selected>Medium</option><option>High</option></select></label>
+      <label class="fld">Date<input id="tk-date" type="date" value="${t}"></label>
+      <label class="fld">Reminder<select id="tk-reminder"><option value="no">No</option><option value="yes">Yes</option></select></label>
+    </div>
+    <div class="btn-row mt">
+      <button class="btn pink" data-action="add-task">+ Add Task</button>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    ${card('Today\'s Schedule', `<div class="list">${rows}</div>`)}
+    <div style="display:flex;flex-direction:column;gap:14px">
+      ${card('Completion — Last 7 Days', `${barChart(items, 150)}`)}
+      ${card('Overdue Tasks', `<div class="list">${overdueHTML}</div>`)}
+    </div>
+  </div>`;
+}
+
+/* ---------- 7.8 GOALS ---------- */
+function renderGoals(){
+  const goalsHTML = S.goals.length ? S.goals.map(g => {
+    const cur = goalCurrent(g);
+    const tgt = num(g.target);
+    const pct = tgt ? clamp((cur/tgt)*100, 0, 100) : 0;
+    const color = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--cyan)' : pct >= 30 ? 'var(--yellow)' : 'var(--pink)';
+    return `<div class="card" style="padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">
+        <div>
+          <div style="font-family:var(--font-head);font-size:13px;color:#fff;letter-spacing:1px">${esc(g.title)}</div>
+          <div class="small muted">${esc(g.type||'General')}${g.auto==='savings' ? ' · auto-tracked' : ''}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="pill" style="color:${color}">${Math.round(pct)}%</span>
+          <button class="x" data-action="del-goal" data-id="${g.id}">✕</button>
+        </div>
+      </div>
+      ${bar(pct, color)}
+      <div class="grid g3 mt" style="gap:8px">
+        ${tile('Current', nf(cur), esc(g.unit||''), 'cyan')}
+        ${tile('Target', nf(tgt), esc(g.unit||''), 'yellow')}
+        ${tile('Remaining', nf(Math.max(0, tgt - cur)), esc(g.unit||''), 'pink')}
+      </div>
+      ${g.auto === 'savings' ? `<div class="small muted mt">Auto-calculated from this month's income − expenses.</div>` : `
+      <div class="form-grid mt">
+        <label class="fld">Update progress (${esc(g.unit||'')})
+          <input type="number" step="0.01" value="${nf(cur)}" data-goal-input="${g.id}">
+        </label>
+        <label class="fld">&nbsp;<button class="btn tiny green" data-action="update-goal" data-id="${g.id}">Update</button></label>
+      </div>`}
+    </div>`;
+  }).join('') : emptyBox('No goals yet — create your first one below.');
+
+  /* auto progress summary */
+  const t = today();
+  const m = t.slice(0,7);
+  const nut = todayNutrition();
+  const water = waterToday();
+  const tsk = tasksToday();
+  const wk = workoutsThisWeek();
+  const net = txSum('income', x=>(x.date||'').startsWith(m)) - txSum('expense', x=>(x.date||'').startsWith(m));
+
+  const auto = [
+    {t:'Savings (this month)', c:Math.max(0,net), g:S.settings.savingsGoal, u:S.settings.currency, col:'var(--green)'},
+    {t:'Calories (today)', c:nut.kcal, g:S.settings.calorieGoal, u:'kcal', col:'var(--orange)'},
+    {t:'Water (today)', c:water, g:S.settings.waterGoal, u:'ml', col:'var(--cyan)'},
+    {t:'Protein (today)', c:nut.p, g:S.settings.proteinGoal, u:'g', col:'var(--pink)'},
+    {t:'Workouts (week)', c:wk.length, g:S.settings.weeklyWorkoutGoal, u:'sessions', col:'var(--purple)'},
+    {t:'Tasks (today)', c:tsk.filter(x=>x.done).length, g:tsk.length, u:'tasks', col:'var(--green)'}
+  ];
+
+  const autoHTML = auto.map(a => {
+    const pct = a.g ? clamp((a.c/a.g)*100, 0, 100) : 0;
+    return barRow(esc(a.t), `${nf(a.c)} / ${nf(a.g)} ${esc(a.u)}`, pct, a.col,
+      `Remaining: ${nf(Math.max(0, a.g - a.c))} ${esc(a.u)}`);
+  }).join('');
+
+  return `
+  <h1 class="page-title">Goals & Progress</h1>
+
+  <div class="card mb">
+    <h3 class="card-title">Auto-Tracked Daily Goals</h3>
+    ${autoHTML}
+  </div>
+
+  <div class="card mb">
+    <h3 class="card-title">Create New Goal</h3>
+    <div class="form-grid">
+      <label class="fld wide">Goal title<input id="gl-title" placeholder="e.g. Save ₹50,000 / Lose 5 kg / Read 12 books"></label>
+      <label class="fld">Type<select id="gl-type">
+        <option>Savings</option><option>Diet</option><option>Water</option>
+        <option>Fitness</option><option>Weight</option><option>Habit</option><option>Personal</option>
+      </select></label>
+      <label class="fld">Current<input id="gl-current" type="number" step="0.01" value="0"></label>
+      <label class="fld">Target<input id="gl-target" type="number" step="0.01" placeholder="100"></label>
+      <label class="fld">Unit<input id="gl-unit" placeholder="₹ / kg / km / books"></label>
+    </div>
+    <div class="btn-row mt">
+      <button class="btn pink" data-action="add-goal">+ Create Goal</button>
+    </div>
+  </div>
+
+  <div class="grid g2">${goalsHTML}</div>`;
+}
+
+/* ---------- 7.9 REPORTS ---------- */
+function renderReports(){
+  const days = lastNDays(7);
+  const t = today();
+  const st = S.settings;
+
+  /* income vs expense */
+  const incItems = days.map(d => ({label: dayLabel(d), value: txSum('income', x=>x.date===d), color:'var(--green)'}));
+  const expItems = days.map(d => ({label: dayLabel(d), value: txSum('expense', x=>x.date===d), color:'var(--red)'}));
+  const kcalItems = days.map(d => ({label: dayLabel(d), value: S.diet.filter(x=>x.date===d).reduce((a,b)=>a+num(b.kcal),0), color:'var(--orange)'}));
+  const waterItems = days.map(d => ({label: dayLabel(d), value: S.water.filter(x=>x.date===d).reduce((a,b)=>a+num(b.ml),0), color:'var(--cyan)'}));
+  const taskItems = days.map(d => {
+    const dl = S.tasks.filter(x=>x.date===d);
+    const dd = dl.filter(x=>x.done).length;
+    return {label: dayLabel(d), value: dl.length ? (dd/dl.length)*100 : 0, display: dl.length ? Math.round((dd/dl.length)*100)+'%' : '—', color:'var(--green)'};
+  });
+
+  /* category breakdown for week */
+  const week = {};
+  days.forEach(d => S.txs.filter(x => x.type==='expense' && x.date===d)
+    .forEach(x => { week[x.category] = (week[x.category]||0) + num(x.amount); }));
+  const wkCat = Object.entries(week).sort((a,b)=>b[1]-a[1]);
+  const wkTotal = wkCat.reduce((a,b)=>a+b[1],0);
+  const catColors = ['var(--pink)','var(--cyan)','var(--yellow)','var(--purple)','var(--green)','var(--orange)','var(--red)'];
+  const catHTML = wkCat.length ? wkCat.map(([c,v],i)=>
+    barRow(esc(c), money(v) + (wkTotal ? ` · ${Math.round((v/wkTotal)*100)}%` : ''), wkTotal ? (v/wkTotal)*100 : 0, catColors[i%catColors.length])
+  ).join('') : emptyBox('No expenses in the last 7 days.');
+
+  /* weekly totals */
+  const wkInc = days.reduce((a,d)=>a+txSum('income',x=>x.date===d),0);
+  const wkExp = days.reduce((a,d)=>a+txSum('expense',x=>x.date===d),0);
+  const wkKcal = days.reduce((a,d)=>a+S.diet.filter(x=>x.date===d).reduce((x,y)=>x+num(y.kcal),0),0);
+  const wkWater = days.reduce((a,d)=>a+S.water.filter(w=>w.date===d).reduce((x,y)=>x+num(y.ml),0),0);
+  const wkWorkouts = S.workouts.filter(w => w.date >= days[0]).length;
+  const wkTasks = S.tasks.filter(x => x.date >= days[0] && x.date <= t);
+  const wkTasksDone = wkTasks.filter(x=>x.done).length;
+
+  /* monthly */
+  const m = t.slice(0,7);
+  const mInc = txSum('income', x => (x.date||'').startsWith(m));
+  const mExp = txSum('expense', x => (x.date||'').startsWith(m));
+
+  return `
+  <h1 class="page-title">Reports & Analytics</h1>
+
+  <div class="grid g4 mb">
+    ${tile('7-day income', money(wkInc), '', 'green')}
+    ${tile('7-day expenses', money(wkExp), '', 'red')}
+    ${tile('7-day savings', money(wkInc - wkExp), '', (wkInc-wkExp)>=0?'green':'red')}
+    ${tile('Avg daily spend', money(wkExp/7), 'last 7 days', 'yellow')}
+  </div>
+
+  <div class="grid g2 mb">
+    ${card('Income — Last 7 Days', `${barChart(incItems, 160)}`)}
+    ${card('Expenses — Last 7 Days', `${barChart(expItems, 160)}`)}
+  </div>
+
+  <div class="grid g2 mb">
+    ${card('Spending Categories (7 days)', `<div class="list">${catHTML}</div>`)}
+    ${card('Monthly Summary', `
+      <div class="grid g2" style="gap:10px">
+        ${tile('Income', money(mInc), 'this month', 'green')}
+        ${tile('Expenses', money(mExp), 'this month', 'red')}
+        ${tile('Saved', money(mInc - mExp), 'this month', (mInc-mExp)>=0?'green':'red')}
+        ${tile('Budget left', money(Math.max(0, st.monthlyBudget - mExp)), 'of ' + money(st.monthlyBudget), 'cyan')}
+      </div>
+      <div class="mt">
+        ${barRow('Budget utilisation', Math.round((mExp/(st.monthlyBudget||1))*100) + '%',
+          (mExp/(st.monthlyBudget||1))*100, mExp > st.monthlyBudget ? 'var(--red)' : 'var(--yellow)')}
+      </div>
+    `)}
+  </div>
+
+  <div class="grid g2 mb">
+    ${card('Calories — Last 7 Days', `${barChart(kcalItems, 160)}
+      <div class="legend"><span class="muted">Total: ${Math.round(wkKcal)} kcal · Avg: ${Math.round(wkKcal/7)} kcal/day</span></div>`)}
+    ${card('Water Intake — Last 7 Days', `${barChart(waterItems, 160)}
+      <div class="legend"><span class="muted">Total: ${wkWater} ml · Avg: ${Math.round(wkWater/7)} ml/day</span></div>`)}
+  </div>
+
+  <div class="grid g2">
+    ${card('Task Completion — Last 7 Days', `${barChart(taskItems, 160)}
+      <div class="legend"><span class="muted">${wkTasksDone} of ${wkTasks.length} tasks completed this week</span></div>`)}
+    ${card('Health & Fitness Summary', `
+      <div class="grid g2" style="gap:10px">
+        ${tile('Workouts', wkWorkouts, 'last 7 days', 'purple')}
+        ${tile('Workout minutes', S.workouts.filter(w=>w.date>=days[0]).reduce((a,b)=>a+num(b.duration),0), 'last 7 days', 'cyan')}
+        ${tile('Calories burned', S.workouts.filter(w=>w.date>=days[0]).reduce((a,b)=>a+num(b.calories),0), 'last 7 days', 'orange')}
+        ${tile('Avg daily water', Math.round(wkWater/7) + ' ml', 'last 7 days', 'cyan')}
+        ${tile('Avg daily calories', Math.round(wkKcal/7) + ' kcal', 'last 7 days', 'orange')}
+        ${tile('Task completion', (wkTasks.length ? Math.round((wkTasksDone/wkTasks.length)*100) : 0) + '%', 'this week', 'green')}
+      </div>
+    `)}
+  </div>`;
+}
+
+/* ---------- 7.10 SETTINGS ---------- */
+function renderSettings(){
+  const st = S.settings;
+  return `
+  <h1 class="page-title">Settings</h1>
+
+  <div class="grid g2 mb">
+    ${card('Profile & Preferences', `
+      <div class="form-grid">
+        <label class="fld">Your name<input id="st-name" value="${esc(st.name)}"></label>
+        <label class="fld">Currency symbol<input id="st-currency" value="${esc(st.currency)}"></label>
+      </div>
+    `)}
+    ${card('Financial Targets', `
+      <div class="form-grid">
+        <label class="fld">Monthly budget<input id="st-budget" type="number" min="0" value="${st.monthlyBudget}"></label>
+        <label class="fld">Monthly savings goal<input id="st-savings" type="number" min="0" value="${st.savingsGoal}"></label>
+      </div>
+    `)}
+  </div>
+
+  <div class="grid g2 mb">
+    ${card('Nutrition Goals', `
+      <div class="form-grid">
+        <label class="fld">Daily calories (kcal)<input id="st-kcal" type="number" min="0" value="${st.calorieGoal}"></label>
+        <label class="fld">Protein (g)<input id="st-p" type="number" min="0" value="${st.proteinGoal}"></label>
+        <label class="fld">Carbs (g)<input id="st-c" type="number" min="0" value="${st.carbGoal}"></label>
+        <label class="fld">Fat (g)<input id="st-f" type="number" min="0" value="${st.fatGoal}"></label>
+        <label class="fld">Fiber (g)<input id="st-fi" type="number" min="0" value="${st.fiberGoal}"></label>
+      </div>
+    `)}
+    ${card('Health Goals', `
+      <div class="form-grid">
+        <label class="fld">Daily water (ml)<input id="st-water" type="number" min="0" value="${st.waterGoal}"></label>
+        <label class="fld">Weekly workouts<input id="st-workouts" type="number" min="0" value="${st.weeklyWorkoutGoal}"></label>
+        <label class="fld">Weight goal (kg)<input id="st-weight" type="number" min="0" step="0.1" value="${st.weightGoal}"></label>
+      </div>
+    `)}
+  </div>
+
+  <div class="btn-row mb">
+    <button class="btn green" data-action="save-settings">💾 Save Settings</button>
+  </div>
+
+  <div class="grid g2">
+    ${card('Data Management', `
+      <p class="small muted mb">Your data is stored locally in this browser. Export a backup regularly, or import it on another device to sync manually.</p>
+      <div class="btn-row">
+        <button class="btn" data-action="export-data">⬇ Export JSON</button>
+        <button class="btn" data-action="import-data">⬆ Import JSON</button>
+        <button class="btn pink" data-action="reset-demo">↺ Load Demo Data</button>
+        <button class="btn ghost" data-action="wipe-data">⚠ Erase Everything</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    `)}
+    ${card('Storage Info', `
+      <div class="grid g2" style="gap:10px">
+        ${tile('Transactions', S.txs.length, 'records', 'cyan')}
+        ${tile('Diet entries', S.diet.length, 'records', 'orange')}
+        ${tile('Water logs', S.water.length, 'records', 'cyan')}
+        ${tile('Workouts', S.workouts.length, 'records', 'purple')}
+        ${tile('Tasks', S.tasks.length, 'records', 'green')}
+        ${tile('Goals', S.goals.length, 'records', 'yellow')}
+      </div>
+      <div class="small muted mt">Storage used: ~${(JSON.stringify(S).length/1024).toFixed(1)} KB</div>
+    `)}
+  </div>`;
+}
+
+/* ============================================================
+   8. RENDER ROUTER
+   ============================================================ */
+const VIEWS = {
+  dashboard: renderDashboard,
+  search: renderSearch,
+  finance: renderFinance,
+  diet: renderDiet,
+  water: renderWater,
+  workout: renderWorkout,
+  tasks: renderTasks,
+  goals: renderGoals,
+  reports: renderReports,
+  settings: renderSettings
+};
+
+function render(){
+  const fn = VIEWS[currentView] || renderDashboard;
+  const view = $('#view');
+  view.innerHTML = fn();
+
+  // hooks per view
+  if(currentView === 'search'){
+    const ps = $('#pageSearch');
+    if(ps){
+      ps.addEventListener('input', () => {
+        const q = ps.value;
+        $('#globalSearch').value = q;
+        renderPageResults(q);
+      });
+      renderPageResults('');
+    }
+  }
+  if(currentView === 'workout'){
+    const list = $('#exerciseList');
+    if(list && !list.children.length) list.insertAdjacentHTML('beforeend', exerciseRowHTML());
+  }
+  if(currentView === 'finance'){
+    const sel = $('#tx-type');
+    if(sel) sel.addEventListener('change', updateTxCategories);
+  }
+}
+
+function updateTxCategories(){
+  const type = $('#tx-type').value;
+  const cats = type === 'income' ? INCOME_CATS : EXPENSE_CATS;
+  $('#tx-cat').innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function renderPageResults(q){
+  const box = $('#pageResults');
+  if(!box) return;
+  if(!q || !q.trim()){
+    box.innerHTML = '';
+    return;
+  }
+  const local = runSearch(q);
+  box.innerHTML = local.length
+    ? `<div class="search-results open" style="position:static;max-height:none;box-shadow:none">
+        ${local.map((f,i)=>foodResultHTML(f,i)).join('')}
+       </div>
+       <div class="btn-row mt">
+         <button class="btn ghost tiny" data-action="online-search" data-q="${esc(q)}">🌐 Search Online (Open Food Facts)</button>
+       </div>`
+    : `<div class="empty">No local match for "<b>${esc(q)}</b>".
+        <div class="btn-row mt" style="justify-content:center">
+          <button class="btn" data-action="online-search" data-q="${esc(q)}">🌐 Search Online</button>
+        </div>
+      </div>`;
+}
+
+/* ============================================================
+   9. SEARCH DROPDOWN (GLOBAL)
+   ============================================================ */
+function initGlobalSearch(){
+  const input = $('#globalSearch');
+  const box = $('#searchResults');
+  let timer = null;
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    const ps = $('#pageSearch');
+    if(ps) ps.value = q;
+
+    if(!q){
+      box.classList.remove('open');
+      box.innerHTML = '';
+      if(currentView === 'search') renderPageResults('');
+      return;
+    }
+    const local = runSearch(q);
+    RESULTS = local;
+
+    let html = '';
+    if(local.length){
+      html += local.slice(0,7).map((f,i)=>foodResultHTML(f,i)).join('');
+    } else {
+      html += `<div class="sr-empty">No local match. Try online lookup…</div>`;
+    }
+    html += `<div class="sr-item" data-action="online-search" data-q="${esc(q)}" style="justify-content:center">
+      <span class="cyan">🌐 Search the online food database</span></div>`;
+    html += `<div class="sr-item" data-action="go-search" style="justify-content:center">
+      <span class="muted">Open full Search page →</span></div>`;
+
+    box.innerHTML = html;
+    box.classList.add('open');
+
+    if(currentView === 'search') renderPageResults(q);
+  });
+
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){ box.classList.remove('open'); input.blur(); }
+    if(e.key === 'Enter'){
+      box.classList.remove('open');
+      if(currentView !== 'search') go('search');
+      const ps = $('#pageSearch');
+      if(ps){ ps.value = input.value; renderPageResults(input.value); ps.focus(); }
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if(!e.target.closest('.search-wrap')) box.classList.remove('open');
+  });
+}
+
+/* ============================================================
+   10. MODAL — ADD TO DIET
+   ============================================================ */
+function openFoodModal(food){
+  pendingFood = food;
+  const html = `
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Add to Diet</h2>
+        <button class="x" data-action="close-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div style="font-family:var(--font-head);font-size:16px;color:#fff;letter-spacing:1px">${esc(food.n)}</div>
+          <div class="small muted">Per serving: ${esc(food.s)}</div>
+        </div>
+
+        <div class="macro-row">
+          <div class="macro"><b class="yellow">${Math.round(food.k)}</b><span>kcal</span></div>
+          <div class="macro"><b class="pink">${nf(food.p)}</b><span>protein</span></div>
+          <div class="macro"><b class="cyan">${nf(food.c)}</b><span>carbs</span></div>
+          <div class="macro"><b class="orange">${nf(food.f)}</b><span>fat</span></div>
+          <div class="macro"><b class="green">${nf(food.fi)}</b><span>fiber</span></div>
+        </div>
+
+        <div class="form-grid">
+          <label class="fld">Quantity
+            <input id="fm-qty" type="number" min="0.25" step="0.25" value="1">
+          </label>
+          <label class="fld">Serving size
+            <input id="fm-serving" value="${esc(food.s)}">
+          </label>
+          <label class="fld">Meal
+            <select id="fm-meal">${MEALS.map(m=>`<option>${m}</option>`).join('')}</select>
+          </label>
+          <label class="fld">Date
+            <input id="fm-date" type="date" value="${today()}">
+          </label>
+        </div>
+
+        <div class="preview" id="fm-preview"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn ghost" data-action="close-modal">Cancel</button>
+        <button class="btn pink" data-action="confirm-add-food">+ Add to Today's Diet</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+
+  const update = () => {
+    const q = Math.max(0, num($('#fm-qty').value) || 1);
+    $('#fm-preview').innerHTML = `
+      <span>Total: <b class="yellow">${Math.round(food.k * q)} kcal</b></span>
+      <span>P <b class="pink">${nf(food.p*q)}g</b></span>
+      <span>C <b class="cyan">${nf(food.c*q)}g</b></span>
+      <span>F <b class="orange">${nf(food.f*q)}g</b></span>
+      <span>Fiber <b class="green">${nf(food.fi*q)}g</b></span>`;
+  };
+  $('#fm-qty').addEventListener('input', update);
+  update();
+}
+function closeModal(){
+  const m = $('#modal');
+  if(m) m.remove();
+  pendingFood = null;
+}
+
+/* ============================================================
+   11. ACTIONS
+   ============================================================ */
+function addFoodToDiet(food, qty, serving, meal, date){
+  S.diet.push({
+    id: uid(),
+    date: date || today(),
+    meal: meal || 'Snack',
+    name: food.n,
+    qty: qty,
+    serving: serving || food.s,
+    kcal: food.k * qty,
+    p: food.p * qty,
+    c: food.c * qty,
+    f: food.f * qty,
+    fi: (food.fi || 0) * qty
+  });
+  /* track recents/frequents */
+  S.recentFoods = [food.n, ...S.recentFoods.filter(x => x !== food.n)].slice(0, 12);
+  S.foodCounts[food.n] = (S.foodCounts[food.n] || 0) + 1;
+  saveState();
+  toast(`Added ${food.n} (${Math.round(food.k*qty)} kcal) to ${meal}`);
+  render();
+}
+
+document.addEventListener('click', e => {
+  /* nav */
+  const navEl = e.target.closest('[data-view]');
+  if(navEl){ go(navEl.dataset.view); return; }
+
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const a = el.dataset.action;
+
+  /* ---------- modal ---------- */
+  if(a === 'close-modal'){ closeModal(); return; }
+  if(a === 'confirm-add-food'){
+    if(!pendingFood) return;
+    const qty = Math.max(0.25, num($('#fm-qty').value) || 1);
+    const serving = $('#fm-serving').value || pendingFood.s;
+    const meal = $('#fm-meal').value;
+    const date = $('#fm-date').value || today();
+    const f = pendingFood;
+    closeModal();
+    addFoodToDiet(f, qty, serving, meal, date);
+    return;
+  }
+
+  /* ---------- search ---------- */
+  if(a === 'add-food'){
+    const i = parseInt(el.dataset.i, 10);
+    const food = RESULTS[i];
+    if(food) openFoodModal(food);
+    $('#searchResults').classList.remove('open');
+    return;
+  }
+  if(a === 'go-search'){
+    $('#searchResults').classList.remove('open');
+    go('search');
+    return;
+  }
+  if(a === 'quick-search'){
+    const q = el.dataset.q;
+    $('#globalSearch').value = q;
+    if(currentView !== 'search'){ go('search'); }
+    const ps = $('#pageSearch');
+    if(ps){ ps.value = q; renderPageResults(q); }
+    return;
+  }
+  if(a === 'online-search'){
+    const q = el.dataset.q;
+    el.textContent = '🌐 Searching…';
+    onlineSearch(q).then(list => {
+      if(!list.length){
+        toast('No online results found for "' + q + '"');
+        render();
+        return;
+      }
+      RESULTS = list;
+      const box = $('#pageResults');
+      if(currentView === 'search' && box){
+        box.innerHTML = `<div class="small muted mb" style="letter-spacing:1.4px;text-transform:uppercase">Online results (Open Food Facts) — per 100g</div>
+          <div class="search-results open" style="position:static;max-height:none;box-shadow:none">
+            ${list.map((f,i)=>foodResultHTML(f,i)).join('')}
+          </div>`;
+      } else {
+        const sb = $('#searchResults');
+        sb.innerHTML = list.map((f,i)=>foodResultHTML(f,i)).join('');
+        sb.classList.add('open');
+      }
+      toast(`Found ${list.length} online results`);
+    }).catch(err => {
+      console.warn(err);
+      toast('Online lookup failed — check your connection');
+      render();
+    });
+    return;
+  }
+  if(a === 'add-custom-food'){
+    const name = $('#cf-name').value.trim();
+    if(!name){ toast('Enter a food name'); return; }
+    const food = {
+      n: name,
+      s: $('#cf-serving').value.trim() || '1 serving',
+      k: num($('#cf-kcal').value),
+      p: num($('#cf-p').value),
+      c: num($('#cf-c').value),
+      f: num($('#cf-f').value),
+      fi: num($('#cf-fi').value)
+    };
+    addFoodToDiet(food, 1, food.s, 'Snack', today());
+    return;
+  }
+  if(a === 'add-manual-food'){
+    const name = $('#d-name').value.trim();
+    if(!name){ toast('Enter a food name'); return; }
+    const food = {
+      n: name,
+      s: '1 serving',
+      k: num($('#d-kcal').value),
+      p: num($('#d-p').value),
+      c: num($('#d-c').value),
+      f: num($('#d-f').value),
+      fi: 0
+    };
+    addFoodToDiet(food, 1, food.s, $('#d-meal').value, today());
+    return;
+  }
+
+  /* ---------- finance ---------- */
+  if(a === 'add-tx'){
+    const amount = num($('#tx-amount').value);
+    if(amount <= 0){ toast('Enter a valid amount'); return; }
+    S.txs.push({
+      id: uid(),
+      type: $('#tx-type').value,
+      amount: amount,
+      category: $('#tx-cat').value,
+      note: $('#tx-note').value.trim(),
+      date: $('#tx-date').value || today()
+    });
+    saveState(); toast('Transaction added'); render();
+    return;
+  }
+  if(a === 'del-tx'){
+    S.txs = S.txs.filter(x => x.id !== el.dataset.id);
+    saveState(); render();
+    return;
+  }
+
+  /* ---------- diet ---------- */
+  if(a === 'del-diet'){
+    S.diet = S.diet.filter(x => x.id !== el.dataset.id);
+    saveState(); render();
+    return;
+  }
+
+  /* ---------- water ---------- */
+  if(a === 'add-water'){
+    const ml = num(el.dataset.ml);
+    S.water.push({id: uid(), date: today(), ml: ml});
+    saveState(); toast(`+${ml} ml water`); render();
+    return;
+  }
+  if(a === 'add-water-custom'){
+    const ml = num($('#w-custom').value);
+    if(ml <= 0){ toast('Enter an amount in ml'); return; }
+    S.water.push({id: uid(), date: today(), ml: ml});
+    saveState(); toast(`+${ml} ml water`); render();
+    return;
+  }
+  if(a === 'del-water'){
+    S.water = S.water.filter(x => x.id !== el.dataset.id);
+    saveState(); render();
+    return;
+  }
+
+  /* ---------- workout ---------- */
+  if(a === 'add-exercise-row'){
+    $('#exerciseList').insertAdjacentHTML('beforeend', exerciseRowHTML());
+    return;
+  }
+  if(a === 'del-exercise-row'){
+    const row = el.closest('.ex-row');
+    if(row) row.remove();
+    return;
+  }
+  if(a === 'add-workout'){
+    const name = $('#wk-name').value.trim();
+    if(!name){ toast('Enter a workout name'); return; }
+    const exercises = $$('#exerciseList .ex-row').map(r => ({
+      name: $('.ex-name', r).value.trim(),
+      sets: num($('.ex-sets', r).value),
+      reps: num($('.ex-reps', r).value),
+      weight: num($('.ex-weight', r).value)
+    })).filter(x => x.name);
+    S.workouts.push({
+      id: uid(),
+      date: $('#wk-date').value || today(),
+      name: name,
+      duration: num($('#wk-duration').value),
+      calories: num($('#wk-calories').value),
+      exercises: exercises
+    });
+    saveState(); toast('Workout logged 💪'); render();
+    return;
+  }
+  if(a === 'del-workout'){
+    S.workouts = S.workouts.filter(x => x.id !== el.dataset.id);
+    saveState(); render();
+    return;
+  }
+
+  /* ---------- tasks ---------- */
+  if(a === 'add-task'){
+    const name = $('#tk-name').value.trim();
+    if(!name){ toast('Enter a task name'); return; }
+    S.tasks.push({
+      id: uid(),
+      date: $('#tk-date').value || today(),
+      name: name,
+      start: $('#tk-start').value,
+      end: $('#tk-end').value,
+      category: $('#tk-cat').value,
+      priority: $('#tk-priority').value,
+      reminder: $('#tk-reminder').value === 'yes',
+      done: false
+    });
+    saveState(); toast('Task added'); render();
+    return;
+  }
+  if(a === 'toggle-task'){
+    const task = S.tasks.find(x => x.id === el.dataset.id);
+    if(task){ task.done = !task.done; saveState(); render(); }
+    return;
+  }
+  if(a === 'del-task'){
+    S.tasks = S.tasks.filter(x => x.id !== el.dataset.id);
+    saveState(); render();
+    return;
+  }
+
+  /* ---------- goals ---------- */
+  if(a === 'add-goal'){
+    const title = $('#gl-title').value.trim();
+    if(!title){ toast('Enter a goal title'); return; }
+    S.goals.push({
+      id: uid(),
+      title: title,
+      type: $('#gl-type').value,
+      current: num($('#gl-current').value),
+      target: num($('#gl-target').value) || 100,
+      unit: $('#gl-unit').value.trim()
+    });
+    saveState(); toast('Goal created 🎯'); render();
+    return;
+  }
+  if(a === 'del-goal'){
+    S.goals = S.goals.filter(x => x.id !== el.dataset.id);
+    saveState(); render();
+    return;
+  }
+  if(a === 'update-goal'){
+    const g = S.goals.find(x => x.id === el.dataset.id);
+    const inp = document.querySelector(`[data-goal-input="${el.dataset.id}"]`);
+    if(g && inp){ g.current = num(inp.value); saveState(); toast('Progress updated'); render(); }
+    return;
+  }
+
+  /* ---------- settings ---------- */
+  if(a === 'save-settings'){
+    const st = S.settings;
+    st.name = $('#st-name').value.trim() || 'Commander';
+    st.currency = $('#st-currency').value.trim() || '₹';
+    st.monthlyBudget = num($('#st-budget').value);
+    st.savingsGoal = num($('#st-savings').value);
+    st.calorieGoal = num($('#st-kcal').value) || 2000;
+    st.proteinGoal = num($('#st-p').value);
+    st.carbGoal = num($('#st-c').value);
+    st.fatGoal = num($('#st-f').value);
+    st.fiberGoal = num($('#st-fi').value);
+    st.waterGoal = num($('#st-water').value) || 3000;
+    st.weeklyWorkoutGoal = num($('#st-workouts').value) || 5;
+    st.weightGoal = num($('#st-weight').value);
+    saveState(); toast('Settings saved ✓'); render();
+    return;
+  }
+  if(a === 'export-data'){
+    const blob = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `neon-dash-backup-${today()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast('Backup exported');
+    return;
+  }
+  if(a === 'import-data'){
+    $('#importFile').click();
+    return;
+  }
+  if(a === 'reset-demo'){
+    if(!confirm('Replace current data with fresh demo data?')) return;
+    S = seedState(); saveState(); toast('Demo data loaded'); go('dashboard');
+    return;
+  }
+  if(a === 'wipe-data'){
+    if(!confirm('This will permanently erase all your data. Continue?')) return;
+    S = emptyState(); saveState(); toast('All data erased'); go('dashboard');
+    return;
+  }
+});
+
+/* file import */
+document.addEventListener('change', e => {
+  if(e.target.id === 'importFile'){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        const base = emptyState();
+        S = Object.assign(base, parsed);
+        S.settings = Object.assign(defaultSettings(), parsed.settings || {});
+        saveState();
+        toast('Data imported ✓');
+        go('dashboard');
+      }catch(err){
+        toast('Invalid backup file');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+});
+
+/* keyboard shortcut: "/" focuses search */
+document.addEventListener('keydown', e => {
+  if(e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)){
+    e.preventDefault();
+    $('#globalSearch').focus();
+  }
+});
+
+/* ============================================================
+   12. BOOT
+   ============================================================ */
+function tickClock(){
+  const el = $('#clock');
+  if(el){
+    const d = new Date();
+    el.textContent = d.toLocaleTimeString('en-US', {hour12:false});
+  }
+}
+
+(function init(){
+  S = loadState();
+  saveState();
+  buildNav();
+  render();
+  initGlobalSearch();
+  tickClock();
+  setInterval(tickClock, 1000);
+  console.log('%cNEON DASH ONLINE', 'color:#ff2e88;font-size:16px;font-weight:bold;text-shadow:0 0 10px #ff2e88');
+})();
+</script>
+</body>
+</html>

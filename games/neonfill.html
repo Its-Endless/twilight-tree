@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#080B12">
+<title>NEONFILL — Pixel Edition</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    width:100%;height:100%;overflow:hidden;background:#05070C;
+    touch-action:none;overscroll-behavior:none;
+    -webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+  #game{display:block;image-rendering:pixelated;image-rendering:crisp-edges;}
+  #scan{
+    position:fixed;inset:0;pointer-events:none;z-index:10;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,0.20) 0px, rgba(0,0,0,0.20) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 3px);
+  }
+  #vig{
+    position:fixed;inset:0;pointer-events:none;z-index:11;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 42%, rgba(0,0,0,0.60) 100%);
+  }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="game"></canvas></div>
+<div id="scan"></div>
+<div id="vig"></div>
+<script>
+"use strict";
+/* ============================================================
+   NEONFILL — PIXEL EDITION  v1.2
+   FIXES:
+   - Visible pause button (top-right) during gameplay
+   - Enemies in the filled region are DESTROYED (not teleported)
+   - Tighter starting play area (bigger inset)
+   - Proper life loss when enemy touches arrow (edge + cut line)
+   ============================================================ */
+
+/* ---------- THEMES ---------- */
+const THEMES = [
+  { name:'NEON',
+    bg:'#080B12', areaFill:'#0C1322',
+    primary:'#39FF88', secondary:'#35C7FF',
+    danger:'#FF3864', warning:'#FFD447',
+    white:'#F4F4F4',
+    grid:'rgba(53,199,255,' },
+  { name:'MAGMA',
+    bg:'#150609', areaFill:'#1E0A10',
+    primary:'#FFB03D', secondary:'#FF5A2E',
+    danger:'#FF3864', warning:'#FFD447',
+    white:'#FFE8D6',
+    grid:'rgba(255,122,61,' },
+  { name:'ICE',
+    bg:'#050A14', areaFill:'#0A1424',
+    primary:'#B39DFF', secondary:'#7FE7FF',
+    danger:'#FF5FAA', warning:'#FFE066',
+    white:'#EAF6FF',
+    grid:'rgba(127,231,255,' },
+  { name:'MATRIX',
+    bg:'#020A04', areaFill:'#041208',
+    primary:'#39FF88', secondary:'#00FF41',
+    danger:'#FF3864', warning:'#B0FF40',
+    white:'#D8FFD8',
+    grid:'rgba(0,255,65,' },
+  { name:'VAPOR',
+    bg:'#0F0620', areaFill:'#180A30',
+    primary:'#FF3DD4', secondary:'#35C7FF',
+    danger:'#FF3864', warning:'#FFD447',
+    white:'#F0E8FF',
+    grid:'rgba(255,61,212,' }
+];
+let THEME_IDX = 0;
+function TH(){ return THEMES[THEME_IDX]; }
+
+/* ---------- CANVAS / SCALING ---------- */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d', { alpha:false });
+let W = 360, H = 520, SCALE = 2, resizeTimer = null;
+
+/* ---------- PIXEL FONT (5x7) ---------- */
+const FONT = {
+ 'A':['.###.','#...#','#...#','#####','#...#','#...#','#...#'],
+ 'B':['####.','#...#','#...#','####.','#...#','#...#','####.'],
+ 'C':['.###.','#...#','#....','#....','#....','#...#','.###.'],
+ 'D':['###..','#..#.','#...#','#...#','#...#','#..#.','###..'],
+ 'E':['#####','#....','#....','####.','#....','#....','#####'],
+ 'F':['#####','#....','#....','####.','#....','#....','#....'],
+ 'G':['.###.','#...#','#....','#.###','#...#','#...#','.###.'],
+ 'H':['#...#','#...#','#...#','#####','#...#','#...#','#...#'],
+ 'I':['.###.','..#..','..#..','..#..','..#..','..#..','.###.'],
+ 'J':['..###','...#.','...#.','...#.','...#.','#..#.','.##..'],
+ 'K':['#...#','#..#.','#.#..','##...','#.#..','#..#.','#...#'],
+ 'L':['#....','#....','#....','#....','#....','#....','#####'],
+ 'M':['#...#','##.##','#.#.#','#...#','#...#','#...#','#...#'],
+ 'N':['#...#','##..#','#.#.#','#..##','#...#','#...#','#...#'],
+ 'O':['.###.','#...#','#...#','#...#','#...#','#...#','.###.'],
+ 'P':['####.','#...#','#...#','####.','#....','#....','#....'],
+ 'Q':['.###.','#...#','#...#','#...#','#.#.#','#..#.','.##.#'],
+ 'R':['####.','#...#','#...#','####.','#.#..','#..#.','#...#'],
+ 'S':['.####','#....','#....','.###.','....#','....#','####.'],
+ 'T':['#####','..#..','..#..','..#..','..#..','..#..','..#..'],
+ 'U':['#...#','#...#','#...#','#...#','#...#','#...#','.###.'],
+ 'V':['#...#','#...#','#...#','#...#','#...#','.#.#.','..#..'],
+ 'W':['#...#','#...#','#...#','#...#','#.#.#','##.##','#...#'],
+ 'X':['#...#','#...#','.#.#.','..#..','.#.#.','#...#','#...#'],
+ 'Y':['#...#','#...#','.#.#.','..#..','..#..','..#..','..#..'],
+ 'Z':['#####','....#','...#.','..#..','.#...','#....','#####'],
+ '0':['.###.','#...#','#..##','#.#.#','##..#','#...#','.###.'],
+ '1':['..#..','.##..','..#..','..#..','..#..','..#..','.###.'],
+ '2':['.###.','#...#','....#','...#.','..#..','.#...','#####'],
+ '3':['####.','....#','....#','.###.','....#','....#','####.'],
+ '4':['...#.','..##.','.#.#.','#..#.','#####','...#.','...#.'],
+ '5':['#####','#....','####.','....#','....#','#...#','.###.'],
+ '6':['..##.','.#...','#....','####.','#...#','#...#','.###.'],
+ '7':['#####','....#','...#.','..#..','.#...','.#...','.#...'],
+ '8':['.###.','#...#','#...#','.###.','#...#','#...#','.###.'],
+ '9':['.###.','#...#','#...#','.####','....#','...#.','.##..'],
+ ' ':['.....','.....','.....','.....','.....','.....','.....'],
+ '.':['.....','.....','.....','.....','.....','.##..','.##..'],
+ ':':['.....','.##..','.##..','.....','.##..','.##..','.....'],
+ '-':['.....','.....','.....','#####','.....','.....','.....'],
+ '!':['..#..','..#..','..#..','..#..','..#..','.....','..#..'],
+ '%':['##..#','##..#','...#.','..#..','.#...','#..##','#..##'],
+ '/':['....#','....#','...#.','..#..','.#...','#....','#....'],
+ '+':['.....','..#..','..#..','#####','..#..','..#..','.....'],
+ '<':['...#.','..#..','.#...','#....','.#...','..#..','...#.'],
+ '>':['.#...','..#..','...#.','....#','...#.','..#..','.#...'],
+ '=':['.....','.....','#####','.....','#####','.....','.....'],
+ '[':['..##.','..#..','..#..','..#..','..#..','..#..','..##.'],
+ ']':['.##..','..#..','..#..','..#..','..#..','..#..','.##..'],
+ '(':['...#.','..#..','.#...','.#...','.#...','..#..','...#.'],
+ ')':['.#...','..#..','...#.','...#.','...#.','..#..','.#...'],
+ '*':['.....','#.#.#','.###.','#####','.###.','#.#.#','.....'],
+ '?':['.###.','#...#','....#','...#.','..#..','.....','..#..'],
+};
+
+const glyphCache = Object.create(null);
+function getGlyph(ch, color){
+  const key = color + '|' + ch;
+  let c = glyphCache[key];
+  if (c !== undefined) return c;
+  const g = FONT[ch];
+  if (!g){ glyphCache[key] = null; return null; }
+  c = document.createElement('canvas');
+  c.width = 5; c.height = 7;
+  const gx = c.getContext('2d');
+  gx.fillStyle = color;
+  for (let r=0;r<7;r++) for (let col=0;col<5;col++) if (g[r][col] === '#') gx.fillRect(col,r,1,1);
+  glyphCache[key] = c;
+  return c;
+}
+function drawText(str, x, y, color, s){
+  s = s || 1;
+  str = String(str).toUpperCase();
+  let cx = Math.round(x);
+  y = Math.round(y);
+  for (let i=0;i<str.length;i++){
+    const img = getGlyph(str[i], color);
+    if (img) ctx.drawImage(img, 0,0,5,7, cx, y, 5*s, 7*s);
+    cx += 6*s;
+  }
+}
+function textW(str, s){ s = s||1; return str.length*6*s - s; }
+function drawTextC(str, cx, y, color, s){
+  s = s||1;
+  drawText(str, cx - textW(str,s)/2, y, color, s);
+}
+
+/* ---------- MATH HELPERS ---------- */
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function polyArea(p){
+  let a = 0;
+  for (let i=0;i<p.length;i++){
+    const q = p[i], r = p[(i+1)%p.length];
+    a += q.x*r.y - r.x*q.y;
+  }
+  return Math.abs(a)*0.5;
+}
+function pointInPoly(pt, poly){
+  let inside = false;
+  for (let i=0, j=poly.length-1; i<poly.length; j=i++){
+    const xi=poly[i].x, yi=poly[i].y, xj=poly[j].x, yj=poly[j].y;
+    if (((yi>pt.y)!==(yj>pt.y)) && (pt.x < (xj-xi)*(pt.y-yi)/(yj-yi)+xi)) inside = !inside;
+  }
+  return inside;
+}
+function raySeg(ox,oy,dx,dy, ax,ay,bx,by){
+  const ex = bx-ax, ey = by-ay;
+  const det = -dx*ey + ex*dy;
+  if (Math.abs(det) < 1e-9) return -1;
+  const fx = ax-ox, fy = ay-oy;
+  const t = (ex*fy - ey*fx)/det;
+  const u = (dx*fy - dy*fx)/det;
+  if (t > 0 && u >= 0 && u <= 1) return t;
+  return -1;
+}
+function closestOnSeg(px,py,ax,ay,bx,by){
+  const vx=bx-ax, vy=by-ay;
+  const L2 = vx*vx+vy*vy;
+  let t = L2>0 ? ((px-ax)*vx + (py-ay)*vy)/L2 : 0;
+  t = t<0?0:(t>1?1:t);
+  return { x: ax+vx*t, y: ay+vy*t };
+}
+function distToSeg(px,py,ax,ay,bx,by){
+  const c = closestOnSeg(px,py,ax,ay,bx,by);
+  return Math.hypot(px-c.x, py-c.y);
+}
+function lerp(a,b,t){ return a + (b-a)*t; }
+
+/* ---------- AUDIO ---------- */
+const AudioSys = {
+  ctx:null, master:null, sfxOn:true, musicOn:true, cutOsc:null, cutGain:null, musicTimer:null, musicStep:0,
+  init(){
+    if (this.ctx) return;
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AC();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.7;
+      this.master.connect(this.ctx.destination);
+    }catch(e){ this.ctx = null; }
+  },
+  resume(){ if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+  tone(freq, dur, type, vol, delay){
+    if (!this.sfxOn || !this.ctx) return;
+    type = type||'square'; vol = vol===undefined?0.06:vol; delay = delay||0;
+    const t0 = this.ctx.currentTime + delay;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol, t0+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    o.connect(g); g.connect(this.master);
+    o.start(t0); o.stop(t0+dur+0.03);
+  },
+  sweep(f0,f1,dur,type,vol){
+    if (!this.sfxOn || !this.ctx) return;
+    type = type||'square'; vol = vol===undefined?0.06:vol;
+    const t0 = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0,t0);
+    o.frequency.exponentialRampToValueAtTime(Math.max(30,f1), t0+dur);
+    g.gain.setValueAtTime(vol,t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    o.connect(g); g.connect(this.master);
+    o.start(t0); o.stop(t0+dur+0.03);
+  },
+  noise(dur, vol){
+    if (!this.sfxOn || !this.ctx) return;
+    const sr = this.ctx.sampleRate;
+    const len = Math.floor(sr*dur);
+    const buf = this.ctx.createBuffer(1, len, sr);
+    const d = buf.getChannelData(0);
+    for (let i=0;i<len;i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const g = this.ctx.createGain();
+    g.gain.value = vol===undefined?0.10:vol;
+    const f = this.ctx.createBiquadFilter();
+    f.type='lowpass'; f.frequency.value = 900;
+    src.connect(f); f.connect(g); g.connect(this.master);
+    src.start();
+  },
+  startCut(){
+    if (!this.sfxOn || !this.ctx || this.cutOsc) return;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type='sawtooth';
+    o.frequency.setValueAtTime(90, this.ctx.currentTime);
+    o.frequency.linearRampToValueAtTime(240, this.ctx.currentTime+0.5);
+    g.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.022, this.ctx.currentTime+0.06);
+    o.connect(g); g.connect(this.master);
+    o.start();
+    this.cutOsc = o; this.cutGain = g;
+  },
+  stopCut(){
+    if (!this.cutOsc) return;
+    const t = this.ctx.currentTime;
+    try{
+      this.cutGain.gain.cancelScheduledValues(t);
+      this.cutGain.gain.setValueAtTime(this.cutGain.gain.value, t);
+      this.cutGain.gain.linearRampToValueAtTime(0.0001, t+0.07);
+      this.cutOsc.stop(t+0.12);
+    }catch(e){}
+    this.cutOsc = null; this.cutGain = null;
+  },
+  startMusic(){
+    if (this.musicTimer) return;
+    const notes = [196, 261.63, 329.63, 392, 329.63, 261.63];
+    this.musicTimer = setInterval(()=>{
+      if (!this.musicOn || !this.ctx) return;
+      const s = G.state;
+      if (s==='MENU'||s==='PLAYING'||s==='CUTTING'||s==='RETRACTING'||s==='FILLING'||s==='HOWTO'||s==='SETTINGS'||s==='PAUSED'){
+        const n = notes[this.musicStep % notes.length];
+        this.tone(n, 0.55, 'triangle', 0.018, 0);
+        if (this.musicStep % 3 === 0) this.tone(n/2, 0.8, 'sine', 0.014, 0);
+        this.musicStep++;
+      }
+    }, 640);
+  }
+};
+
+/* ---------- GAME STATE ---------- */
+const G = {
+  state:'MENU',
+  prevState:'MENU',
+  settingsReturn:'MENU',
+  level:1, score:0, best:0, lives:3,
+  poly:[], cum:null, perim:0,
+  levelStartArea:1, curArea:1,
+  fillTarget:55,
+  enemies:[],
+  player:{s:0,x:0,y:0,angle:0},
+  playerSpeed:80,
+  cut:null,
+  timeScale:1, slowFx:0, warnBeep:0,
+  invuln:0, shake:0, hitFlash:0, flashWhite:0,
+  particles:[], trail:[],
+  fillAnim:null, levelClearT:0,
+  t:0, buttons:[], touchActive:false,
+};
+const AREA = { x:14, y:44, w:200, h:300 };
+
+/* ---------- SHAPE GENERATION ---------- */
+function genShape(cx, cy, R, level){
+  const n = 24 + Math.floor(Math.random()*7) + Math.min(10, level*2);
+  const hcount = 2 + Math.min(4, Math.floor(level/2) + Math.floor(Math.random()*2));
+  const harms = [];
+  for (let i=0;i<hcount;i++){
+    const k = 2 + i + Math.floor(Math.random()*2);
+    const amp = (0.17/(i*0.75+1)) * (0.55+Math.random()*0.85);
+    const ph = Math.random()*Math.PI*2;
+    harms.push({k, amp, ph});
+  }
+  const pts = [];
+  for (let i=0;i<n;i++){
+    const a = (i/n)*Math.PI*2;
+    let r = 1;
+    for (const h of harms) r += h.amp * Math.sin(h.k*a + h.ph);
+    r = clamp(r, 0.58, 1.34);
+    pts.push({ x: cx + Math.cos(a)*R*r, y: cy + Math.sin(a)*R*r*0.94 });
+  }
+  return pts;
+}
+function fitShape(pts, area){
+  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+  for (const p of pts){
+    if (p.x<minx)minx=p.x; if (p.x>maxx)maxx=p.x;
+    if (p.y<miny)miny=p.y; if (p.y>maxy)maxy=p.y;
+  }
+  const sw = area.w/(maxx-minx), sh = area.h/(maxy-miny);
+  const s = Math.min(sw, sh);
+  const ox = area.x + area.w/2 - (minx+maxx)*0.5*s;
+  const oy = area.y + area.h/2 - (miny+maxy)*0.5*s;
+  return pts.map(p=>({ x: Math.round(p.x*s+ox), y: Math.round(p.y*s+oy) }));
+}
+
+/* ---------- POLYGON METADATA ---------- */
+function updatePolyMeta(){
+  const p = G.poly, n = p.length;
+  const cum = new Float64Array(n+1);
+  let t = 0;
+  for (let i=0;i<n;i++){
+    const a=p[i], b=p[(i+1)%n];
+    t += Math.hypot(b.x-a.x, b.y-a.y);
+    cum[i+1] = t;
+  }
+  G.cum = cum;
+  G.perim = t;
+  G.playerSpeed = Math.max(46, t/6.2);
+  G.curArea = polyArea(p);
+}
+function posAt(poly, cum, s){
+  const n = poly.length;
+  const total = cum[n];
+  s = ((s % total) + total) % total;
+  let i = 0;
+  while (i < n-1 && cum[i+1] <= s) i++;
+  const a = poly[i], b = poly[(i+1)%n];
+  const segLen = cum[i+1]-cum[i];
+  const t = segLen > 1e-9 ? (s-cum[i])/segLen : 0;
+  const dx = b.x-a.x, dy = b.y-a.y;
+  const l = Math.hypot(dx,dy) || 1;
+  return { x:a.x+dx*t, y:a.y+dy*t, dx:dx/l, dy:dy/l, i:i, t:t };
+}
+function collectForward(pts, i0, i1){
+  const n = pts.length;
+  const out = [];
+  let k = (i0+1)%n;
+  let guard = 0;
+  while (guard++ <= n+1){
+    out.push(pts[k]);
+    if (k === i1) break;
+    k = (k+1)%n;
+  }
+  return out;
+}
+
+/* ---------- AREA ---------- */
+function computeArea(){
+  AREA.x = 12;
+  AREA.y = 44;
+  AREA.w = Math.max(80, W - 24);
+  AREA.h = Math.max(90, H - 44 - 22);
+}
+
+/* ---------- ENEMY HELPERS ---------- */
+function enemyCountForLevel(level){
+  if (level <= 1) return 1;
+  if (level <= 3) return 2;
+  if (level <= 6) return 3;
+  if (level <= 10) return 4;
+  return 5;
+}
+function enemySpeedForLevel(level){
+  const base = 32 + level * 5.2;
+  const cap = 118;
+  return Math.min(cap, base);
+}
+function findSafeSpawn(poly, inner, minDistFromEdge, exclude, minSep){
+  for (let tries=0; tries<500; tries++){
+    const px = inner.x + Math.random()*inner.w;
+    const py = inner.y + Math.random()*inner.h;
+    if (!pointInPoly({x:px,y:py}, poly)) continue;
+    let minD = 1e9;
+    for (let i=0;i<poly.length;i++){
+      const a=poly[i], b=poly[(i+1)%poly.length];
+      minD = Math.min(minD, distToSeg(px,py,a.x,a.y,b.x,b.y));
+    }
+    if (minD < minDistFromEdge) continue;
+    let ok = true;
+    if (exclude){
+      for (const ex of exclude){
+        if (Math.hypot(px-ex.x, py-ex.y) < minSep){ ok = false; break; }
+      }
+    }
+    if (!ok) continue;
+    return {x:px, y:py};
+  }
+  // fallback: try decreasing distance
+  for (let tries=0; tries<200; tries++){
+    const px = inner.x + Math.random()*inner.w;
+    const py = inner.y + Math.random()*inner.h;
+    if (!pointInPoly({x:px,y:py}, poly)) continue;
+    if (exclude){
+      let ok = true;
+      for (const ex of exclude){
+        if (Math.hypot(px-ex.x, py-ex.y) < minSep*0.5){ ok = false; break; }
+      }
+      if (!ok) continue;
+    }
+    return {x:px, y:py};
+  }
+  let cx=0, cy=0;
+  for (const p of poly){ cx+=p.x; cy+=p.y; }
+  return {x:cx/poly.length, y:cy/poly.length};
+}
+
+/* ---------- LEVEL SETUP ---------- */
+function startLevel(level){
+  computeArea();
+  G.level = level;
+  G.fillTarget = Math.min(86, 55 + (level-1)*5);
+  G.state = 'PLAYING';
+  G.cut = null;
+  G.fillAnim = null;
+  G.timeScale = 1;
+  G.slowFx = 0;
+  G.invuln = 0.5; // shorter initial invuln — collide sooner
+  G.particles.length = 0;
+  G.trail.length = 0;
+
+  // TIGHTER starting area: bigger inset
+  const inset = Math.min(W, H) * 0.06;
+  const pad = 4;
+  const inner = {
+    x: AREA.x + pad + inset,
+    y: AREA.y + pad + inset,
+    w: AREA.w - (pad + inset)*2,
+    h: AREA.h - (pad + inset)*2
+  };
+  let pts = genShape(0,0,100, level);
+  pts = fitShape(pts, inner);
+  G.poly = pts;
+  updatePolyMeta();
+  G.levelStartArea = G.curArea;
+
+  // Spawn enemies
+  G.enemies.length = 0;
+  const count = enemyCountForLevel(level);
+  const speed = enemySpeedForLevel(level);
+  const sep = Math.max(28, Math.min(inner.w, inner.h) / (count + 1.4));
+  const placed = [];
+  const minEdge = Math.max(14, Math.min(20, Math.min(inner.w, inner.h) * 0.12));
+  for (let i=0;i<count;i++){
+    const p = findSafeSpawn(G.poly, inner, minEdge, placed, sep);
+    placed.push(p);
+    const ang = Math.random()*Math.PI*2;
+    G.enemies.push({
+      x:p.x, y:p.y,
+      vx:Math.cos(ang)*speed, vy:Math.sin(ang)*speed,
+      r:4.5, speed:speed, escapeGuard:0
+    });
+  }
+
+  G.player.s = 0;
+  syncPlayer();
+}
+function syncPlayer(){
+  const p = posAt(G.poly, G.cum, G.player.s);
+  G.player.x = p.x; G.player.y = p.y;
+  G.player.angle = Math.atan2(p.dy, p.dx);
+}
+
+/* ---------- INWARD NORMAL ---------- */
+function inwardNormalAt(poly, i){
+  const a = poly[i], b = poly[(i+1)%poly.length];
+  const dx = b.x-a.x, dy = b.y-a.y;
+  const l = Math.hypot(dx,dy) || 1;
+  const tx = dx/l, ty = dy/l;
+  let nx = -ty, ny = tx;
+  const mx = (a.x+b.x)*0.5, my = (a.y+b.y)*0.5;
+  const off = Math.min(2.5, l*0.25);
+  if (!pointInPoly({x:mx+nx*off, y:my+ny*off}, poly)){ nx = -nx; ny = -ny; }
+  return { nx:nx, ny:ny };
+}
+
+/* ---------- CUT LOGIC ---------- */
+function launchCut(){
+  if (G.state !== 'PLAYING' || G.poly.length < 3) return;
+  const p = posAt(G.poly, G.cum, G.player.s);
+  const i0 = p.i;
+  const nrm = inwardNormalAt(G.poly, i0);
+
+  let bestT = Infinity, bestEdge = -1;
+  const poly = G.poly;
+  for (let i=0;i<poly.length;i++){
+    const A = poly[i], B = poly[(i+1)%poly.length];
+    const t = raySeg(p.x, p.y, nrm.nx, nrm.ny, A.x, A.y, B.x, B.y);
+    if (t > 1.2 && t < bestT){ bestT = t; bestEdge = i; }
+  }
+  if (bestEdge < 0 || bestT > 4000) return;
+
+  G.cut = {
+    ox:p.x, oy:p.y, nx:nrm.nx, ny:nrm.ny,
+    len:0, maxLen:bestT,
+    tipx:p.x, tipy:p.y,
+    i0:i0, i1:bestEdge,
+    s0:G.player.s
+  };
+  G.state = 'CUTTING';
+  G.timeScale = 1;
+  G.trail.length = 0;
+  AudioSys.startCut();
+  AudioSys.tone(660, 0.06, 'square', 0.045);
+}
+
+function releaseCut(){
+  if (G.state !== 'CUTTING') return;
+  G.state = 'RETRACTING';
+  AudioSys.stopCut();
+  AudioSys.tone(300, 0.08, 'square', 0.035);
+}
+
+function completeCut(){
+  const c = G.cut;
+  const poly = G.poly;
+  const L = { x:c.ox, y:c.oy };
+  const D = { x:c.tipx, y:c.tipy };
+  const i0 = c.i0, i1 = c.i1;
+
+  const fwd = (i0 === i1) ? [] : collectForward(poly, i0, i1);
+  const polyA = [L].concat(fwd, [D]);
+  const bwd = collectForward(poly, i1, i0);
+  const polyB = [D].concat(bwd, [L]);
+
+  const areaA = polyArea(polyA);
+  const areaB = polyArea(polyB);
+
+  // Count enemies on each side
+  let countA = 0, countB = 0;
+  for (const e of G.enemies){
+    const a = pointInPoly({x:e.x, y:e.y}, polyA);
+    const b = pointInPoly({x:e.x, y:e.y}, polyB);
+    if (a && !b) countA++;
+    else if (b && !a) countB++;
+    else if (a && b) countA++; // shouldn't happen
+  }
+
+  // Fill the region with FEWER enemies (prefer empty side)
+  let keep, fill, fillArea;
+  if (countA > countB){
+    keep = polyA; fill = polyB; fillArea = areaB;
+  } else if (countB > countA){
+    keep = polyB; fill = polyA; fillArea = areaA;
+  } else if (areaA >= areaB){
+    keep = polyA; fill = polyB; fillArea = areaB;
+  } else {
+    keep = polyB; fill = polyA; fillArea = areaA;
+  }
+
+  if (keep.length < 3){ keep = (keep === polyA) ? polyB : polyA; }
+
+  G.poly = keep;
+  const di = Math.max(0, keep.indexOf(D));
+  updatePolyMeta();
+  G.player.s = G.cum[di];
+  syncPlayer();
+
+  // Score
+  const gained = Math.round((fillArea / Math.max(1,G.levelStartArea)) * 900) + 40;
+  G.score += gained;
+
+  // Particles along the cut
+  const steps = Math.max(4, Math.floor(c.maxLen/9));
+  for (let i=0;i<steps;i++){
+    const t = i/steps;
+    spawnParticles(L.x + (D.x-L.x)*t, L.y + (D.y-L.y)*t, 2, TH().warning, 40);
+  }
+  spawnParticles(D.x, D.y, 10, TH().primary, 70);
+
+  // ========================================================
+  //  FIX: KILL enemies that are now OUTSIDE the kept polygon.
+  //  They are DESTROYED (with a burst) — NOT teleported.
+  // ========================================================
+  const survivors = [];
+  for (const e of G.enemies){
+    if (pointInPoly({x:e.x, y:e.y}, G.poly)){
+      // still inside — keep, but make sure they aren't hugging the new edge
+      let minD = 1e9;
+      for (let i=0;i<G.poly.length;i++){
+        const a=G.poly[i], b=G.poly[(i+1)%G.poly.length];
+        minD = Math.min(minD, distToSeg(e.x,e.y,a.x,a.y,b.x,b.y));
+      }
+      if (minD < e.r + 2){
+        // nudge inward slightly toward centroid
+        let cx=0, cy=0;
+        for (const q of G.poly){ cx+=q.x; cy+=q.y; }
+        cx /= G.poly.length; cy /= G.poly.length;
+        const dx = cx-e.x, dy = cy-e.y;
+        const dl = Math.hypot(dx,dy) || 1;
+        e.x += dx/dl * (e.r + 3 - minD);
+        e.y += dy/dl * (e.r + 3 - minD);
+      }
+      survivors.push(e);
+    } else {
+      // DESTROYED — no respawn
+      spawnParticles(e.x, e.y, 16, TH().danger, 120);
+      spawnParticles(e.x, e.y, 6, TH().warning, 70);
+    }
+  }
+  G.enemies = survivors;
+
+  G.fillAnim = { poly: fill, t: 0 };
+  G.state = 'FILLING';
+  G.shake = Math.max(G.shake, 0.55);
+  G.flashWhite = 0.6;
+  G.cut = null;
+  AudioSys.stopCut();
+  AudioSys.tone(523, 0.09, 'square', 0.06);
+  AudioSys.tone(784, 0.12, 'square', 0.06, 0.07);
+  AudioSys.tone(1046, 0.16, 'square', 0.05, 0.15);
+}
+
+/* ---------- ON HIT ---------- */
+function onHit(){
+  G.lives--;
+  G.shake = 1.0;
+  G.hitFlash = 1.0;
+  G.invuln = 2.0;
+  AudioSys.stopCut();
+  AudioSys.noise(0.25, 0.13);
+  AudioSys.sweep(320, 60, 0.3, 'square', 0.08);
+  spawnParticles(G.player.x, G.player.y, 20, TH().danger, 110);
+
+  if (G.cut){
+    // Hit during a cut → retract
+    G.state = 'RETRACTING';
+    G.cut.hit = true;
+  } else {
+    // Hit on the edge → knock nearby enemies away, brief recovery
+    for (const e of G.enemies){
+      const dx = e.x - G.player.x, dy = e.y - G.player.y;
+      const dl = Math.hypot(dx, dy) || 1;
+      e.vx = dx/dl * e.speed;
+      e.vy = dy/dl * e.speed;
+      e.x += dx/dl * 10;
+      e.y += dy/dl * 10;
+      // make sure not outside
+      if (!pointInPoly({x:e.x,y:e.y}, G.poly)){
+        let cx=0, cy=0;
+        for (const q of G.poly){ cx+=q.x; cy+=q.y; }
+        cx /= G.poly.length; cy /= G.poly.length;
+        const ddx = cx-e.x, ddy = cy-e.y;
+        const ddl = Math.hypot(ddx,ddy) || 1;
+        e.x += ddx/ddl * 5;
+        e.y += ddy/ddl * 5;
+      }
+    }
+    if (G.lives <= 0){ gameOver(); return; }
+    // brief stun so player can move away
+    G.state = 'PLAYING';
+  }
+}
+
+function gameOver(){
+  G.state = 'GAME_OVER';
+  AudioSys.stopCut();
+  if (G.score > G.best){
+    G.best = G.score;
+    try{ localStorage.setItem('neonfill_best', String(G.best)); }catch(e){}
+  }
+  AudioSys.sweep(400, 80, 0.7, 'sawtooth', 0.06);
+}
+
+/* ---------- COLLISION CHECK (centralized) ---------- */
+function checkEnemyCollisions(){
+  if (G.invuln > 0) return false;
+  if (G.state !== 'PLAYING' && G.state !== 'CUTTING') return false;
+
+  const px = G.player.x, py = G.player.y;
+
+  for (const e of G.enemies){
+    // Player body collision (works on edge AND while cutting)
+    const dPlayer = Math.hypot(e.x - px, e.y - py);
+    if (dPlayer < e.r + 2.8){ onHit(); return true; }
+
+    // Cut line collision (only while cutting)
+    if (G.state === 'CUTTING' && G.cut){
+      const c = G.cut;
+      const dLine = distToSeg(e.x, e.y, c.ox, c.oy, c.tipx, c.tipy);
+      if (dLine < e.r + 2.5){ onHit(); return true; }
+    }
+  }
+  return false;
+}
+
+/* ---------- PARTICLES ---------- */
+function spawnParticles(x,y,n,color,spd){
+  for (let i=0;i<n;i++){
+    const a = Math.random()*Math.PI*2;
+    const s = (spd||70)*(0.25+Math.random());
+    G.particles.push({
+      x:x, y:y,
+      vx:Math.cos(a)*s, vy:Math.sin(a)*s,
+      life:0.35+Math.random()*0.5, max:0.85,
+      color:color, size: Math.random()<0.4 ? 2 : 1
+    });
+  }
+  if (G.particles.length > 320) G.particles.splice(0, G.particles.length-320);
+}
+function updateParticles(dt){
+  for (let i=G.particles.length-1;i>=0;i--){
+    const p = G.particles[i];
+    p.x += p.vx*dt; p.y += p.vy*dt;
+    p.vy += 90*dt;
+    p.vx *= (1 - 2.2*dt);
+    p.life -= dt;
+    if (p.life <= 0) G.particles.splice(i,1);
+  }
+}
+
+/* ---------- ENEMY MOVEMENT ---------- */
+function moveOneEnemy(e, dt){
+  if (dt <= 0) return;
+  let nx = e.x + e.vx*dt;
+  let ny = e.y + e.vy*dt;
+
+  if (!pointInPoly({x:nx,y:ny}, G.poly)){
+    let best = null, bestD = Infinity;
+    const p = G.poly;
+    for (let i=0;i<p.length;i++){
+      const a=p[i], b=p[(i+1)%p.length];
+      const c = closestOnSeg(nx,ny,a.x,a.y,b.x,b.y);
+      const d = (c.x-nx)*(c.x-nx) + (c.y-ny)*(c.y-ny);
+      if (d < bestD){ bestD = d; best = c; }
+    }
+    if (best){
+      let nxn = nx-best.x, nyn = ny-best.y;
+      const nl = Math.hypot(nxn,nyn) || 1;
+      nxn/=nl; nyn/=nl;
+      const dot = e.vx*nxn + e.vy*nyn;
+      if (dot > 0){ e.vx -= 2*dot*nxn; e.vy -= 2*dot*nyn; }
+      nx = best.x - nxn*(e.r+1.2);
+      ny = best.y - nyn*(e.r+1.2);
+      if (!pointInPoly({x:nx,y:ny}, G.poly)){
+        nx = e.x; ny = e.y;
+        e.vx = -e.vx; e.vy = -e.vy;
+        e.escapeGuard = (e.escapeGuard||0) + 1;
+      } else {
+        e.escapeGuard = 0;
+      }
+    }
+  } else {
+    e.escapeGuard = 0;
+  }
+
+  e.x = nx; e.y = ny;
+
+  if (e.escapeGuard > 8){
+    let cx=0, cy=0;
+    for (const p of G.poly){ cx+=p.x; cy+=p.y; }
+    e.x = cx/G.poly.length; e.y = cy/G.poly.length;
+    e.escapeGuard = 0;
+  }
+
+  const sp = Math.hypot(e.vx,e.vy);
+  if (sp > 0.001){ e.vx = e.vx/sp*e.speed; e.vy = e.vy/sp*e.speed; }
+}
+function moveEnemies(dt){
+  if (dt <= 0) return;
+  for (const e of G.enemies) moveOneEnemy(e, dt);
+}
+
+/* ---------- MAIN TICK ---------- */
+function tick(dt){
+  G.t += dt;
+  if (G.shake > 0) G.shake = Math.max(0, G.shake - dt*3.2);
+  if (G.hitFlash > 0) G.hitFlash = Math.max(0, G.hitFlash - dt*3.0);
+  if (G.flashWhite > 0) G.flashWhite = Math.max(0, G.flashWhite - dt*4);
+  if (G.invuln > 0) G.invuln = Math.max(0, G.invuln - dt);
+
+  if (G.state === 'MENU' || G.state === 'HOWTO' || G.state === 'SETTINGS'){
+    moveEnemies(dt*0.85);
+    updateParticles(dt);
+    return;
+  }
+  if (G.state === 'PAUSED'){ return; }
+  if (G.state === 'GAME_OVER'){ updateParticles(dt); return; }
+
+  if (G.state === 'LEVEL_CLEAR'){
+    G.levelClearT += dt;
+    updateParticles(dt);
+    if (Math.random() < 0.4){
+      spawnParticles(
+        AREA.x + Math.random()*AREA.w,
+        AREA.y + Math.random()*AREA.h,
+        1, [TH().primary, TH().secondary, TH().warning][Math.floor(Math.random()*3)], 50);
+    }
+    if (G.levelClearT > 2.0){
+      G.level++;
+      G.lives = Math.min(5, G.lives + (G.level % 3 === 0 ? 1 : 0));
+      startLevel(G.level);
+    }
+    return;
+  }
+
+  if (G.state === 'FILLING'){
+    G.fillAnim.t += dt*2.6;
+    updateParticles(dt);
+    if (Math.random() < 0.6 && G.fillAnim.poly.length){
+      const pp = G.fillAnim.poly[Math.floor(Math.random()*G.fillAnim.poly.length)];
+      spawnParticles(pp.x, pp.y, 1, TH().primary, 30);
+    }
+    if (G.fillAnim.t >= 1){
+      G.fillAnim = null;
+      const pct = levelFillPct();
+      if (pct >= G.fillTarget){
+        G.state = 'LEVEL_CLEAR';
+        G.levelClearT = 0;
+        G.score += 400 + G.level*120;
+        AudioSys.tone(659,0.1,'square',0.06);
+        AudioSys.tone(880,0.1,'square',0.06,0.1);
+        AudioSys.tone(1175,0.22,'square',0.06,0.2);
+      } else {
+        G.state = 'PLAYING';
+      }
+    }
+    return;
+  }
+
+  /* --- PLAYING / CUTTING / RETRACTING --- */
+
+  // Slow-motion based on closest enemy to active cut line
+  let targetTs = 1;
+  if (G.state === 'CUTTING' && G.cut){
+    const c = G.cut;
+    let minD = Infinity;
+    for (const e of G.enemies){
+      const d = distToSeg(e.x, e.y, c.ox, c.oy, c.tipx, c.tipy);
+      if (d < minD) minD = d;
+    }
+    const dangerR = 4.5 + 4.5;
+    const warnR = 68;
+    if (minD < warnR){
+      const k = clamp((minD - dangerR) / (warnR - dangerR), 0, 1);
+      targetTs = 0.12 + 0.88*k;
+    }
+  }
+  const smooth = 1 - Math.pow(0.0015, dt);
+  G.timeScale = lerp(G.timeScale, targetTs, smooth);
+  if (G.timeScale < 0.03) G.timeScale = 0.03;
+
+  const slowActive = targetTs < 0.85;
+  G.slowFx = lerp(G.slowFx, slowActive ? 1 : 0, 1-Math.pow(0.002,dt));
+
+  if (slowActive){
+    G.warnBeep += dt;
+    if (G.warnBeep > 0.42){
+      G.warnBeep = 0;
+      AudioSys.tone(1400, 0.045, 'square', 0.028);
+    }
+  } else G.warnBeep = 0;
+
+  const ts = G.timeScale;
+
+  // Edge movement
+  if (G.state === 'PLAYING'){
+    G.player.s += G.playerSpeed * dt;
+    syncPlayer();
+    G.trail.push({x:G.player.x, y:G.player.y, life:0.35});
+    if (G.trail.length > 14) G.trail.shift();
+  }
+  for (let i=G.trail.length-1;i>=0;i--){
+    G.trail[i].life -= dt;
+    if (G.trail[i].life <= 0) G.trail.splice(i,1);
+  }
+
+  // Enemies move
+  moveEnemies(dt * (G.state === 'RETRACTING' ? 1.0 : ts));
+
+  // Cutting progression
+  if (G.state === 'CUTTING'){
+    const c = G.cut;
+    c.len += 240 * dt * ts;
+    if (c.len > c.maxLen) c.len = c.maxLen;
+    c.tipx = c.ox + c.nx*c.len;
+    c.tipy = c.oy + c.ny*c.len;
+    G.player.x = c.tipx; G.player.y = c.tipy;
+    G.player.angle = Math.atan2(c.ny, c.nx);
+
+    if (Math.random() < 0.75){
+      spawnParticles(c.tipx, c.tipy, 1, TH().warning, 22);
+    }
+
+    // =========================================
+    //  CENTRALIZED COLLISION CHECK
+    // =========================================
+    if (checkEnemyCollisions()) return;
+
+    if (c.len >= c.maxLen - 0.01){
+      completeCut();
+      return;
+    }
+  } else if (G.state === 'PLAYING'){
+    // Edge collision check (enemy wandering into arrow on the boundary)
+    if (checkEnemyCollisions()) return;
+  }
+
+  // Retracting
+  if (G.state === 'RETRACTING'){
+    const c = G.cut;
+    if (!c){ G.state = 'PLAYING'; }
+    else {
+      c.len -= 900 * dt;
+      if (c.len <= 0){
+        c.len = 0;
+        G.player.s = c.s0;
+        G.cut = null;
+        syncPlayer();
+        if (G.lives <= 0){ gameOver(); return; }
+        G.state = 'PLAYING';
+      } else {
+        c.tipx = c.ox + c.nx*c.len;
+        c.tipy = c.oy + c.ny*c.len;
+        G.player.x = c.tipx; G.player.y = c.tipy;
+        G.player.angle = Math.atan2(-c.ny, -c.nx);
+        if (Math.random() < 0.5) spawnParticles(c.tipx, c.tipy, 1, TH().secondary, 20);
+      }
+    }
+  }
+
+  updateParticles(dt);
+}
+
+function levelFillPct(){
+  const pct = (1 - G.curArea/Math.max(1,G.levelStartArea)) * 100;
+  return clamp(pct, 0, 100);
+}
+
+/* ---------- BACKGROUND GRID ---------- */
+let gridCanvas = null;
+function buildGrid(){
+  gridCanvas = document.createElement('canvas');
+  gridCanvas.width = W; gridCanvas.height = H;
+  const g = gridCanvas.getContext('2d');
+  const t = TH();
+  g.fillStyle = t.grid + '0.055)';
+  for (let x=0;x<W;x+=8) g.fillRect(x,0,1,H);
+  for (let y=0;y<H;y+=8) g.fillRect(0,y,W,1);
+  g.fillStyle = t.grid + '0.09)';
+  for (let x=0;x<W;x+=32) g.fillRect(x,0,1,H);
+  for (let y=0;y<H;y+=32) g.fillRect(0,y,W,1);
+}
+
+/* ---------- PATTERNS ---------- */
+let patternFill = null, patternClaim = null;
+function buildPatterns(){
+  const t = TH();
+  const c1 = document.createElement('canvas'); c1.width=4; c1.height=4;
+  const g1 = c1.getContext('2d');
+  g1.fillStyle = t.primary;
+  g1.fillRect(0,0,2,2); g1.fillRect(2,2,2,2);
+  patternFill = ctx.createPattern(c1,'repeat');
+
+  const c2 = document.createElement('canvas'); c2.width=6; c2.height=6;
+  const g2 = c2.getContext('2d');
+  g2.fillStyle = t.secondary;
+  g2.fillRect(0,0,1,1); g2.fillRect(3,3,1,1);
+  patternClaim = ctx.createPattern(c2,'repeat');
+}
+
+function applyTheme(){
+  document.body.style.background = TH().bg;
+  buildGrid();
+  buildPatterns();
+}
+
+/* ---------- RESIZE ---------- */
+function resize(){
+  const vw = Math.max(200, window.innerWidth);
+  const vh = Math.max(240, window.innerHeight);
+  let s = Math.round(vh/420);
+  s = clamp(s, 2, 5);
+  while (vw/s < 170 && s > 1) s--;
+
+  SCALE = s;
+  W = Math.max(170, Math.round(vw/SCALE));
+  H = Math.max(240, Math.round(vh/SCALE));
+
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.width = (W*SCALE)+'px';
+  canvas.style.height = (H*SCALE)+'px';
+  ctx.imageSmoothingEnabled = false;
+
+  buildGrid();
+  buildPatterns();
+  computeArea();
+
+  if (G.poly && G.poly.length >= 3) refitWorld();
+}
+function refitWorld(){
+  const inset = Math.min(W, H) * 0.06;
+  const inner = {
+    x: AREA.x + 4 + inset,
+    y: AREA.y + 4 + inset,
+    w: AREA.w - (4 + inset)*2,
+    h: AREA.h - (4 + inset)*2
+  };
+  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+  for (const p of G.poly){
+    if (p.x<minx)minx=p.x; if (p.x>maxx)maxx=p.x;
+    if (p.y<miny)miny=p.y; if (p.y>maxy)maxy=p.y;
+  }
+  const bw = Math.max(1,maxx-minx), bh = Math.max(1,maxy-miny);
+  const s = Math.min(inner.w/bw, inner.h/bh);
+  const ox = inner.x + inner.w/2 - (minx+maxx)*0.5*s;
+  const oy = inner.y + inner.h/2 - (miny+maxy)*0.5*s;
+  for (const p of G.poly){ p.x = p.x*s+ox; p.y = p.y*s+oy; }
+  for (const e of G.enemies){
+    e.x = e.x*s+ox; e.y = e.y*s+oy;
+    e.speed *= Math.sqrt(s);
+  }
+  G.player.s *= s;
+  G.levelStartArea *= s*s;
+  if (G.cut){
+    G.cut.ox = G.cut.ox*s+ox; G.cut.oy = G.cut.oy*s+oy;
+    G.cut.maxLen *= s; G.cut.len *= s;
+    G.cut.tipx = G.cut.ox + G.cut.nx*G.cut.len;
+    G.cut.tipy = G.cut.oy + G.cut.ny*G.cut.len;
+    G.cut.s0 *= s;
+  }
+  if (G.fillAnim){
+    for (const p of G.fillAnim.poly){ p.x = p.x*s+ox; p.y = p.y*s+oy; }
+  }
+  updatePolyMeta();
+  syncPlayer();
+}
+
+/* ---------- RENDERING ---------- */
+function pathPoly(p){
+  ctx.beginPath();
+  ctx.moveTo(p[0].x, p[0].y);
+  for (let i=1;i<p.length;i++) ctx.lineTo(p[i].x, p[i].y);
+  ctx.closePath();
+}
+
+function render(){
+  const shakeX = G.shake>0 ? (Math.random()-0.5)*G.shake*7 : 0;
+  const shakeY = G.shake>0 ? (Math.random()-0.5)*G.shake*7 : 0;
+
+  ctx.save();
+  ctx.translate(Math.round(shakeX), Math.round(shakeY));
+
+  ctx.fillStyle = TH().bg;
+  ctx.fillRect(-20,-20,W+40,H+40);
+
+  drawBackdropStars();
+
+  if (G.state === 'MENU'){ drawMenu(); }
+  else if (G.state === 'HOWTO'){ drawHowTo(); }
+  else if (G.state === 'SETTINGS'){ drawSettings(); }
+  else if (G.state === 'GAME_OVER'){ drawWorld(0.35); drawGameOver(); }
+  else {
+    drawWorld(1);
+    drawHUD();
+    if (G.state === 'LEVEL_CLEAR') drawLevelClear();
+    if (G.state === 'PAUSED') drawPauseMenu();
+  }
+
+  ctx.restore();
+
+  if (G.hitFlash > 0){
+    ctx.fillStyle = 'rgba(255,56,100,'+(G.hitFlash*0.32)+')';
+    ctx.fillRect(0,0,W,H);
+  }
+  if (G.flashWhite > 0){
+    ctx.fillStyle = 'rgba(244,244,244,'+(G.flashWhite*0.22)+')';
+    ctx.fillRect(0,0,W,H);
+  }
+  if (G.slowFx > 0.05){
+    ctx.fillStyle = 'rgba(53,199,255,'+(G.slowFx*0.055)+')';
+    ctx.fillRect(0,0,W,H);
+  }
+}
+
+const stars = [];
+for (let i=0;i<48;i++) stars.push({ x:Math.random(), y:Math.random(), s:Math.random()<0.85?1:2, v:0.004+Math.random()*0.012, a:0.05+Math.random()*0.18 });
+function drawBackdropStars(){
+  const t = TH();
+  for (const st of stars){
+    let yy = (st.y + G.t*st.v) % 1;
+    const xx = Math.round(st.x*W);
+    ctx.fillStyle = t.grid + st.a + ')';
+    ctx.fillRect(xx, Math.round(yy*H), st.s, st.s);
+  }
+}
+
+function drawWorld(dim){
+  if (!G.poly || G.poly.length < 3) return;
+  const t = TH();
+
+  ctx.save();
+  if (dim < 1) ctx.globalAlpha = dim;
+
+  pathPoly(G.poly);
+  ctx.fillStyle = t.areaFill;
+  ctx.fill();
+
+  ctx.save();
+  pathPoly(G.poly);
+  ctx.clip();
+  if (gridCanvas) ctx.drawImage(gridCanvas, 0, 0);
+
+  const cxp = AREA.x + AREA.w/2, cyp = AREA.y + AREA.h/2;
+  const grad = ctx.createRadialGradient(cxp, cyp, 4, cxp, cyp, Math.max(AREA.w,AREA.h)*0.7);
+  grad.addColorStop(0, t.grid + '0.10)');
+  grad.addColorStop(1, t.grid + '0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+  ctx.restore();
+
+  if (G.fillAnim){
+    const f = G.fillAnim;
+    const a = clamp(1 - f.t, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = a * 0.9;
+    pathPoly(f.poly);
+    ctx.fillStyle = patternFill || t.primary;
+    ctx.fill();
+    ctx.globalAlpha = a * 0.55;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = t.primary;
+    ctx.stroke();
+    ctx.globalAlpha = a * 0.5;
+    ctx.fillStyle = t.bg;
+    const bandY = AREA.y + AREA.h * f.t;
+    ctx.beginPath();
+    ctx.rect(0, bandY, W, H - bandY);
+    ctx.clip();
+    ctx.fillRect(0,0,W,H);
+    ctx.restore();
+  }
+
+  pathPoly(G.poly);
+  ctx.lineWidth = 7; ctx.strokeStyle = t.grid + '0.07)'; ctx.stroke();
+  pathPoly(G.poly);
+  ctx.lineWidth = 4; ctx.strokeStyle = t.grid + '0.18)'; ctx.stroke();
+  pathPoly(G.poly);
+  ctx.lineWidth = 2; ctx.strokeStyle = t.secondary; ctx.stroke();
+
+  drawCornerTicks();
+
+  ctx.restore();
+
+  if (G.cut && (G.state === 'CUTTING' || G.state === 'RETRACTING')){
+    drawCutLine();
+  }
+
+  if (G.state !== 'MENU'){
+    drawEnemies();
+    drawPlayer();
+  } else {
+    drawEnemies(0.75);
+  }
+
+  drawParticles();
+}
+
+function drawCornerTicks(){
+  const p = G.poly;
+  const t = TH();
+  for (let i=0;i<p.length;i+=Math.max(3, Math.floor(p.length/7))){
+    const a = p[i], b = p[(i+1)%p.length];
+    const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
+    let dx = b.x-a.x, dy = b.y-a.y;
+    const l = Math.hypot(dx,dy)||1;
+    dx/=l; dy/=l;
+    ctx.strokeStyle = t.grid + '0.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(Math.round(mx - dx*3), Math.round(my - dy*3));
+    ctx.lineTo(Math.round(mx + dx*3), Math.round(my + dy*3));
+    ctx.stroke();
+  }
+}
+
+function drawCutLine(){
+  const c = G.cut;
+  const t = TH();
+  let minD = Infinity;
+  for (const e of G.enemies){
+    const d = distToSeg(e.x, e.y, c.ox, c.oy, c.tipx, c.tipy);
+    if (d < minD) minD = d;
+  }
+  const danger = minD < 28;
+  const col = danger ? t.danger : t.warning;
+
+  ctx.save();
+  ctx.lineCap = 'butt';
+
+  ctx.globalAlpha = 0.18;
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = col;
+  ctx.beginPath(); ctx.moveTo(c.ox, c.oy); ctx.lineTo(c.tipx, c.tipy); ctx.stroke();
+
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = col;
+  ctx.beginPath(); ctx.moveTo(c.ox, c.oy); ctx.lineTo(c.tipx, c.tipy); ctx.stroke();
+
+  ctx.setLineDash([3,4]);
+  ctx.lineDashOffset = -G.t*22;
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = t.white;
+  ctx.beginPath(); ctx.moveTo(c.ox, c.oy); ctx.lineTo(c.tipx, c.tipy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = t.secondary;
+  ctx.fillRect(Math.round(c.ox)-2, Math.round(c.oy)-2, 4, 4);
+  ctx.fillStyle = t.bg;
+  ctx.fillRect(Math.round(c.ox)-1, Math.round(c.oy)-1, 2, 2);
+
+  ctx.fillStyle = danger ? t.danger : t.warning;
+  ctx.fillRect(Math.round(c.tipx)-2, Math.round(c.tipy)-2, 4, 4);
+
+  ctx.restore();
+}
+
+function drawEnemies(alpha){
+  for (const e of G.enemies) drawOneEnemy(e, alpha);
+}
+function drawOneEnemy(e, alpha){
+  const t = TH();
+  ctx.save();
+  if (alpha !== undefined) ctx.globalAlpha = alpha;
+
+  const x = Math.round(e.x), y = Math.round(e.y);
+  const r = e.r;
+  const pulse = 1 + Math.sin(G.t*9)*0.18;
+  const danger = G.slowFx > 0.3;
+
+  ctx.globalAlpha = (alpha===undefined?1:alpha) * (0.16 + G.slowFx*0.22);
+  ctx.fillStyle = t.danger;
+  ctx.beginPath(); ctx.arc(x, y, r*2.6*pulse, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = (alpha===undefined?1:alpha);
+
+  ctx.fillStyle = t.danger;
+  ctx.beginPath();
+  ctx.moveTo(x, y-r-1.5);
+  ctx.lineTo(x+r+1.5, y);
+  ctx.lineTo(x, y+r+1.5);
+  ctx.lineTo(x-r-1.5, y);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = t.bg;
+  ctx.beginPath();
+  ctx.moveTo(x, y-r+0.5);
+  ctx.lineTo(x+r-0.5, y);
+  ctx.lineTo(x, y+r-0.5);
+  ctx.lineTo(x-r+0.5, y);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = danger ? t.warning : t.white;
+  ctx.fillRect(x-1, y-1, 2, 2);
+
+  if (G.slowFx > 0.05){
+    ctx.globalAlpha = G.slowFx * 0.85;
+    ctx.strokeStyle = t.warning;
+    ctx.lineWidth = 1;
+    const rr = r + 5 + Math.sin(G.t*14)*1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, rr, 0, Math.PI*2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawPlayer(){
+  const t = TH();
+  for (let i=0;i<G.trail.length;i++){
+    const tr = G.trail[i];
+    const a = (tr.life/0.35) * 0.45;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = t.secondary;
+    const sz = (i%2===0)?1:2;
+    ctx.fillRect(Math.round(tr.x)-1, Math.round(tr.y)-1, sz, sz);
+  }
+  ctx.globalAlpha = 1;
+
+  const x = Math.round(G.player.x);
+  const y = Math.round(G.player.y);
+  const ang = G.player.angle;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = t.primary;
+  ctx.beginPath();
+  ctx.moveTo(9,0); ctx.lineTo(-6,-6); ctx.lineTo(-3,0); ctx.lineTo(-6,6);
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  const cutting = (G.state === 'CUTTING' || G.state === 'RETRACTING');
+  ctx.fillStyle = cutting ? t.warning : t.white;
+  ctx.beginPath();
+  ctx.moveTo(6.5,0);
+  ctx.lineTo(-4,-4.5);
+  ctx.lineTo(-1.5,0);
+  ctx.lineTo(-4,4.5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = cutting ? '#7A5C00' : '#1B2436';
+  ctx.beginPath();
+  ctx.moveTo(2,0);
+  ctx.lineTo(-2,-1.8);
+  ctx.lineTo(-1,0);
+  ctx.lineTo(-2,1.8);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+
+  if (G.invuln > 0 && Math.floor(G.t*12)%2 === 0){
+    ctx.globalAlpha = 0.45;
+    ctx.strokeStyle = t.danger;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawParticles(){
+  for (const p of G.particles){
+    const a = clamp(p.life/p.max, 0, 1);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- PAUSE BUTTON RECT ---------- */
+function getPauseBtnRect(){
+  // Visual is small; hit area is larger for touch
+  return {
+    x: W - 18, y: 5, w: 14, h: 12,         // visual
+    hx: W - 28, hy: 0, hw: 28, hh: 22      // hit area
+  };
+}
+
+/* ---------- HUD ---------- */
+function drawHUD(){
+  const t = TH();
+  const pct = levelFillPct();
+
+  drawText('LEVEL ' + String(G.level).padStart(2,'0'), 8, 7, t.secondary, 1);
+
+  const hx = W/2 - (3*9)/2 + 1;
+  for (let i=0;i<3;i++){
+    const filled = i < G.lives;
+    drawHeart(hx + i*9, 6, filled);
+  }
+
+  // Enemy count under hearts
+  if (G.enemies.length >= 1){
+    const cnt = 'x' + G.enemies.length;
+    drawTextC(cnt, W/2, 17, t.danger, 1);
+  }
+
+  // Score (left of pause button)
+  const sc = String(G.score).padStart(6,'0');
+  const scW = textW(sc, 1);
+  drawText(sc, W - 24 - scW, 7, t.warning, 1);
+
+  // Pause button
+  drawPauseButton();
+
+  const bx = 8, by = 22, bw = W - 16, bh = 8;
+  ctx.fillStyle = t.areaFill;
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeStyle = t.grid + '0.35)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bx+0.5, by+0.5, bw-1, bh-1);
+
+  const fillW = Math.round((bw-4) * clamp(pct/G.fillTarget, 0, 1));
+
+  ctx.fillStyle = t.grid + '0.55)';
+  ctx.fillRect(bx + bw - 4, by + 1, 1, bh-2);
+
+  for (let i=0;i<fillW;i+=2){
+    const tt = i/Math.max(1,(bw-4));
+    const col = tt < 0.6 ? t.primary : (tt < 0.85 ? t.secondary : t.warning);
+    ctx.fillStyle = col;
+    ctx.fillRect(bx+2+i, by+2, 1, bh-4);
+  }
+
+  const pTxt = String(Math.floor(pct)).padStart(2,'0') + '%';
+  drawText(pTxt, bx + bw - textW(pTxt,1) - 3, by + 1, t.white, 1);
+}
+
+function drawPauseButton(){
+  const t = TH();
+  const r = getPauseBtnRect();
+  const x = r.x, y = r.y, w = r.w, h = r.h;
+
+  ctx.fillStyle = t.grid + '0.15)';
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = t.secondary;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x+0.5, y+0.5, w-1, h-1);
+
+  ctx.fillStyle = t.white;
+  ctx.fillRect(x + 4, y + 3, 2, h - 6);
+  ctx.fillRect(x + 8, y + 3, 2, h - 6);
+}
+
+function drawHeart(x, y, filled){
+  const t = TH();
+  const P = [
+    '.##.##.',
+    '#######',
+    '#######',
+    '.#####.',
+    '..###..',
+    '...#...'
+  ];
+  const col = filled ? t.danger : '#2A1524';
+  const hi  = filled ? t.warning : '#2A1524';
+  for (let r=0;r<6;r++){
+    for (let c=0;c<7;c++){
+      if (P[r][c] === '#'){
+        ctx.fillStyle = (r===1 && (c===1||c===5)) ? hi : col;
+        ctx.fillRect(x+c, y+r, 1, 1);
+      }
+    }
+  }
+}
+
+/* ---------- MENU BUTTONS ---------- */
+function layoutButtons(items, topFrac){
+  const bw = Math.min(170, W-40);
+  const bh = 20;
+  const gap = 8;
+  const totalH = items.length*(bh+gap) - gap;
+  let y = H*(topFrac===undefined?0.56:topFrac) - totalH/2;
+  return items.map((it,i)=>({
+    id: it.id, label: it.label,
+    x: Math.round(W/2 - bw/2),
+    y: Math.round(y + i*(bh+gap)),
+    w: bw, h: bh
+  }));
+}
+function drawButton(b, highlight){
+  const t = TH();
+  const isHi = highlight || b.hover;
+  ctx.fillStyle = isHi ? t.grid + '0.16)' : t.grid + '0.05)';
+  ctx.fillRect(b.x, b.y, b.w, b.h);
+  ctx.strokeStyle = isHi ? t.secondary : '#1E4A63';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(b.x+0.5, b.y+0.5, b.w-1, b.h-1);
+
+  ctx.fillStyle = isHi ? t.primary : '#1E4A63';
+  ctx.fillRect(b.x, b.y, 2, 2);
+  ctx.fillRect(b.x+b.w-2, b.y, 2, 2);
+  ctx.fillRect(b.x, b.y+b.h-2, 2, 2);
+  ctx.fillRect(b.x+b.w-2, b.y+b.h-2, 2, 2);
+
+  drawTextC(b.label, b.x + b.w/2, b.y + Math.round((b.h-7)/2), isHi ? t.white : '#7FB6D0', 1);
+}
+
+function drawMenu(){
+  const t = TH();
+  if (G.poly && G.poly.length >= 3){
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    pathPoly(G.poly);
+    ctx.fillStyle = t.areaFill;
+    ctx.fill();
+    pathPoly(G.poly);
+    ctx.lineWidth = 2; ctx.strokeStyle = t.secondary; ctx.stroke();
+    ctx.restore();
+    drawEnemies(0.55);
+  }
+
+  ctx.fillStyle = 'rgba(8,11,18,0.72)';
+  ctx.fillRect(0,0,W,H);
+
+  const titleY = Math.round(H*0.20);
+  ctx.save();
+  ctx.globalAlpha = 0.14;
+  drawTextC('NEONFILL', W/2+1, titleY+1, t.secondary, 4);
+  ctx.restore();
+  drawTextC('NEONFILL', W/2, titleY, t.primary, 4);
+
+  const tw = textW('NEONFILL', 4);
+  ctx.fillStyle = t.secondary;
+  ctx.fillRect(Math.round(W/2-tw/2), titleY + 30, tw, 2);
+  ctx.fillStyle = t.grid + '0.35)';
+  ctx.fillRect(Math.round(W/2-tw/2)-6, titleY + 34, tw+12, 1);
+
+  drawTextC('PIXEL EDITION  ·  ' + t.name, W/2, titleY + 40, '#7FB6D0', 1);
+
+  const items = [
+    {id:'start', label:'START GAME'},
+    {id:'how',   label:'HOW TO PLAY'},
+    {id:'settings', label:'SETTINGS'}
+  ];
+  G.buttons = layoutButtons(items, 0.62);
+  for (const b of G.buttons) drawButton(b, false);
+
+  const bestTxt = 'BEST ' + String(G.best).padStart(6,'0');
+  drawTextC(bestTxt, W/2, H - 22, 'rgba(127,182,208,0.8)', 1);
+  drawTextC('HOLD TO CUT  /  RELEASE TO CANCEL', W/2, H - 12, 'rgba(127,182,208,0.45)', 1);
+}
+
+function drawHowTo(){
+  const t = TH();
+  ctx.fillStyle = 'rgba(8,11,18,0.88)';
+  ctx.fillRect(0,0,W,H);
+
+  drawTextC('HOW TO PLAY', W/2, 30, t.primary, 2);
+
+  const lines = [
+    ['MOVE',        'THE ARROW FOLLOWS THE EDGE.'],
+    ['HOLD',        'LAUNCH A STRAIGHT CUT.'],
+    ['RELEASE',     'CANCEL AND RETRACT.'],
+    ['REACH EDGE',  'CLAIM THE EMPTY SIDE.'],
+    ['DONT HIT',    'THE RED ENEMIES.'],
+    ['SLOW-MO',     'WARNS YOU IN TIME.'],
+    ['CUT THEM OFF','ENEMIES IN FILLED SIDE DIE.']
+  ];
+  let y = 58;
+  for (const [k,v] of lines){
+    drawText(k, 16, y, t.warning, 1);
+    drawText(v, 16, y + 10, '#9FD4E8', 1);
+    y += 24;
+  }
+
+  const items = [{id:'back', label:'BACK'}];
+  G.buttons = layoutButtons(items, 0.88);
+  for (const b of G.buttons) drawButton(b, false);
+}
+
+function drawSettings(){
+  const t = TH();
+  ctx.fillStyle = 'rgba(8,11,18,0.90)';
+  ctx.fillRect(0,0,W,H);
+  drawTextC('SETTINGS', W/2, 30, t.primary, 2);
+
+  const swatchY = 56;
+  const sw = 14, sh = 14, gap = 6;
+  const totalW = THEMES.length*sw + (THEMES.length-1)*gap;
+  const startX = Math.round(W/2 - totalW/2);
+  for (let i=0;i<THEMES.length;i++){
+    const x = startX + i*(sw+gap);
+    const th = THEMES[i];
+    ctx.fillStyle = th.bg;
+    ctx.fillRect(x, swatchY, sw, sh);
+    ctx.fillStyle = th.primary;
+    ctx.fillRect(x, swatchY, sw, 3);
+    ctx.fillStyle = th.secondary;
+    ctx.fillRect(x, swatchY+sh-3, sw, 3);
+    ctx.fillStyle = th.danger;
+    ctx.fillRect(x+2, swatchY+5, 3, 4);
+    if (i === THEME_IDX){
+      ctx.strokeStyle = t.white;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x-1.5, swatchY-1.5, sw+3, sh+3);
+    }
+  }
+
+  drawTextC('THEME: ' + t.name, W/2, swatchY + 24, '#9FD4E8', 1);
+
+  const items = [
+    {id:'theme', label:'CHANGE THEME'},
+    {id:'sound', label: AudioSys.sfxOn ? 'SOUND: ON' : 'SOUND: OFF'},
+    {id:'music', label: AudioSys.musicOn ? 'MUSIC: ON' : 'MUSIC: OFF'},
+    {id:'back',  label:'BACK'}
+  ];
+  G.buttons = layoutButtons(items, 0.66);
+  for (const b of G.buttons) drawButton(b, false);
+}
+
+function drawGameOver(){
+  const t = TH();
+  ctx.fillStyle = 'rgba(8,11,18,0.78)';
+  ctx.fillRect(0,0,W,H);
+
+  const blink = Math.sin(G.t*4) > -0.4;
+  drawTextC('GAME OVER', W/2, H*0.22, blink ? t.danger : '#8A1E38', 3);
+
+  drawTextC('SCORE', W/2, H*0.36, '#7FB6D0', 1);
+  drawTextC(String(G.score).padStart(6,'0'), W/2, H*0.36 + 12, t.warning, 2);
+
+  drawTextC('BEST', W/2, H*0.48, '#7FB6D0', 1);
+  drawTextC(String(G.best).padStart(6,'0'), W/2, H*0.48 + 12, t.primary, 2);
+
+  const items = [
+    {id:'restart', label:'RESTART'},
+    {id:'menu',    label:'MAIN MENU'}
+  ];
+  G.buttons = layoutButtons(items, 0.70);
+  for (const b of G.buttons) drawButton(b, false);
+}
+
+function drawLevelClear(){
+  const t = TH();
+  const a = clamp(G.levelClearT/0.6, 0, 1);
+  ctx.save();
+  ctx.globalAlpha = a;
+
+  const y = H*0.34;
+  ctx.fillStyle = 'rgba(8,11,18,0.62)';
+  ctx.fillRect(0, y-16, W, 54);
+
+  const blink = Math.floor(G.t*10)%2 === 0;
+  drawTextC('LEVEL CLEAR', W/2, y-6, blink ? t.primary : '#1E8A50', 2);
+
+  const bonus = 400 + G.level*120;
+  drawTextC('+' + bonus, W/2, y + 20, t.warning, 1);
+
+  ctx.restore();
+}
+
+function drawPauseMenu(){
+  const t = TH();
+  ctx.fillStyle = 'rgba(8,11,18,0.85)';
+  ctx.fillRect(0,0,W,H);
+
+  const blink = Math.sin(G.t*3) > -0.6;
+  drawTextC('PAUSED', W/2, H*0.20, blink ? t.primary : t.secondary, 3);
+
+  drawTextC('LEVEL ' + String(G.level).padStart(2,'0') + '  ·  SCORE ' + String(G.score).padStart(6,'0'),
+            W/2, H*0.32, '#7FB6D0', 1);
+
+  const items = [
+    {id:'resume',   label:'RESUME'},
+    {id:'restart',  label:'RESTART LEVEL'},
+    {id:'settings', label:'SETTINGS'},
+    {id:'quit',     label:'MAIN MENU'}
+  ];
+  G.buttons = layoutButtons(items, 0.62);
+  for (const b of G.buttons) drawButton(b, false);
+}
+
+/* ---------- INPUT ---------- */
+function toLogical(clientX, clientY){
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: (clientX - r.left) / SCALE,
+    y: (clientY - r.top) / SCALE
+  };
+}
+function hitButton(pt){
+  for (const b of G.buttons){
+    if (pt.x >= b.x && pt.x <= b.x+b.w && pt.y >= b.y && pt.y <= b.y+b.h) return b;
+  }
+  return null;
+}
+
+function handleButton(id){
+  switch(id){
+    case 'start':
+      AudioSys.init(); AudioSys.resume(); AudioSys.startMusic();
+      G.score = 0; G.lives = 3;
+      startLevel(1);
+      AudioSys.tone(523,0.08,'square',0.055);
+      AudioSys.tone(784,0.12,'square',0.055,0.08);
+      break;
+    case 'how':
+      G.prevState = 'MENU'; G.state = 'HOWTO'; break;
+    case 'settings':
+      G.settingsReturn = (G.state === 'PAUSED') ? 'PAUSED' : 'MENU';
+      G.state = 'SETTINGS'; break;
+    case 'theme':
+      THEME_IDX = (THEME_IDX + 1) % THEMES.length;
+      applyTheme();
+      try{ localStorage.setItem('neonfill_theme', String(THEME_IDX)); }catch(e){}
+      AudioSys.tone(880,0.07,'square',0.05);
+      AudioSys.tone(1175,0.09,'square',0.045,0.06);
+      break;
+    case 'sound':
+      AudioSys.sfxOn = !AudioSys.sfxOn;
+      if (AudioSys.sfxOn){ AudioSys.init(); AudioSys.resume(); AudioSys.tone(880,0.07,'square',0.05); }
+      break;
+    case 'music':
+      AudioSys.musicOn = !AudioSys.musicOn;
+      break;
+    case 'back':
+      G.state = G.settingsReturn || 'MENU';
+      break;
+    case 'resume':
+      G.state = 'PLAYING'; break;
+    case 'restart':
+      AudioSys.init(); AudioSys.resume(); AudioSys.startMusic();
+      G.score = 0; G.lives = 3;
+      startLevel(1);
+      break;
+    case 'quit':
+      G.state = 'MENU';
+      break;
+    case 'menu':
+      G.state = 'MENU';
+      break;
+  }
+}
+
+function onPointerDown(e){
+  e.preventDefault();
+  AudioSys.init();
+  AudioSys.resume();
+  AudioSys.startMusic();
+  G.touchActive = true;
+
+  const t = (e.touches && e.touches[0]) ? e.touches[0] : e;
+  const pt = toLogical(t.clientX, t.clientY);
+
+  // Menu-like states use on-screen buttons
+  if (G.state === 'MENU' || G.state === 'HOWTO' || G.state === 'SETTINGS'
+      || G.state === 'GAME_OVER' || G.state === 'PAUSED'){
+    const b = hitButton(pt);
+    if (b) handleButton(b.id);
+    return;
+  }
+
+  // Gameplay states: check pause button first
+  if (G.state === 'PLAYING' || G.state === 'CUTTING'
+      || G.state === 'RETRACTING' || G.state === 'FILLING'){
+    const r = getPauseBtnRect();
+    if (pt.x >= r.hx && pt.x <= r.hx + r.hw && pt.y >= r.hy && pt.y <= r.hy + r.hh){
+      if (G.state === 'CUTTING') releaseCut();
+      G.prevState = G.state;
+      G.state = 'PAUSED';
+      AudioSys.stopCut();
+      return;
+    }
+  }
+
+  // Launch cut
+  if (G.state === 'PLAYING'){
+    launchCut();
+  }
+}
+function onPointerUp(e){
+  e.preventDefault();
+  G.touchActive = false;
+  if (G.state === 'CUTTING') releaseCut();
+}
+
+window.addEventListener('keydown', (e)=>{
+  if (e.code === 'Space' || e.key === ' '){
+    e.preventDefault();
+    AudioSys.init(); AudioSys.resume(); AudioSys.startMusic();
+    if (G.state === 'MENU'){ handleButton('start'); return; }
+    if (G.state === 'GAME_OVER'){ handleButton('restart'); return; }
+    if (G.state === 'PAUSED'){ handleButton('resume'); return; }
+    if (G.state === 'PLAYING'){ launchCut(); }
+    return;
+  }
+  if (e.code === 'Escape'){
+    e.preventDefault();
+    if (G.state === 'PLAYING' || G.state === 'CUTTING' || G.state === 'RETRACTING' || G.state === 'FILLING'){
+      if (G.state === 'CUTTING'){ releaseCut(); }
+      G.prevState = G.state;
+      G.state = 'PAUSED';
+      AudioSys.stopCut();
+    } else if (G.state === 'PAUSED'){
+      G.state = 'PLAYING';
+    } else if (G.state === 'HOWTO' || G.state === 'SETTINGS'){
+      G.state = G.settingsReturn || 'MENU';
+    }
+    return;
+  }
+  if (e.code === 'KeyR'){
+    if (G.state !== 'MENU'){
+      AudioSys.init(); AudioSys.resume();
+      G.score = 0; G.lives = 3;
+      startLevel(1);
+    }
+    return;
+  }
+  if (e.code === 'KeyM'){
+    AudioSys.musicOn = !AudioSys.musicOn;
+  }
+  if (e.code === 'KeyT'){
+    THEME_IDX = (THEME_IDX + 1) % THEMES.length;
+    applyTheme();
+    try{ localStorage.setItem('neonfill_theme', String(THEME_IDX)); }catch(e){}
+  }
+});
+window.addEventListener('keyup', (e)=>{
+  if (e.code === 'Space' || e.key === ' '){
+    e.preventDefault();
+    if (G.state === 'CUTTING') releaseCut();
+  }
+});
+
+canvas.addEventListener('mousedown', (e)=>{ if (e.button === 0) onPointerDown(e); });
+window.addEventListener('mouseup', (e)=>{ if (e.button === 0) onPointerUp(e); });
+canvas.addEventListener('touchstart', onPointerDown, {passive:false});
+window.addEventListener('touchend', onPointerUp, {passive:false});
+window.addEventListener('touchcancel', onPointerUp, {passive:false});
+canvas.addEventListener('contextmenu', (e)=>e.preventDefault());
+window.addEventListener('blur', ()=>{
+  if (G.state === 'CUTTING') releaseCut();
+  AudioSys.stopCut();
+});
+
+/* ---------- GAME LOOP ---------- */
+let lastTs = 0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  if (!lastTs) lastTs = ts;
+  let dt = (ts - lastTs)/1000;
+  lastTs = ts;
+  if (dt > 0.06) dt = 0.06;
+  if (dt < 0) dt = 0;
+  tick(dt);
+  render();
+}
+
+/* ---------- BOOT ---------- */
+function boot(){
+  try{ G.best = parseInt(localStorage.getItem('neonfill_best')||'0',10) || 0; }catch(e){ G.best = 0; }
+  try{
+    const savedTheme = parseInt(localStorage.getItem('neonfill_theme')||'0',10);
+    if (!isNaN(savedTheme) && savedTheme >= 0 && savedTheme < THEMES.length) THEME_IDX = savedTheme;
+  }catch(e){}
+  document.body.style.background = TH().bg;
+
+  resize();
+  applyTheme();
+  startLevel(1);
+  G.state = 'MENU';
+  G.score = 0;
+  G.lives = 3;
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{ resize(); }, 120);
+});
+window.addEventListener('orientationchange', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{ resize(); }, 260);
+});
+
+boot();
+</script>
+</body>
+</html>
