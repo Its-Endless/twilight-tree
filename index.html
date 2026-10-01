@@ -3,64 +3,112 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a1a">
+<meta name="theme-color" content="#04050e">
 <title>Twilight Tree · Free Browser Games</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
 <meta name="description" content="Free browser games with no downloads and no accounts. Play reaction, action, and puzzle games instantly in your browser.">
 <meta name="author" content="Shubhang Gupta">
 
-<!-- Google AdSense — replace ca-pub-XXXXXXXXXXXXXXXX after approval -->
+<!-- Google AdSense — publisher ID -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1923618182494890" crossorigin="anonymous"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="arcade-body">
 
-<header class="site-header">
-  <a href="index.html" class="logo" aria-label="Twilight Tree home">
-    <span class="logo-icon">🌲</span>
-    <span class="logo-text">TWILIGHT TREE</span>
-  </a>
-  <nav class="site-nav">
-    <a href="index.html" class="active">Arcade</a>
-    <a href="about.html">About</a>
-    <a href="privacy.html">Privacy</a>
-    <a href="contact.html">Contact</a>
-    <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">🔊</button>
-  </nav>
+<!-- ============ ATMOSPHERIC BACKGROUND ============ -->
+<div class="bg" aria-hidden="true">
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+  <div class="bg-stars"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-scan"></div>
+</div>
+
+<!-- ============ HUD HEADER ============ -->
+<header class="hud-header">
+  <div class="hud-inner">
+    <a href="index.html" class="brand" aria-label="Twilight Tree home">
+      <span class="brand-mark">🌲</span>
+      <span class="brand-text">TWILIGHT TREE<em>GAME HUB</em></span>
+    </a>
+
+    <nav class="hud-nav" id="hud-nav" aria-label="Main navigation">
+      <span class="nav-glider" id="nav-glider"></span>
+      <a href="index.html" class="active">Arcade</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+
+    <div class="hud-actions">
+      <button id="sound-toggle" class="hud-btn" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+    </div>
+  </div>
+  <div class="scroll-progress"><i id="scroll-bar"></i></div>
 </header>
 
 <main class="arcade-main">
 
+  <!-- ============ HERO ============ -->
   <section class="hero">
-    <h1>Twilight Tree Arcade</h1>
-    <p>Free browser games · No downloads · No accounts</p>
-    <div class="search-wrapper">
-      <span class="search-icon">🔍</span>
-      <input type="search" id="search-input" placeholder="Search games…" autocomplete="off" spellcheck="false" aria-label="Search games">
+    <div class="hero-copy">
+      <span class="eyebrow"><i class="dot"></i> SYSTEM ONLINE · <span id="game-count">0</span> GAMES READY</span>
+
+      <h1 class="hero-title">ENTER THE<br>TWILIGHT ARCADE</h1>
+
+      <p class="hero-sub">Free browser games. No downloads. No accounts. Just press start.</p>
+
+      <div class="search-hud">
+        <span class="s-icon">🔍</span>
+        <input type="search" id="search-input" placeholder="Search the game library…" autocomplete="off" spellcheck="false" aria-label="Search games">
+        <kbd class="s-kbd">/</kbd>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat"><b id="stat-games">0</b><span>Games</span></div>
+        <div class="stat"><b id="stat-cats">0</b><span>Genres</span></div>
+        <div class="stat"><b>100%</b><span>Free</span></div>
+        <div class="stat"><b>0</b><span>Downloads</span></div>
+      </div>
     </div>
+
+    <!-- Featured game panel -->
+    <aside class="featured" aria-label="Featured game">
+      <div class="featured-head">
+        <span class="feat-tag">◆ FEATURED</span>
+        <button class="btn-mini" id="shuffle-btn" type="button">🎲 SHUFFLE</button>
+      </div>
+      <div class="featured-card" id="featured-card"></div>
+    </aside>
   </section>
 
-  <section class="categories-bar" id="categories-bar" aria-label="Categories"></section>
-
-  <section id="recently-played-section" class="hidden">
-    <h2 class="section-title">⏱ Recently Played</h2>
-    <div class="games-grid" id="recently-played-grid"></div>
+  <!-- ============ CATEGORY RAIL ============ -->
+  <section class="rail-section" aria-label="Categories">
+    <div class="cat-rail" id="categories-bar"></div>
   </section>
 
-  <!-- TOP AD -->
-  <div class="ad-container">
-    <div class="ad-placeholder">
-      <span class="ad-label">Ad Space</span>
-      <span class="ad-hint">Top banner · paste AdSense code here</span>
+  <!-- ============ RECENTLY PLAYED ============ -->
+  <section id="recently-played-section" class="hidden reveal">
+    <div class="section-head">
+      <h2 class="section-title"><span class="bar"></span> CONTINUE PLAYING</h2>
+      <span class="section-count" id="recent-count">0</span>
     </div>
-    <!-- After AdSense approval, replace the placeholder above with:
+    <div class="recent-track" id="recently-played-grid"></div>
+  </section>
+
+  <!-- ============ TOP AD SLOT ============ -->
+  <div class="ad-slot" role="complementary" aria-label="Advertisement">
+    <span class="ad-label">AD SPACE</span>
+    <span class="ad-hint">Top banner · paste AdSense code here</span>
+    <!-- After AdSense approval, replace the block above with:
     <ins class="adsbygoogle"
          style="display:block"
-         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+         data-ad-client="ca-pub-1923618182494890"
          data-ad-slot="1111111111"
          data-ad-format="auto"
          data-full-width-responsive="true"></ins>
@@ -68,34 +116,51 @@
     -->
   </div>
 
-  <section>
-    <h2 class="section-title" id="all-games-title">🎮 All Games</h2>
+  <!-- ============ ALL GAMES ============ -->
+  <section class="library">
+    <div class="section-head">
+      <h2 class="section-title" id="all-games-title"><span class="bar"></span> ALL GAMES</h2>
+      <span class="section-count" id="all-games-count">0</span>
+    </div>
+
     <div class="games-grid" id="games-grid"></div>
+
     <div id="no-results" class="no-results hidden">
-      <p>🔍 No games found. Try a different search.</p>
+      <div class="nr-icon">🛰️</div>
+      <p class="nr-title">NO SIGNAL</p>
+      <p class="nr-sub">No games matched your search. Try another keyword.</p>
     </div>
   </section>
 
 </main>
 
+<!-- ============ FOOTER ============ -->
 <footer class="site-footer">
   <div class="footer-inner">
-    <div class="footer-col">
-      <h4>Twilight Tree</h4>
+    <div class="footer-col footer-brand">
+      <a href="index.html" class="brand brand--footer">
+        <span class="brand-mark">🌲</span>
+        <span class="brand-text">TWILIGHT TREE<em>GAME HUB</em></span>
+      </a>
       <p>A growing collection of free browser games. Made for quick breaks, long sessions, and everything in between.</p>
+      <div class="footer-status"><i></i> ALL SYSTEMS OPERATIONAL</div>
     </div>
+
     <div class="footer-col">
-      <h4>Pages</h4>
+      <h4>Navigate</h4>
       <a href="index.html">Arcade</a>
       <a href="about.html">About</a>
       <a href="privacy.html">Privacy Policy</a>
       <a href="contact.html">Contact</a>
     </div>
+
     <div class="footer-col">
       <h4>Contact</h4>
       <a href="mailto:shubhgupta916@gmail.com">shubhgupta916@gmail.com</a>
+      <p class="footer-note">Built by Shubhang Gupta</p>
     </div>
   </div>
+
   <div class="footer-bottom">
     <p>© <span id="year"></span> Twilight Tree. All games are free to play.</p>
   </div>
@@ -103,222 +168,419 @@
 
 <script src="games.js"></script>
 <script>
-  'use strict';
+'use strict';
 
-  /* ============================================================
-     RECENTLY PLAYED STORAGE
-     ============================================================ */
-  const RECENT_KEY = 'twilighttree_recent';
-  const MAX_RECENT = 4;
+/* ============================================================
+   DATA
+   ============================================================ */
+const GAMES = Array.isArray(window.GAMES) ? window.GAMES : [];
+const RECENT_KEY = 'twilighttree_recent';
+const MAX_RECENT = 6;
+const FINE_POINTER = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  function getRecent() {
-    try {
-      const raw = localStorage.getItem(RECENT_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) { return []; }
-  }
+/* ============================================================
+   HUD CHROME — nav glider + scroll bar + reveals
+   ============================================================ */
+(function hudChrome() {
+  const nav = document.getElementById('hud-nav');
+  const glider = document.getElementById('nav-glider');
 
-  function saveRecent(ids) {
-    try { localStorage.setItem(RECENT_KEY, JSON.stringify(ids)); } catch (e) {}
-  }
+  if (nav && glider) {
+    const links = Array.from(nav.querySelectorAll('a'));
+    const activeLink = nav.querySelector('a.active') || links[0];
 
-  /* ============================================================
-     SOUND (subtle hover + click blips)
-     ============================================================ */
-  let soundEnabled = (localStorage.getItem('twilighttree_sound') !== 'off');
-  let audioCtx = null;
-
-  function ensureAudio() {
-    if (!audioCtx) {
-      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    function move(el) {
+      if (!el) return;
+      glider.style.width = el.offsetWidth + 'px';
+      glider.style.transform = 'translateX(' + el.offsetLeft + 'px)';
     }
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+    requestAnimationFrame(() => move(activeLink));
+    links.forEach(l => {
+      l.addEventListener('mouseenter', () => move(l));
+      l.addEventListener('focus', () => move(l));
+    });
+    nav.addEventListener('mouseleave', () => move(activeLink));
+    window.addEventListener('resize', () => move(nav.querySelector('a.active') || links[0]));
   }
 
-  function blip(freq, dur) {
-    if (!soundEnabled || !audioCtx) return;
-    try {
-      const t = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(0.05, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(t); osc.stop(t + dur);
-    } catch (e) {}
+  const bar = document.getElementById('scroll-bar');
+  if (bar) {
+    const update = () => {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - doc.clientHeight;
+      bar.style.width = (max > 0 ? (doc.scrollTop / max) * 100 : 0) + '%';
+    };
+    document.addEventListener('scroll', update, { passive: true });
+    update();
   }
+})();
 
-  // Sound toggle
-  const soundBtn = document.getElementById('sound-toggle');
-  function updateSoundBtn() {
-    soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
-    soundBtn.setAttribute('aria-label', soundEnabled ? 'Mute sound' : 'Unmute sound');
+let revealObserver = null;
+if ('IntersectionObserver' in window) {
+  revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+}
+
+function observeReveals(root) {
+  (root || document).querySelectorAll('.reveal:not(.in)').forEach(el => {
+    if (revealObserver) revealObserver.observe(el);
+    else el.classList.add('in');
+  });
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => t.classList.remove('show'), 1600);
+  setTimeout(() => t.remove(), 2100);
+}
+
+/* ============================================================
+   SOUND ENGINE (subtle UI blips)
+   ============================================================ */
+let soundEnabled = localStorage.getItem('twilighttree_sound') !== 'off';
+let audioCtx = null;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
   }
-  updateSoundBtn();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function blip(freq, dur, type) {
+  if (!soundEnabled || !audioCtx) return;
+  try {
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.05, t);
+    gain.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + dur);
+  } catch (e) {}
+}
+
+const soundBtn = document.getElementById('sound-toggle');
+function updateSoundBtn() {
+  if (!soundBtn) return;
+  soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+  soundBtn.setAttribute('aria-label', soundEnabled ? 'Mute sound' : 'Unmute sound');
+}
+updateSoundBtn();
+
+if (soundBtn) {
   soundBtn.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
     localStorage.setItem('twilighttree_sound', soundEnabled ? 'on' : 'off');
     updateSoundBtn();
-    if (soundEnabled) { ensureAudio(); blip(660, 0.08); }
+    if (soundEnabled) { ensureAudio(); blip(680, 0.09); }
+  });
+}
+
+['click', 'touchstart', 'keydown'].forEach(ev =>
+  document.addEventListener(ev, ensureAudio, { once: true, passive: true })
+);
+
+/* ============================================================
+   RECENTLY PLAYED STORAGE
+   ============================================================ */
+function getRecent() {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+
+/* ============================================================
+   CARD BUILDER
+   ============================================================ */
+function buildCard(game, index) {
+  const card = document.createElement('a');
+  card.className = 'game-card reveal';
+  card.href = 'play.html?id=' + encodeURIComponent(game.id);
+  card.style.setProperty('--accent', game.accent || '#28e7ff');
+  card.setAttribute('aria-label', 'Play ' + game.title);
+
+  const gradient = game.gradient || ['#28e7ff', '#8b5cff'];
+  const c1 = gradient[0], c2 = gradient[1];
+
+  const media = game.thumbnail
+    ? '<img class="card-thumb-img" src="' + game.thumbnail + '" alt="' + game.title + '" loading="lazy" decoding="async">'
+    : '<span class="card-emoji">' + (game.emoji || '🎮') + '</span>';
+
+  card.innerHTML =
+    '<div class="card-thumb" style="background:linear-gradient(140deg,' + c1 + ',' + c2 + ');">' +
+      media +
+      '<span class="shine"></span>' +
+      (game.isNew ? '<span class="card-new">NEW</span>' : '') +
+      '<div class="card-play"><span>▶</span></div>' +
+    '</div>' +
+    '<div class="card-info">' +
+      '<span class="card-title">' + game.title + '</span>' +
+      '<span class="card-meta">' +
+        '<span class="card-cat">' + (game.category || 'Arcade') + '</span>' +
+        '<span class="card-arrow">▶</span>' +
+      '</span>' +
+    '</div>' +
+    '<span class="card-bar"></span>';
+
+  if (index < 12) card.style.transitionDelay = (index * 40) + 'ms';
+
+  /* 3D tilt */
+  if (FINE_POINTER) {
+    card.addEventListener('mousemove', (e) => {
+      const r = card.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - 0.5;
+      const py = (e.clientY - r.top) / r.height - 0.5;
+      card.style.setProperty('--ry', (px * 9).toFixed(2) + 'deg');
+      card.style.setProperty('--rx', (-py * 9).toFixed(2) + 'deg');
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.setProperty('--ry', '0deg');
+      card.style.setProperty('--rx', '0deg');
+    });
+  }
+
+  card.addEventListener('mouseenter', () => { ensureAudio(); blip(920, 0.05); });
+  card.addEventListener('click', () => { ensureAudio(); blip(1240, 0.09); });
+
+  return card;
+}
+
+function renderGrid(container, games, withAds) {
+  container.innerHTML = '';
+  games.forEach((g, i) => {
+    container.appendChild(buildCard(g, i));
+    if (withAds && (i + 1) % 6 === 0 && i !== games.length - 1) {
+      const ad = document.createElement('div');
+      ad.className = 'ad-slot ad-slot--inset';
+      ad.innerHTML = '<span class="ad-label">AD SPACE</span><span class="ad-hint">In-feed · paste AdSense code here</span>';
+      container.appendChild(ad);
+    }
+  });
+  observeReveals(container);
+}
+
+/* ============================================================
+   FEATURED PANEL
+   ============================================================ */
+const featuredCard = document.getElementById('featured-card');
+const shuffleBtn = document.getElementById('shuffle-btn');
+let currentFeatured = null;
+
+function pickFeatured(exclude) {
+  const pool = GAMES.filter(g => g !== exclude);
+  if (!pool.length) return GAMES[0] || null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function renderFeatured(game) {
+  if (!featuredCard || !game) return;
+  currentFeatured = game;
+
+  const gradient = game.gradient || ['#28e7ff', '#8b5cff'];
+  const art = game.thumbnail
+    ? '<img src="' + game.thumbnail + '" alt="' + game.title + '" loading="lazy">'
+    : '<span class="feat-emoji">' + (game.emoji || '🎮') + '</span>';
+
+  featuredCard.style.setProperty('--accent', game.accent || '#28e7ff');
+
+  featuredCard.innerHTML =
+    '<div class="feat-art" style="background:linear-gradient(140deg,' + gradient[0] + ',' + gradient[1] + ');">' +
+      art +
+      '<span class="feat-shine"></span>' +
+      (game.isNew ? '<span class="feat-new">NEW</span>' : '') +
+    '</div>' +
+    '<div class="feat-body">' +
+      '<h3 class="feat-title">' + game.title + '</h3>' +
+      '<p class="feat-desc">' + (game.description || 'Jump straight into the action — no downloads, no sign-ups.') + '</p>' +
+      '<div class="feat-actions">' +
+        '<a class="btn-play" href="play.html?id=' + encodeURIComponent(game.id) + '"><span>▶</span> PLAY NOW</a>' +
+        '<span class="feat-cat">' + (game.category || 'Arcade') + '</span>' +
+      '</div>' +
+    '</div>';
+}
+
+if (featuredCard && GAMES.length) {
+  renderFeatured(GAMES.find(g => g.isNew) || GAMES[0]);
+}
+
+if (shuffleBtn) {
+  shuffleBtn.addEventListener('click', () => {
+    ensureAudio();
+    blip(760, 0.07);
+    featuredCard.classList.add('swapping');
+    setTimeout(() => {
+      renderFeatured(pickFeatured(currentFeatured));
+      featuredCard.classList.remove('swapping');
+    }, 200);
+  });
+}
+
+/* ============================================================
+   CATEGORIES
+   ============================================================ */
+const gamesGrid = document.getElementById('games-grid');
+const recentGrid = document.getElementById('recently-played-grid');
+const recentSection = document.getElementById('recently-played-section');
+const categoriesBar = document.getElementById('categories-bar');
+const searchInput = document.getElementById('search-input');
+const noResults = document.getElementById('no-results');
+const allGamesTitle = document.getElementById('all-games-title');
+const allGamesCount = document.getElementById('all-games-count');
+const recentCount = document.getElementById('recent-count');
+
+let currentCategory = 'All';
+let currentSearch = '';
+
+function buildCategories() {
+  const counts = {};
+  GAMES.forEach(g => {
+    const c = g.category || 'Arcade';
+    counts[c] = (counts[c] || 0) + 1;
   });
 
-  /* ============================================================
-     RENDER GAME CARDS
-     ============================================================ */
-  const gamesGrid = document.getElementById('games-grid');
-  const recentGrid = document.getElementById('recently-played-grid');
-  const recentSection = document.getElementById('recently-played-section');
-  const categoriesBar = document.getElementById('categories-bar');
-  const searchInput = document.getElementById('search-input');
-  const noResults = document.getElementById('no-results');
-  const allGamesTitle = document.getElementById('all-games-title');
+  const cats = ['All'].concat(Object.keys(counts).sort());
+  categoriesBar.innerHTML = '';
 
-  let currentCategory = 'All';
-  let currentSearch = '';
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cat-btn' + (cat === 'All' ? ' active' : '');
+    const total = cat === 'All' ? GAMES.length : counts[cat];
+    btn.innerHTML = cat + '<i>' + total + '</i>';
 
-    function buildCard(game, indexInGrid) {
-    const card = document.createElement('a');
-    card.className = 'game-card';
-    card.href = 'play.html?id=' + encodeURIComponent(game.id);
-    card.style.setProperty('--accent', game.accent || '#00f0ff');
-    card.setAttribute('aria-label', 'Play ' + game.title);
-
-    const [c1, c2] = game.gradient || ['#00f0ff', '#b400ff'];
-
-    // Use thumbnail image if provided, otherwise fall back to emoji
-    const media = game.thumbnail
-      ? `<img class="card-thumb-img" src="${game.thumbnail}" alt="${game.title}" loading="lazy" decoding="async">`
-      : `<span class="card-emoji">${game.emoji || '🎮'}</span>`;
-
-    card.innerHTML = `
-      <div class="card-thumb" style="background: linear-gradient(135deg, ${c1}, ${c2});">
-        ${media}
-        ${game.isNew ? '<span class="card-new">NEW</span>' : ''}
-        <div class="card-play"><div class="card-play-icon">▶</div></div>
-      </div>
-      <div class="card-info">
-        <span class="card-title">${game.title}</span>
-        <span class="card-cat">${game.category || 'Arcade'}</span>
-      </div>
-    `;
-
-    card.addEventListener('mouseenter', () => { ensureAudio(); blip(880, 0.05); });
-    card.addEventListener('click', () => { ensureAudio(); blip(1200, 0.09); });
-
-    return card;
-  }
-
-  function renderGrid(container, games, withAds) {
-    container.innerHTML = '';
-    games.forEach((g, i) => {
-      container.appendChild(buildCard(g, i));
-      // In-feed ad after every 6 cards (only in main grid)
-      if (withAds && (i + 1) % 6 === 0 && i !== games.length - 1) {
-        const ad = document.createElement('div');
-        ad.className = 'ad-container inset';
-        ad.innerHTML = `
-          <div class="ad-placeholder">
-            <span class="ad-label">Ad Space</span>
-            <span class="ad-hint">In-feed · paste AdSense code here</span>
-          </div>
-        `;
-        container.appendChild(ad);
-      }
+    btn.addEventListener('click', () => {
+      currentCategory = cat;
+      categoriesBar.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ensureAudio();
+      blip(720, 0.06);
+      refresh();
     });
+
+    categoriesBar.appendChild(btn);
+  });
+}
+
+/* ============================================================
+   FILTER + SEARCH
+   ============================================================ */
+function getFilteredGames() {
+  let list = GAMES.slice();
+
+  if (currentCategory !== 'All') {
+    list = list.filter(g => (g.category || 'Arcade') === currentCategory);
   }
 
-  /* ============================================================
-     FILTER & SEARCH
-     ============================================================ */
-  function getFilteredGames() {
-    let list = window.GAMES.slice();
-
-    if (currentCategory !== 'All') {
-      list = list.filter(g => (g.category || 'Arcade') === currentCategory);
-    }
-
-    if (currentSearch.trim()) {
-      const q = currentSearch.trim().toLowerCase();
-      list = list.filter(g =>
-        g.title.toLowerCase().includes(q) ||
-        (g.description || '').toLowerCase().includes(q) ||
-        (g.category || '').toLowerCase().includes(q)
-      );
-    }
-
-    return list;
+  const q = currentSearch.trim().toLowerCase();
+  if (q) {
+    list = list.filter(g =>
+      (g.title || '').toLowerCase().includes(q) ||
+      (g.description || '').toLowerCase().includes(q) ||
+      (g.category || '').toLowerCase().includes(q)
+    );
   }
 
-  function refresh() {
-    const list = getFilteredGames();
+  return list;
+}
 
-    if (list.length === 0) {
-      gamesGrid.innerHTML = '';
-      noResults.classList.remove('hidden');
-      allGamesTitle.textContent = '🎮 All Games';
-    } else {
-      noResults.classList.add('hidden');
-      allGamesTitle.textContent = currentCategory === 'All'
-        ? (currentSearch ? `🔎 Results (${list.length})` : '🎮 All Games')
-        : `🎮 ${currentCategory} (${list.length})`;
-      renderGrid(gamesGrid, list, true);
-    }
+function refresh() {
+  const list = getFilteredGames();
+
+  if (list.length === 0) {
+    gamesGrid.innerHTML = '';
+    noResults.classList.remove('hidden');
+    allGamesTitle.innerHTML = '<span class="bar"></span> ALL GAMES';
+    allGamesCount.textContent = '0';
+    return;
   }
 
-  /* ============================================================
-     CATEGORY BAR
-     ============================================================ */
-  function buildCategories() {
-    const set = new Set(['All']);
-    window.GAMES.forEach(g => set.add(g.category || 'Arcade'));
-    const cats = Array.from(set);
+  noResults.classList.add('hidden');
 
-    categoriesBar.innerHTML = '';
-    cats.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.className = 'cat-btn' + (cat === 'All' ? ' active' : '');
-      btn.textContent = cat;
-      btn.addEventListener('click', () => {
-        currentCategory = cat;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        ensureAudio(); blip(720, 0.06);
-        refresh();
-      });
-      categoriesBar.appendChild(btn);
-    });
+  if (currentSearch.trim()) {
+    allGamesTitle.innerHTML = '<span class="bar"></span> SEARCH RESULTS';
+  } else if (currentCategory === 'All') {
+    allGamesTitle.innerHTML = '<span class="bar"></span> ALL GAMES';
+  } else {
+    allGamesTitle.innerHTML = '<span class="bar"></span> ' + currentCategory.toUpperCase();
   }
 
-  /* ============================================================
-     RECENTLY PLAYED
-     ============================================================ */
-  function renderRecentlyPlayed() {
-    const ids = getRecent();
-    const list = ids
-      .map(id => window.GAMES.find(g => g.id === id))
-      .filter(Boolean);
+  allGamesCount.textContent = list.length;
+  renderGrid(gamesGrid, list, true);
+}
 
-    if (list.length === 0) {
-      recentSection.classList.add('hidden');
-      return;
-    }
+/* ============================================================
+   RECENTLY PLAYED
+   ============================================================ */
+function renderRecentlyPlayed() {
+  const ids = getRecent();
+  const list = ids.map(id => GAMES.find(g => g.id === id)).filter(Boolean);
 
-    recentSection.classList.remove('hidden');
-    renderGrid(recentGrid, list, false);
+  if (!list.length) {
+    recentSection.classList.add('hidden');
+    return;
   }
 
-  /* ============================================================
-     INIT
-     ============================================================ */
-  document.getElementById('year').textContent = new Date().getFullYear();
-  buildCategories();
-  refresh();
-  renderRecentlyPlayed();
+  recentSection.classList.remove('hidden');
+  recentCount.textContent = list.length;
+  renderGrid(recentGrid, list, false);
+}
 
-  // Search
-  let searchTimeout;
+/* ============================================================
+   HERO STATS (animated counters)
+   ============================================================ */
+function animateCount(el, target, duration) {
+  if (!el) return;
+  const start = performance.now();
+  const step = (now) => {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(target * eased);
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function initStats() {
+  const catSet = new Set(GAMES.map(g => g.category || 'Arcade'));
+  animateCount(document.getElementById('stat-games'), GAMES.length, 900);
+  animateCount(document.getElementById('stat-cats'), catSet.size, 900);
+  document.getElementById('game-count').textContent = GAMES.length;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.getElementById('year').textContent = new Date().getFullYear();
+
+buildCategories();
+refresh();
+renderRecentlyPlayed();
+initStats();
+observeReveals(document);
+
+/* Search */
+let searchTimeout;
+if (searchInput) {
   searchInput.addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
@@ -327,10 +589,21 @@
     }, 120);
   });
 
-  // First user interaction warms up the audio context
-  ['click', 'touchstart', 'keydown'].forEach(ev =>
-    document.addEventListener(ev, ensureAudio, { once: true, passive: true })
-  );
+  /* "/" keyboard shortcut */
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== searchInput) {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    }
+    if (e.key === 'Escape' && document.activeElement === searchInput) {
+      searchInput.value = '';
+      currentSearch = '';
+      refresh();
+      searchInput.blur();
+    }
+  });
+}
 </script>
 </body>
 </html>

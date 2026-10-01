@@ -11,17 +11,6 @@
 
 window.GAMES = [
   {
-    id: "click-the-dot",
-    title: "Click the Dot",
-    description: "Tap the glowing dot as fast as you can. Build combos up to 5× for maximum score.",
-    category: "Reaction",
-    thumbnail: "thumbnails/click-the-dot.png",
-    gradient: ["#00f0ff", "#b400ff"],
-    accent: "#00f0ff",
-    file: "games/click-the-dot.html",
-    isNew: false
-  },
-  {
     id: "star-vanguard",
     title: "Star Vanguard",
     description: "Endless wave-based space shooter. Destroy formations, dodge asteroids, upgrade your ship.",
@@ -30,28 +19,6 @@ window.GAMES = [
     gradient: ["#ff00aa", "#ffe600"],
     accent: "#ff00aa",
     file: "games/star-vanguard.html",
-    isNew: true
-  },
-  {
-    id: "whack-a-mole",
-    title: "Whack-a-Mole",
-    description: "Tap the moles, dodge the bombs, and chase the combo multiplier in 30 seconds of pure arcade mayhem.",
-    category: "Reaction",
-    thumbnail: "thumbnails/whack-a-mole.png",
-    gradient: ["#FFD700", "#FF3DAE"],
-    accent: "#FFD700",
-    file: "games/whack-a-mole.html",
-    isNew: true
-  },
-  {
-    id: "stickman-archer",
-    title: "Stickman Archer",
-    description: "Aim, draw, and release. Precision archery with satisfying physics.",
-    category: "Action",
-    thumbnail: "thumbnails/stickman-archer.png",
-    gradient: ["#00ff88", "#00f0ff"],
-    accent: "#00ff88",
-    file: "games/stickman-archer.html",
     isNew: true
   },
   {
@@ -88,17 +55,6 @@ window.GAMES = [
     isNew: true
   },
   {
-    id: "don't look behind",
-    title: "Don't look behind",
-    description: "You Die, if you look Behind.",
-    category: "Horror",
-    thumbnail: "thumbnails/dlb.png",
-    gradient: ["#00ff88", "#00f0ff"],
-    accent: "#00ff88",
-    file: "games/dlb.html",
-    isNew: true
-  },
-  {
     id: "gravityrace",
     title: "Gravity Race",
     description: "Bring back old  days of raing with a cool drift.",
@@ -107,39 +63,6 @@ window.GAMES = [
     gradient: ["#00ff88", "#00f0ff"],
     accent: "#00ff88",
     file: "games/gravityrace.html",
-    isNew: true
-  },
-  {
-    id: "terrahaven",
-    title: "TerraHaven",
-    description: "Build and Destroy in this Endless World, Show you creativity.",
-    category: "Creative",
-    thumbnail: "thumbnails/terrahaven.png",
-    gradient: ["#00ff88", "#00f0ff"],
-    accent: "#00ff88",
-    file: "games/terrahaven.html",
-    isNew: true
-  },
-  {
-    id: "appleshooter",
-    title: "Apple Shooter",
-    description: "Shoot the Apple not the Guy and Build a HighScore.",
-    category: "Shooting",
-    thumbnail: "thumbnails/appleshooter.png",
-    gradient: ["#00ff88", "#00f0ff"],
-    accent: "#00ff88",
-    file: "games/appleshooter.html",
-    isNew: true
-  },
-  {
-    id: "endless_shooter",
-    title: "Endless Shooter",
-    description: "An endless shooter game.",
-    category: "Shooting",
-    thumbnail: "thumbnails/endless_shooter.png",
-    gradient: ["#ff00aa", "#ffe600"],
-    accent: "#00ff88",
-    file: "games/endless_shooter.html",
     isNew: true
   },
     {
@@ -151,6 +74,17 @@ window.GAMES = [
     gradient: ["#ff00aa", "#ffe600"],
     accent: "#00ff88",
     file: "games/neonfill.html",
+    isNew: true
+  },
+  {
+    id: "gravityshift",
+    title: "Gravity Shift",
+    description: "Endless wave-based space shooter. Destroy formations, dodge asteroids, upgrade your ship.",
+    category: "Action",
+    thumbnail: "thumbnails/gravityshift.jpg",
+    gradient: ["#ff00aa", "#ffe600"],
+    accent: "#ff00aa",
+    file: "games/gravityshift.html",
     isNew: true
   }
 ];

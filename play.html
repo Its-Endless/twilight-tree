@@ -56,6 +56,84 @@
   const fullscreenBtn = document.getElementById('fullscreen-btn');
   const shareBtn = document.getElementById('share-btn');
 
+  /* ============================================================
+     IFRAME FOCUS HANDLING
+     Keyboard events only reach the iframe when its window has
+     focus. We aggressively grant focus on load, click, tap,
+     visibility change, and via a message handshake with the game.
+     ============================================================ */
+  function focusGameFrame() {
+    try {
+      if (frame.contentWindow) {
+        frame.contentWindow.focus();
+        const doc = frame.contentDocument;
+        if (doc) {
+          const cvs = doc.querySelector('canvas');
+          if (cvs && typeof cvs.focus === 'function') {
+            cvs.setAttribute('tabindex', '0');
+            cvs.focus();
+          }
+          // Also try the body if canvas isn't found
+          if (!cvs && doc.body && typeof doc.body.focus === 'function') {
+            doc.body.focus();
+          }
+        }
+      }
+    } catch (e) {
+      // Cross-origin iframe — cannot focus directly
+      console.warn('[Twilight Tree] Cannot focus iframe:', e);
+    }
+  }
+
+  // When the game sends us a "game-ready" message, take focus
+  window.addEventListener('message', function (e) {
+    if (e && e.data && e.data.type === 'game-ready') {
+      focusGameFrame();
+    }
+  });
+
+  // Focus on any click/tap on the parent page (capture phase so it always runs)
+  document.addEventListener('click', focusGameFrame, true);
+  document.addEventListener('mousedown', focusGameFrame, true);
+  document.addEventListener('touchstart', focusGameFrame, { passive: true, capture: true });
+  document.addEventListener('pointerdown', focusGameFrame, true);
+
+  // Focus when returning to the tab
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) setTimeout(focusGameFrame, 50);
+  });
+
+  // Focus on window focus (e.g. alt-tab back)
+  window.addEventListener('focus', function () {
+    setTimeout(focusGameFrame, 50);
+  });
+
+  // Focus on orientation change / resize
+  window.addEventListener('resize', function () {
+    setTimeout(focusGameFrame, 100);
+  });
+  window.addEventListener('orientationchange', function () {
+    setTimeout(focusGameFrame, 250);
+  });
+
+  // Focus when the iframe is entered with the mouse
+  frame.addEventListener('mouseenter', focusGameFrame);
+
+  // Belt-and-braces: blur any focused parent element so it stops
+  // swallowing keyboard events meant for the game.
+  function blurParentFocus() {
+    const el = document.activeElement;
+    if (el && el !== document.body && el !== frame && typeof el.blur === 'function') {
+      el.blur();
+    }
+  }
+
+  // Expose for debugging / manual invocation from console
+  window.__focusGameFrame = focusGameFrame;
+
+  /* ============================================================
+     LOAD GAME
+     ============================================================ */
   if (!game) {
     titleEl.textContent = 'Game Not Found';
     loading.innerHTML = '<span style="letter-spacing:2px;text-transform:uppercase;color:#8888aa;font-size:0.8rem;">This game does not exist.</span>';
@@ -64,18 +142,26 @@
     document.title = game.title + ' · Twilight Tree';
     titleEl.textContent = game.title;
 
+    // Blur any focused parent element (e.g. the grid card that was clicked)
+    blurParentFocus();
+
     // Load game into iframe
     frame.src = game.file;
 
-    // Hide loading once iframe finishes loading
-    frame.addEventListener('load', () => {
-      if (frame.src !== 'about:blank') {
-        loading.classList.add('hidden');
-      }
+    // When the iframe finishes loading: hide loading + grab focus
+    frame.addEventListener('load', function () {
+      if (frame.src === 'about:blank') return;
+      loading.classList.add('hidden');
+
+      // Multiple focus attempts — browsers sometimes need a beat to settle
+      focusGameFrame();
+      setTimeout(focusGameFrame, 100);
+      setTimeout(focusGameFrame, 300);
+      setTimeout(focusGameFrame, 700);
     });
 
     // Safety: force-hide loading after 6s
-    setTimeout(() => loading.classList.add('hidden'), 6000);
+    setTimeout(function () { loading.classList.add('hidden'); }, 6000);
 
     // Record to "Recently Played"
     try {
@@ -93,35 +179,45 @@
   /* ============================================================
      BACK BUTTON
      ============================================================ */
-  backBtn.addEventListener('click', () => {
+  backBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
     window.location.href = 'index.html';
   });
 
   /* ============================================================
      FULLSCREEN
      ============================================================ */
-  fullscreenBtn.addEventListener('click', async () => {
+  fullscreenBtn.addEventListener('click', async function (e) {
+    e.stopPropagation();
     try {
       const target = document.querySelector('.play-frame-wrapper');
-      if (!document.fullscreenElement) {
+      const isFull = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!isFull) {
         if (target.requestFullscreen) await target.requestFullscreen();
         else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
       } else {
         if (document.exitFullscreen) await document.exitFullscreen();
         else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
       }
-    } catch (e) { /* user cancelled or not supported */ }
+      // Ensure the game receives focus after fullscreen change
+      setTimeout(focusGameFrame, 200);
+    } catch (err) { /* user cancelled or not supported */ }
   });
 
   // Update fullscreen icon on change
-  document.addEventListener('fullscreenchange', () => {
+  document.addEventListener('fullscreenchange', function () {
     fullscreenBtn.textContent = document.fullscreenElement ? '⛶' : '⛶';
+    setTimeout(focusGameFrame, 200);
+  });
+  document.addEventListener('webkitfullscreenchange', function () {
+    setTimeout(focusGameFrame, 200);
   });
 
   /* ============================================================
      SHARE
      ============================================================ */
-  shareBtn.addEventListener('click', async () => {
+  shareBtn.addEventListener('click', async function (e) {
+    e.stopPropagation();
     const shareData = {
       title: game ? game.title + ' · Twilight Tree' : 'Twilight Tree',
       text: game ? 'Playing ' + game.title + ' on Twilight Tree!' : 'Check out Twilight Tree!',
@@ -136,7 +232,7 @@
       } else {
         prompt('Copy this link:', window.location.href);
       }
-    } catch (e) { /* cancelled */ }
+    } catch (err) { /* cancelled */ }
   });
 
   function showToast(msg) {
@@ -152,8 +248,8 @@
       transition:opacity 0.3s;
     `;
     document.body.appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; }, 1500);
-    setTimeout(() => t.remove(), 1900);
+    setTimeout(function () { t.style.opacity = '0'; }, 1500);
+    setTimeout(function () { t.remove(); }, 1900);
   }
 </script>
 </body>
