@@ -35,7 +35,7 @@ const PLAYER_W=12, PLAYER_H=14;
 const BASE_SPEED=1.25, MAX_SPEED=4.2;
 const SPEED_INCREASE_INTERVAL=700, SPEED_STEP=0.28;
 const GRAVITY=0.55, FLIP_COOLDOWN=6;
-const HUD_H=30;                     // <-- INCREASED for BEST row
+const HUD_H=30;
 const FONT_HEAD="'Orbitron',sans-serif";
 const FONT_MONO="'Share Tech Mono',monospace";
 
@@ -154,10 +154,6 @@ function measureText(text,size,weight,mono){
 
 // ============================================================
 //  AUDIO ENGINE — with distinct music modes
-//  'menu'    : calm atmospheric theme on home/garage/etc.
-//  'run'     : fast intense theme during gameplay
-//  'pause'   : slow ambient theme during pause
-//  'gameover': low somber drone
 // ============================================================
 class AudioEngine{
     constructor(){
@@ -174,7 +170,6 @@ class AudioEngine{
             this.musicGain=this.ctx.createGain();this.musicGain.gain.value=0.5;this.musicGain.connect(this.masterGain);
             this.sfxGain=this.ctx.createGain();this.sfxGain.gain.value=0.75;this.sfxGain.connect(this.masterGain);
             this.applySettings();
-            // Auto-start music if mode is already set
             if(this.musicMode&&this.musicMode!=='silent'){
                 this.musicPlaying=true;this.step=0;this._scheduleMusic();
             }
@@ -203,56 +198,35 @@ class AudioEngine{
     _scheduleMusic(){
         if(!this.musicPlaying||!this.ctx)return;
         let stepDur;
-        if(this.musicMode==='menu'){
-            stepDur=60/90/2;
-            this._menuPattern(stepDur);
-        }else if(this.musicMode==='run'){
-            stepDur=60/(135+this.speedLevel*15)/2;
-            this._runPattern(stepDur);
-        }else if(this.musicMode==='pause'){
-            stepDur=60/60/2;
-            this._pausePattern(stepDur);
-        }else if(this.musicMode==='gameover'){
-            stepDur=60/50/2;
-            this._gameoverPattern(stepDur);
-        }else{
-            this.musicPlaying=false;
-            return;
-        }
+        if(this.musicMode==='menu'){stepDur=60/90/2;this._menuPattern(stepDur);}
+        else if(this.musicMode==='run'){stepDur=60/(135+this.speedLevel*15)/2;this._runPattern(stepDur);}
+        else if(this.musicMode==='pause'){stepDur=60/60/2;this._pausePattern(stepDur);}
+        else if(this.musicMode==='gameover'){stepDur=60/50/2;this._gameoverPattern(stepDur);}
+        else{this.musicPlaying=false;return;}
         this.step++;
         this.musicTimer=setTimeout(()=>this._scheduleMusic(),stepDur*1000);
     }
-    // --- MUSIC PATTERNS ---
     _menuPattern(stepDur){
         const t=this.ctx.currentTime;
-        // Slow ambient bass
         const bass=[55,55,65,55,82,65,55,73];
         this._note(bass[this.step%bass.length],'triangle',0.14,stepDur*0.9,t);
-        // Soft pad arpeggio
         const pad=[220,262,330,262,247,330,392,330];
         this._note(pad[this.step%pad.length],'sine',0.07,stepDur*1.6,t);
-        // Occasional shimmer
         if(this.step%4===0)this._note(440,'sine',0.045,stepDur*2,t);
         if(this.step%8===0)this._note(659,'sine',0.03,stepDur*2.5,t);
     }
     _runPattern(stepDur){
         const t=this.ctx.currentTime;
-        // Pulsing bass
         const bass=[55,55,82,55,65,65,98,65];
         this._note(bass[this.step%bass.length],'sawtooth',0.18,stepDur*0.8,t);
-        // Arpeggio
         const arp=[220,277,330,277,262,330,392,330];
         this._note(arp[this.step%arp.length],'square',0.09,stepDur*0.5,t);
-        // Percussion
         if(this.step%2===0)this._noise(0.06,stepDur*0.3,t);
-        // Extra layers at high speed
         if(this.speedLevel>=3&&this.step%4===0)this._note(440+this.speedLevel*40,'triangle',0.06,stepDur*0.4,t);
-        // Combo layer
         if(game.combo>=10&&this.step%8===0)this._note(880+game.combo*5,'triangle',0.05,stepDur*0.6,t);
     }
     _pausePattern(stepDur){
         const t=this.ctx.currentTime;
-        // Very slow ambient chord
         const chord=[220,277,330];
         chord.forEach(f=>this._note(f,'sine',0.04,stepDur*3,t));
         if(this.step%4===0)this._note(165,'triangle',0.055,stepDur*2,t);
@@ -260,13 +234,11 @@ class AudioEngine{
     }
     _gameoverPattern(stepDur){
         const t=this.ctx.currentTime;
-        // Low somber drone
         if(this.step%4===0){
             this._note(82,'triangle',0.08,stepDur*3,t);
             this._note(110,'sine',0.05,stepDur*3,t);
         }
     }
-    // --- SFX ---
     playFlip(){if(!this.ctx)return;const t=this.ctx.currentTime;const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type='square';o.frequency.setValueAtTime(880,t);o.frequency.exponentialRampToValueAtTime(1760,t+0.06);o.frequency.exponentialRampToValueAtTime(440,t+0.12);g.gain.setValueAtTime(0.22,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.12);o.connect(g);g.connect(this.sfxGain);o.start(t);o.stop(t+0.12);}
     playCollect(){if(!this.ctx)return;const t=this.ctx.currentTime;[523,659,784].forEach((f,i)=>{const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(0.16,t+i*0.04);g.gain.exponentialRampToValueAtTime(0.001,t+i*0.04+0.1);o.connect(g);g.connect(this.sfxGain);o.start(t+i*0.04);o.stop(t+i*0.04+0.1);});}
     playDeath(){if(!this.ctx)return;const t=this.ctx.currentTime;const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type='sawtooth';o.frequency.setValueAtTime(440,t);o.frequency.exponentialRampToValueAtTime(55,t+0.6);g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.6);o.connect(g);g.connect(this.sfxGain);o.start(t);o.stop(t+0.6);}
@@ -283,6 +255,123 @@ const audio=new AudioEngine();
 function vibrate(ms){if(!save.settings.haptics)return;if(navigator.vibrate){try{navigator.vibrate(ms);}catch(e){}}}
 
 // ============================================================
+//  REWARDED AD INTEGRATION — resume from death
+// ============================================================
+let reviveSnapshot=null;
+let adInProgress=false;
+
+function requestRewardedAd(onReward,onFail){
+    let adBreakFn=null;
+    try{
+        if(typeof adBreak==='function')adBreakFn=adBreak;
+        else if(window.parent&&window.parent!==window&&typeof window.parent.adBreak==='function'){
+            adBreakFn=window.parent.adBreak;
+        }
+    }catch(e){adBreakFn=null;}
+
+    if(!adBreakFn){
+        console.warn('[GravityShift] adBreak unavailable — check play.html wrapper.');
+        onFail&&onFail();
+        return;
+    }
+
+    let rewardGranted=false,finished=false;
+    function finish(cb){if(finished)return;finished=true;cb&&cb();}
+
+    try{
+        adBreakFn({
+            type:'reward',
+            name:'resume_after_death',
+            beforeAd:()=>{try{if(audio&&audio.masterGain)audio.masterGain.gain.value=0.05;}catch(e){}},
+            afterAd:()=>{try{if(audio&&audio.masterGain)audio.masterGain.gain.value=0.72;}catch(e){}},
+            beforeReward:(showAdFn)=>showAdFn(),
+            adViewed:()=>{rewardGranted=true;finish(onReward);},
+            adDismissed:()=>{rewardGranted=false;finish(onFail);},
+            adBreakDone:(info)=>{
+                if(!rewardGranted&&info&&info.breakStatus!=='viewed')finish(onFail);
+                else if(!rewardGranted&&!info)finish(onFail);
+            }
+        });
+    }catch(e){
+        console.warn('[GravityShift] adBreak threw:',e);
+        finish(onFail);
+    }
+}
+
+function reviveFromAd(){
+    if(!reviveSnapshot)return;
+    const s=reviveSnapshot;
+
+    // Restore game state from before death
+    game.distance=s.distance;
+    game.score=s.score;
+    game.energy=s.energy;
+    game.coresEarned=s.coresEarned;
+    game.combo=s.combo;
+    game.maxCombo=s.maxCombo;
+    game.perfectShifts=s.perfectShifts;
+    game.nearMisses=s.nearMisses;
+    game.speed=s.speed;
+    game.speedLevel=s.speedLevel;
+    game.speedIncreaseTimer=s.speedIncreaseTimer;
+    game.zone=s.zone;
+    game.runTime=s.runTime;
+    game.magnetTimer=s.magnetTimer;
+    game.slowmoTimer=s.slowmoTimer;
+    game.doubleTimer=s.doubleTimer;
+    game.comboMilestoneIdx=s.comboMilestoneIdx;
+    game.eliteWaveTimer=s.eliteWaveTimer;
+    game.shieldCount=1;
+    game.newUnlocks=[];
+    game.easterEggTimer=0;
+    game.comboBannerTimer=0;
+    game.comboDisplayTimer=0;
+    game.perfectDisplayTimer=0;
+
+    // Undo endRun() mutations to save file
+    save.cores=s.saveCores;
+    save.totalRuns=s.saveTotalRuns;
+    save.lifetimeDistance=s.saveLifetimeDistance;
+    save.bestScore=s.saveBestScore;
+    save.bestGhost=s.saveBestGhost;
+
+    // Clear the world so we don't die on revive
+    obstacles.length=0;
+    energyCells.length=0;
+    powerupItems.length=0;
+    particles.length=0;
+    shockwaves.length=0;
+    floatingTexts.length=0;
+    achievementQueue.length=0;
+    recentPatterns.length=0;
+
+    // Reset the player
+    player.dead=false;
+    player.deathTimer=0;
+    player.x=60;
+    player.y=GROUND_Y-PLAYER_H;
+    player.vy=0;
+    player.gravityDir=1;
+    player.onSurface=true;
+    player.flipAnim=0;
+    player.visorColor='#00ff88';
+    player.visorTimer=60;
+
+    // Breathing room
+    spawnTimer=200;
+    patternIndex=0;
+
+    // Resume gameplay
+    game.state='PLAYING';
+    game.menuSelection=0;
+    game.cameraShake=0;
+    game.flashAlpha=0;
+    Input.flipRequested=false;
+
+    writeSave();
+}
+
+// ============================================================
 //  MUSIC STATE SYNC
 // ============================================================
 let musicSyncedState=null;
@@ -292,7 +381,6 @@ function syncMusicState(){
     else if(game.state==='PAUSED')desired='pause';
     else if(game.state==='GAMEOVER')desired='gameover';
     else if(game.state==='HOME'||game.state==='GARAGE'||game.state==='DAILY'||game.state==='SETTINGS'||game.state==='ACHIEVEMENTS'||game.state==='TUTORIAL')desired='menu';
-    // LOADING -> null (silent)
     if(desired!==musicSyncedState){
         musicSyncedState=desired;
         if(desired===null){audio.stopMusic();}
@@ -621,6 +709,35 @@ function checkCollisions(){
 }
 
 function endRun(){
+    // ============================================================
+    //  SNAPSHOT for potential revive — captures pre-mutation state
+    // ============================================================
+    reviveSnapshot={
+        distance:game.distance,
+        score:game.score,
+        energy:game.energy,
+        coresEarned:game.coresEarned,
+        combo:game.combo,
+        maxCombo:game.maxCombo,
+        perfectShifts:game.perfectShifts,
+        nearMisses:game.nearMisses,
+        speed:game.speed,
+        speedLevel:game.speedLevel,
+        speedIncreaseTimer:game.speedIncreaseTimer,
+        zone:game.zone,
+        runTime:game.runTime,
+        magnetTimer:game.magnetTimer,
+        slowmoTimer:game.slowmoTimer,
+        doubleTimer:game.doubleTimer,
+        comboMilestoneIdx:game.comboMilestoneIdx,
+        eliteWaveTimer:game.eliteWaveTimer,
+        saveCores:save.cores,
+        saveTotalRuns:save.totalRuns,
+        saveLifetimeDistance:save.lifetimeDistance,
+        saveBestScore:save.bestScore,
+        saveBestGhost:save.bestGhost?save.bestGhost.slice():null
+    };
+
     save.totalRuns++;
     save.lifetimeDistance+=Math.floor(game.distance);
     game.coresEarned=Math.floor(game.energy*0.5+game.score*0.02+game.distance*0.05);
@@ -650,7 +767,6 @@ function update(){
     for(let i=achievementQueue.length-1;i>=0;i--){achievementQueue[i].t--;if(achievementQueue[i].t<=0)achievementQueue.splice(i,1);}
     if(game.easterEggTimer>0)game.easterEggTimer--;
 
-    // Music sync (handles all state transitions)
     syncMusicState();
 
     if(game.state==='LOADING'){updateLoading();return;}
@@ -690,7 +806,6 @@ function update(){
         if(game.zone>=6)unlockAchievement('void_walker');
     }
 
-    // Live cores earned THIS run (for HUD)
     game.coresEarned=Math.floor(game.energy*0.5+game.score*0.02+game.distance*0.05);
 
     player.update();
@@ -1023,42 +1138,32 @@ function drawObstacle(obs){
     }
 }
 
-// ============================================================
-//  NEW HUD: SCORE | ENERGY | RUN CORES (with BEST row)
-// ============================================================
 function drawHUD(){
     ctx.fillStyle='rgba(0,0,0,0.68)';
     ctx.fillRect(0,0,GAME_W,HUD_H);
 
     const colW = GAME_W/3;
 
-    // SCORE (left)
     drawText('SCORE',6,6,'#00e5ff',5,'500','left','middle');
     drawText(String(Math.floor(game.score)).padStart(6,'0'),6,16,'#ffffff',9,'900','left','middle',true);
 
-    // ENERGY (center)
     drawText('ENERGY',colW*1.5,6,'#00e5ff',5,'500','center','middle');
     drawText(String(game.energy).padStart(4,'0'),colW*1.5,16,'#ffdd00',9,'900','center','middle',true);
 
-    // RUN CORES (right) — cores earned THIS RUN
     drawText('RUN',GAME_W-6,6,'#00e5ff',5,'500','right','middle');
     const runCoresStr = '+'+String(game.coresEarned).padStart(4,'0');
     drawText(runCoresStr,GAME_W-6,16,'#aa44ff',9,'900','right','middle',true);
 
-    // BEST high score — small row at the bottom of HUD
     drawText('BEST '+String(save.bestScore).padStart(6,'0'),6,HUD_H-6,'#ffdd00',5,'500','left','middle',true);
 
-    // Speed bar
     const speedBars=Math.floor((game.speed-BASE_SPEED)/(MAX_SPEED-BASE_SPEED)*10);
     let bar='';for(let i=0;i<10;i++)bar+=i<speedBars?'█':'░';
     drawText('SPEED '+bar,GAME_W/2,HUD_H-6,'#0088aa',5,'500','center','middle',true);
 
-    // Run timer (right side, small)
     const totalSec=Math.floor(game.runTime/60);
     const m=Math.floor(totalSec/60),s=totalSec%60;
     drawText(m+':'+String(s).padStart(2,'0'),GAME_W-6,HUD_H-6,'#0088aa',5,'500','right','middle',true);
 
-    // Mobile pause button
     if(game.state==='PLAYING'){
         const pBtn={x:GAME_W-16,y:GAME_H-16,w:12,h:12};
         ctx.fillStyle='rgba(0,229,255,0.15)';ctx.fillRect(pBtn.x,pBtn.y,pBtn.w,pBtn.h);
@@ -1067,7 +1172,6 @@ function drawHUD(){
     }
 }
 
-// Menu registry
 const menuItems=[];
 function beginMenu(){menuItems.length=0;}
 function addMenuItem(label,rect,action,opts){
@@ -1468,6 +1572,9 @@ function drawPaused(){
     drawText('↑↓ + ENTER  OR TAP',GAME_W/2,GAME_H-6,'#0088aa',5,'500','center','middle');
 }
 
+// ============================================================
+//  GAME OVER SCREEN — includes WATCH AD · CONTINUE button
+// ============================================================
 function drawGameOver(){
     beginMenu();
     ctx.fillStyle='rgba(5,5,8,0.9)';ctx.fillRect(0,0,GAME_W,GAME_H);
@@ -1504,6 +1611,32 @@ function drawGameOver(){
         drawText('NEW UNLOCK!',GAME_W/2,128,'#ffdd00',7,'700','center','middle');
         drawText(game.newUnlocks[0],GAME_W/2,138,'#ffffff',8,'900','center','middle');
     }
+
+    // === WATCH AD & CONTINUE ===
+    const showAdBtn = reviveSnapshot && !adInProgress;
+    if(showAdBtn){
+        const adRect={x:GAME_W/2-70,y:130,w:140,h:14};
+        const isSel=game.menuSelection===0;
+        const pulse=Math.sin(game.frame*0.15)*0.5+0.5;
+        ctx.fillStyle='rgba(255,180,60,'+(0.18+pulse*0.18)+')';
+        ctx.fillRect(adRect.x,adRect.y,adRect.w,adRect.h);
+        ctx.strokeStyle='#ffb43c';ctx.lineWidth=1.5;
+        ctx.strokeRect(adRect.x+0.5,adRect.y+0.5,adRect.w-1,adRect.h-1);
+        const blink=Math.floor(game.frame/10)%2===0;
+        const col=isSel?(blink?'#ffffff':'#ffdd00'):'#ffb43c';
+        if(isSel)drawText('►',adRect.x+6,adRect.y+7,blink?'#ffdd00':'#ffb43c',7,'900','left','middle');
+        drawText('WATCH AD · CONTINUE',GAME_W/2,adRect.y+7,col,8,'900','center','middle');
+        addMenuItem('watchad',adRect,'watchad');
+    } else if(adInProgress){
+        const adRect={x:GAME_W/2-70,y:130,w:140,h:14};
+        ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(adRect.x,adRect.y,adRect.w,adRect.h);
+        ctx.strokeStyle='#555';ctx.lineWidth=1;ctx.strokeRect(adRect.x+0.5,adRect.y+0.5,adRect.w-1,adRect.h-1);
+        const dots='.'.repeat(Math.floor(game.frame/15)%4);
+        drawText('LOADING AD'+dots,GAME_W/2,adRect.y+7,'#999',8,'700','center','middle');
+    }
+
+    // === RETRY + HOME (bottom row) ===
+    const baseIdx = showAdBtn ? 1 : 0;
     const items=[
         {label:'RETRY',action:'retry'},
         {label:'HOME',action:'home'}
@@ -1512,7 +1645,7 @@ function drawGameOver(){
     for(let i=0;i<items.length;i++){
         const x=80+i*100;
         const rect={x:x-45,y:btnY-7,w:90,h:14};
-        const isSel=i===game.menuSelection;
+        const isSel=(baseIdx+i)===game.menuSelection;
         if(isSel){
             const pulse=Math.sin(game.frame*0.18)*0.5+0.5;
             ctx.fillStyle='rgba(0,229,255,'+(0.18+pulse*0.2)+')';
@@ -1528,11 +1661,12 @@ function drawGameOver(){
 
 function startGame(){
     audio.init();audio.resume();
+    reviveSnapshot=null;
+    adInProgress=false;
     game.resetRun();
     game.state='PLAYING';
     game.menuSelection=0;
     Input.flipRequested=false;
-    // Music mode auto-switches via syncMusicState()
 }
 function garageAction(){
     const list=game.garageTab===0?SKINS:TRAILS;
@@ -1580,6 +1714,18 @@ function claimDaily(){
 
 function menuAction(action){
     audio.init();audio.resume();
+
+    // === WATCH AD & CONTINUE ===
+    if(action==='watchad'){
+        if(adInProgress||!reviveSnapshot)return;
+        adInProgress=true;
+        requestRewardedAd(
+            function(){adInProgress=false;reviveFromAd();},
+            function(){adInProgress=false;}
+        );
+        return;
+    }
+
     if(action==='play'){audio.playMenuConfirm();startGame();return;}
     if(action==='garage'){audio.playMenuConfirm();game.state='GARAGE';game.garageTab=0;game.garageSel=0;game.menuSelection=0;return;}
     if(action==='daily'){audio.playMenuConfirm();game.state='DAILY';game.menuSelection=0;return;}
@@ -1629,7 +1775,6 @@ function applySettingsVisuals(){
 }
 applySettingsVisuals();
 
-// INPUT
 const Input={flipRequested:false};
 function getGameCoords(clientX,clientY){
     const rect=canvas.getBoundingClientRect();
@@ -1638,6 +1783,7 @@ function getGameCoords(clientX,clientY){
 function handleTap(clientX,clientY){
     audio.init();audio.resume();
     if(game.state==='LOADING')return;
+    if(adInProgress&&game.state==='GAMEOVER')return;
     const g=getGameCoords(clientX,clientY);
     if(game.state==='PLAYING'){
         const pBtn={x:GAME_W-16,y:GAME_H-16,w:12,h:12};
@@ -1660,6 +1806,7 @@ function handleTap(clientX,clientY){
 function handleKey(code){
     audio.init();audio.resume();
     if(game.state==='LOADING')return;
+    if(adInProgress&&game.state==='GAMEOVER')return;
     if(game.state==='TUTORIAL'){
         if(code==='Space'||code==='Enter'||code==='NumpadEnter'||code==='ArrowRight'||code==='KeyD'){menuAction('tutorial_next');}
         return;
@@ -1755,36 +1902,24 @@ requestAnimationFrame(gameLoop);
 
 // ============================================================
 //  IFRAME FOCUS HANDSHAKE
-//  Works whether the game is opened directly or embedded.
 // ============================================================
 (function setupIframeFocus() {
     try { window.focus(); } catch (e) {}
-
-    // Notify parent we're loaded so it can grant us focus
     try {
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({ type: 'game-ready' }, '*');
         }
     } catch (e) {}
-
-    // Re-claim focus on any interaction inside the game
-    function ensureFocus() {
-        try { window.focus(); } catch (e) {}
-    }
+    function ensureFocus() { try { window.focus(); } catch (e) {} }
     window.addEventListener('mousedown', ensureFocus, true);
     window.addEventListener('touchstart', ensureFocus, true);
     window.addEventListener('pointerdown', ensureFocus, true);
-
-    // Re-focus when we come back from a hidden tab
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) ensureFocus();
     });
-
-    // Parent can ping us to take focus
     window.addEventListener('message', function (e) {
         if (e.data && e.data.type === 'focus-game') ensureFocus();
     });
-
     window.__ensureFocus = ensureFocus;
 })();
 

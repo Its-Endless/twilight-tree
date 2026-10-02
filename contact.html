@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a1a">
+<meta name="theme-color" content="#04050e">
 <title>Contact · Twilight Tree</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
 <meta name="description" content="Contact the Twilight Tree team — feedback, bug reports, and business inquiries.">
@@ -11,19 +11,38 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1923618182494890" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="arcade-body">
 
-<header class="site-header">
-  <a href="index.html" class="logo"><span class="logo-icon">🌲</span><span class="logo-text">TWILIGHT TREE</span></a>
-  <nav class="site-nav">
-    <a href="index.html">Arcade</a>
-    <a href="about.html">About</a>
-    <a href="privacy.html">Privacy</a>
-    <a href="contact.html" class="active">Contact</a>
-  </nav>
+<div class="bg" aria-hidden="true">
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+  <div class="bg-stars"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-scan"></div>
+</div>
+
+<header class="hud-header">
+  <div class="hud-inner">
+    <a href="index.html" class="brand" aria-label="Twilight Tree home">
+      <span class="brand-mark">🌲</span>
+      <span class="brand-text">TWILIGHT TREE<em>GAME HUB</em></span>
+    </a>
+    <nav class="hud-nav" id="hud-nav" aria-label="Main navigation">
+      <span class="nav-glider" id="nav-glider"></span>
+      <a href="index.html">Arcade</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="contact.html" class="active">Contact</a>
+    </nav>
+    <div class="hud-actions">
+      <button id="sound-toggle" class="hud-btn" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+    </div>
+  </div>
+  <div class="scroll-progress"><i id="scroll-bar"></i></div>
 </header>
 
 <main class="page-content">
@@ -46,16 +65,82 @@
 
 <footer class="site-footer">
   <div class="footer-inner">
-    <div class="footer-col"><h4>Twilight Tree</h4><p>A growing collection of free browser games.</p></div>
-    <div class="footer-col"><h4>Pages</h4>
-      <a href="index.html">Arcade</a><a href="about.html">About</a>
-      <a href="privacy.html">Privacy Policy</a><a href="contact.html">Contact</a>
+    <div class="footer-col footer-brand">
+      <a href="index.html" class="brand brand--footer">
+        <span class="brand-mark">🌲</span>
+        <span class="brand-text">TWILIGHT TREE<em>GAME HUB</em></span>
+      </a>
+      <p>A growing collection of free browser games. Made for quick breaks, long sessions, and everything in between.</p>
+      <div class="footer-status"><i></i> ALL SYSTEMS OPERATIONAL</div>
     </div>
-    <div class="footer-col"><h4>Contact</h4><a href="mailto:shubhgupta916@gmail.com">shubhgupta916@gmail.com</a></div>
+    <div class="footer-col">
+      <h4>Navigate</h4>
+      <a href="index.html">Arcade</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <a href="mailto:shubhgupta916@gmail.com">shubhgupta916@gmail.com</a>
+      <p class="footer-note">Built by Shubhang Gupta</p>
+    </div>
   </div>
-  <div class="footer-bottom"><p>© <span id="year"></span> Twilight Tree. All rights reserved.</p></div>
+  <div class="footer-bottom">
+    <p>© <span id="year"></span> Twilight Tree. All rights reserved.</p>
+  </div>
 </footer>
 
-<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script>
+(function () {
+  const nav = document.getElementById('hud-nav');
+  const glider = document.getElementById('nav-glider');
+  if (nav && glider) {
+    const links = Array.from(nav.querySelectorAll('a'));
+    const active = nav.querySelector('a.active') || links[0];
+    function move(el) {
+      if (!el) return;
+      glider.style.width = el.offsetWidth + 'px';
+      glider.style.transform = 'translateX(' + el.offsetLeft + 'px)';
+    }
+    requestAnimationFrame(() => move(active));
+    links.forEach(l => {
+      l.addEventListener('mouseenter', () => move(l));
+      l.addEventListener('focus', () => move(l));
+    });
+    nav.addEventListener('mouseleave', () => move(active));
+    window.addEventListener('resize', () => move(nav.querySelector('a.active') || links[0]));
+  }
+
+  const bar = document.getElementById('scroll-bar');
+  if (bar) {
+    const update = () => {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - doc.clientHeight;
+      bar.style.width = (max > 0 ? (doc.scrollTop / max) * 100 : 0) + '%';
+    };
+    document.addEventListener('scroll', update, { passive: true });
+    update();
+  }
+
+  const soundBtn = document.getElementById('sound-toggle');
+  let soundEnabled = localStorage.getItem('twilighttree_sound') !== 'off';
+  function updateSoundBtn() {
+    if (!soundBtn) return;
+    soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+    soundBtn.setAttribute('aria-label', soundEnabled ? 'Mute sound' : 'Unmute sound');
+  }
+  updateSoundBtn();
+  if (soundBtn) {
+    soundBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('twilighttree_sound', soundEnabled ? 'on' : 'off');
+      updateSoundBtn();
+    });
+  }
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+})();
+</script>
 </body>
 </html>

@@ -42,6 +42,12 @@ const THEMES = [
 let THEME_IDX = 0;
 function TH(){ return THEMES[THEME_IDX]; }
 
+/* ============================================================
+   REWARDED AD STATE — declared early so startGame can reset
+   ============================================================ */
+let reviveSnapshot = null;
+let adInProgress = false;
+
 let RNG = Math.random;
 function mulberry32(a){
   return function(){
@@ -886,6 +892,20 @@ function onHit(){
 }
 
 function gameOver(){
+  // ============================================================
+  //  SNAPSHOT for potential ad-revive
+  // ============================================================
+  reviveSnapshot = {
+    level: G.level,
+    score: G.score,
+    comboMax: G.comboMax,
+    perfectStreak: G.perfectStreak,
+    challengeMode: G.challengeMode,
+    challengeTimer: G.challengeTimer,
+    dailyMode: G.dailyMode,
+    seed: G.seed,
+  };
+
   G.state = 'GAME_OVER';
   AudioSys.stopCut();
   if (G.score > G.best){
@@ -922,7 +942,6 @@ function addLeaderboardScore(score, level){
 
 /* ============================================================
    COLLISION — ONLY against the DRAWN portion of the cut path.
-   The highlighted preview ahead of the arrow tip does NOT count.
    ============================================================ */
 function checkCutCollisions(){
   if (G.invuln > 0) return false;
@@ -934,7 +953,6 @@ function checkCutCollisions(){
   const cump = c.cum;
 
   for (const e of G.enemies){
-    // (1) Player tip collision — the arrow head itself
     if (Math.hypot(e.x - px, e.y - py) < e.r + 2.5){
       if (e.isBoss && e.hp > 1){
         e.hp--;
@@ -947,17 +965,13 @@ function checkCutCollisions(){
         onHit(); return true;
       }
     }
-    // (2) Cut line collision — ONLY against segments already drawn
-    //     (segment start < progress). The ghost line ahead is ignored.
     let hitLine = false;
     for (let i=1; i<c.path.length; i++){
       const segStart = cump[i-1];
       const segEnd = cump[i];
-      // Skip segments entirely ahead of the drawn progress
       if (segStart >= c.progress - 0.01) break;
       const a = c.path[i-1];
       const b = c.path[i];
-      // If this segment straddles the tip, clamp its end to the drawn portion
       let bx = b.x, by = b.y;
       if (segEnd > c.progress){
         const tt = (c.progress - segStart) / Math.max(0.0001, segEnd - segStart);
@@ -1132,7 +1146,6 @@ function tick(dt){
     return;
   }
 
-  // Slow-motion
   let targetTs = 1;
   if (G.state === 'CUTTING' && G.cut){
     const c = G.cut;
@@ -1426,8 +1439,6 @@ function drawCornerTicks(){
   }
 }
 
-/* Cut line rendering — clearly distinguishes the drawn portion (dangerous)
-   from the preview portion (safe). */
 function drawCutLine(){
   const c = G.cut;
   const t = TH();
@@ -1445,7 +1456,6 @@ function drawCutLine(){
   ctx.save();
   ctx.lineCap = 'butt';
 
-  // ---- Preview (ghost) portion: everything ahead of progress ----
   ctx.globalAlpha = 0.10;
   ctx.lineWidth = 4;
   ctx.strokeStyle = t.secondary;
@@ -1482,7 +1492,6 @@ function drawCutLine(){
   ctx.setLineDash([]);
   ctx.globalAlpha = 1;
 
-  // ---- Drawn portion (0 to progress) — the dangerous part ----
   ctx.globalAlpha = 0.28; ctx.lineWidth = 7; ctx.strokeStyle = col;
   drawCutActivePath(c, c.progress);
   ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.strokeStyle = col;
@@ -1842,6 +1851,32 @@ function layoutButtons(items, topFrac){
 function drawButton(b, highlight){
   const t = TH();
   const isHi = highlight || b.hover;
+
+  /* ---- Ad button (amber) ---- */
+  if (b.id === 'watchad'){
+    const pulse = 0.5 + 0.5*Math.sin(G.t*4);
+    ctx.fillStyle = 'rgba(255,180,60,'+(0.18+pulse*0.18)+')';
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.strokeStyle = '#FFB43C'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(b.x+0.5, b.y+0.5, b.w-1, b.h-1);
+    ctx.fillStyle = '#FFD447';
+    ctx.fillRect(b.x, b.y, 2, 2); ctx.fillRect(b.x+b.w-2, b.y, 2, 2);
+    ctx.fillRect(b.x, b.y+b.h-2, 2, 2); ctx.fillRect(b.x+b.w-2, b.y+b.h-2, 2, 2);
+    drawTextC(b.label, b.x + b.w/2, b.y + Math.round((b.h-7)/2), '#FFD447', 1);
+    return;
+  }
+
+  /* ---- Loading state (grey, disabled) ---- */
+  if (b.id === 'loading'){
+    ctx.fillStyle = 'rgba(30,30,50,0.55)';
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
+    ctx.strokeRect(b.x+0.5, b.y+0.5, b.w-1, b.h-1);
+    drawTextC(b.label, b.x + b.w/2, b.y + Math.round((b.h-7)/2), '#999', 1);
+    return;
+  }
+
+  /* ---- Standard button ---- */
   ctx.fillStyle = isHi ? t.grid + '0.16)' : t.grid + '0.05)';
   ctx.fillRect(b.x, b.y, b.w, b.h);
   ctx.strokeStyle = isHi ? t.secondary : '#1E4A63'; ctx.lineWidth = 1;
@@ -1982,21 +2017,31 @@ function drawLeaderboard(){
   for (const b of G.buttons) drawButton(b, false);
 }
 
+/* ============================================================
+   GAME OVER SCREEN — with WATCH AD - CONTINUE
+   ============================================================ */
 function drawGameOver(){
   const t = TH();
   ctx.fillStyle = 'rgba(8,11,18,0.78)'; ctx.fillRect(0,0,W,H);
   const blink = Math.sin(G.t*4) > -0.4;
-  drawTextC('GAME OVER', W/2, H*0.20, blink ? t.danger : '#8A1E38', 3);
-  drawTextC('SCORE', W/2, H*0.34, '#7FB6D0', 1);
-  drawTextC(String(G.score).padStart(6,'0'), W/2, H*0.34 + 12, t.warning, 2);
-  drawTextC('BEST', W/2, H*0.46, '#7FB6D0', 1);
-  drawTextC(String(G.best).padStart(6,'0'), W/2, H*0.46 + 12, t.primary, 2);
+  drawTextC('GAME OVER', W/2, H*0.18, blink ? t.danger : '#8A1E38', 3);
+  drawTextC('SCORE', W/2, H*0.30, '#7FB6D0', 1);
+  drawTextC(String(G.score).padStart(6,'0'), W/2, H*0.30 + 12, t.warning, 2);
+  drawTextC('LEVEL ' + String(G.level).padStart(2,'0'), W/2, H*0.40, '#7FB6D0', 1);
+  drawTextC('BEST', W/2, H*0.44, '#7FB6D0', 1);
+  drawTextC(String(G.best).padStart(6,'0'), W/2, H*0.44 + 12, t.primary, 2);
 
-  const items = [
-    {id:'restart', label:'RESTART'},
-    {id:'menu',    label:'MAIN MENU'}
-  ];
-  G.buttons = layoutButtons(items, 0.70);
+  // Build dynamic button list — ad option appears only if a snapshot exists
+  const items = [];
+  if (adInProgress){
+    items.push({id:'loading', label:'LOADING AD...'});
+  } else if (reviveSnapshot){
+    items.push({id:'watchad', label:'WATCH AD - CONTINUE'});
+  }
+  items.push({id:'restart', label:'RESTART'});
+  items.push({id:'menu',    label:'MAIN MENU'});
+
+  G.buttons = layoutButtons(items, 0.68);
   for (const b of G.buttons) drawButton(b, false);
 }
 
@@ -2046,6 +2091,8 @@ function hitButton(pt){
 }
 function startGame(mode){
   AudioSys.init(); AudioSys.resume(); AudioSys.startMusic();
+  reviveSnapshot = null;
+  adInProgress = false;
   G.score = 0; G.lives = 3;
   G.combo = 0; G.comboTimer = 0; G.comboMax = 0;
   G.perfectStreak = 0;
@@ -2069,6 +2116,102 @@ function startGame(mode){
   AudioSys.tone(523,0.08,'square',0.055);
   AudioSys.tone(784,0.12,'square',0.055,0.08);
 }
+
+/* ============================================================
+   REWARDED AD INTEGRATION
+   ============================================================ */
+function requestRewardedAd(onReward, onFail){
+  let adBreakFn = null;
+  try {
+    if (typeof adBreak === 'function') adBreakFn = adBreak;
+    else if (window.parent && window.parent !== window && typeof window.parent.adBreak === 'function') {
+      adBreakFn = window.parent.adBreak;
+    }
+  } catch(e) { adBreakFn = null; }
+
+  if (!adBreakFn){
+    console.warn('[NeonFill] adBreak unavailable — check play.html wrapper.');
+    onFail && onFail();
+    return;
+  }
+
+  let rewardGranted = false, finished = false;
+  function finish(cb){ if (finished) return; finished = true; cb && cb(); }
+
+  try {
+    adBreakFn({
+      type: 'reward',
+      name: 'resume_after_death',
+      beforeAd: () => { try { if (AudioSys.master) AudioSys.master.gain.value = 0.05; } catch(e){} },
+      afterAd:  () => { try { if (AudioSys.master) AudioSys.master.gain.value = 0.7;  } catch(e){} },
+      beforeReward: (showAdFn) => showAdFn(),
+      adViewed:    () => { rewardGranted = true;  finish(onReward); },
+      adDismissed: () => { rewardGranted = false; finish(onFail); },
+      adBreakDone: (info) => {
+        if (!rewardGranted && info && info.breakStatus !== 'viewed') finish(onFail);
+        else if (!rewardGranted && !info) finish(onFail);
+      }
+    });
+  } catch(e) {
+    console.warn('[NeonFill] adBreak threw:', e);
+    finish(onFail);
+  }
+}
+
+function reviveFromAd(){
+  if (!reviveSnapshot) return;
+  const s = reviveSnapshot;
+
+  // Restore score / progress state BEFORE rebuilding the level
+  // (startLevel doesn't touch these but keep it explicit)
+  G.score = s.score;
+  G.combo = 0;
+  G.comboTimer = 0;
+  G.comboMax = s.comboMax;
+  G.perfectStreak = s.perfectStreak;
+  G.challengeMode = s.challengeMode;
+  G.dailyMode = s.dailyMode;
+  G.seed = s.seed;
+  G.lives = 1;
+
+  // Clear transient state so nothing carries over
+  G.cut = null;
+  G.fillAnim = null;
+  G.particles.length = 0;
+  G.trail.length = 0;
+  G.killFeed.length = 0;
+  G.powerUps.length = 0;
+  G.timeScale = 1;
+  G.slowFx = 0;
+  G.warnBeep = 0;
+  G.shake = 0;
+  G.hitFlash = 0;
+  G.flashWhite = 0;
+  G.perfectFlash = 0;
+  G.shieldFlash = 0;
+
+  // Rebuild the current level with a fresh layout.
+  if (s.dailyMode){
+    setSeed(s.seed);
+    startLevel(s.level, { useSeed: s.seed });
+  } else {
+    RNG = Math.random;
+    startLevel(s.level);
+  }
+
+  // Start level set invuln to 0.5; bump it and give breathing-room buffs
+  G.invuln = 2.5;
+  G.activeShield = 8.0;
+  G.activeFreeze = 2.0;
+
+  if (s.challengeMode){
+    G.challengeTimer = Math.max(20, s.challengeTimer);
+  }
+
+  AudioSys.tone(880, 0.1, 'square', 0.06);
+  AudioSys.tone(1318, 0.15, 'square', 0.06, 0.08);
+}
+
 function handleButton(id){
   switch(id){
     case 'start': startGame('normal'); break;
@@ -2107,11 +2250,29 @@ function handleButton(id){
       startGame('normal'); break;
     case 'quit': G.state = 'MENU'; break;
     case 'menu': G.state = 'MENU'; break;
+
+    /* ---- REWARDED AD ---- */
+    case 'watchad':
+      if (adInProgress || !reviveSnapshot) break;
+      adInProgress = true;
+      AudioSys.tone(660, 0.08, 'square', 0.05);
+      requestRewardedAd(
+        function(){ adInProgress = false; reviveFromAd(); },
+        function(){ adInProgress = false; }
+      );
+      break;
+    case 'loading':
+      // no-op — button is disabled while an ad is loading
+      break;
   }
 }
 
 function onPointerDown(e){
   e.preventDefault();
+
+  // Block input while an ad is loading (game over screen only)
+  if (adInProgress && G.state === 'GAME_OVER') return;
+
   AudioSys.init(); AudioSys.resume(); AudioSys.startMusic();
   G.touchActive = true;
   const t = (e.touches && e.touches[0]) ? e.touches[0] : e;
@@ -2151,9 +2312,11 @@ window.addEventListener('keydown', (e)=>{
   if (isSpaceKey(e)){
     e.preventDefault();
     e.stopPropagation();
-    // Ignore OS auto-repeat — only act on the first press
     if (e.repeat || G.spaceHeld) return;
     G.spaceHeld = true;
+
+    // Block spacebar on game over while ad is loading
+    if (adInProgress && G.state === 'GAME_OVER') return;
 
     AudioSys.init(); AudioSys.resume(); AudioSys.startMusic();
 

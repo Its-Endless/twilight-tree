@@ -48,7 +48,7 @@ window.GAMES = [
     title: "Snake",
     description: "The old retro snake game with new taste.",
     category: "Reaction",
-    thumbnail: "thumbnails/snake.png",
+    thumbnail: "thumbnails/snake.jpg",
     gradient: ["#00ff88", "#00f0ff"],
     accent: "#00ff88",
     file: "games/snake.html",
@@ -70,7 +70,7 @@ window.GAMES = [
     title: "Neon Fill",
     description: "A retro type old border builder game.",
     category: "Shooting",
-    thumbnail: "thumbnails/neonfill.png",
+    thumbnail: "thumbnails/neonfill.jpg",
     gradient: ["#ff00aa", "#ffe600"],
     accent: "#00ff88",
     file: "games/neonfill.html",
@@ -85,6 +85,17 @@ window.GAMES = [
     gradient: ["#ff00aa", "#ffe600"],
     accent: "#ff00aa",
     file: "games/gravityshift.html",
+    isNew: true
+  },
+  {
+    id: "onemorefloor",
+    title: "One More Floor",
+    description: "Jump and reach the top.",
+    category: "Action",
+    thumbnail: "thumbnails/onemorefloor.jpg",
+    gradient: ["#ff00aa", "#ffe600"],
+    accent: "#ff00aa",
+    file: "games/onemorefloor.html",
     isNew: true
   }
 ];
